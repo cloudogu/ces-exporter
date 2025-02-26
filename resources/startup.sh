@@ -17,4 +17,7 @@ echo "                       'V/(/////////////////////////////V'      "
 
 echo "exporter started"
 
-/usr/sbin/sshd -D
+chown -R root:root /root/.ssh/authorized_keys
+chmod 600 /root/.ssh/authorized_keys
+
+/usr/sbin/sshd -e -D
