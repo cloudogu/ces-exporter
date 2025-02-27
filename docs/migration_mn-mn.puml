@@ -1,0 +1,101 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+skinparam maxMessageSize 160
+skinparam sequenceMessageAlign center
+autonumber
+
+actor Admin
+participant "CES-Importer" as I
+participant "Importer Job" as IJ
+participant "Dogu-Operator (Importer)" as DOI
+participant "CES-Exporter" as E
+participant "Dogu-Operator (Exporter)" as DOE
+participant "Dogu-Pod" as DP
+
+'Install
+Admin --> E: Install Exporter
+Admin --> I: Install Importer
+
+Admin --> I: Start Migration
+activate I
+
+'Stop Dogus
+I -> DOI: Stop Dogus
+activate DOI
+I <-- DOI: Dogus stopped
+deactivate DOI
+
+|||
+
+'Export-Mode start
+I -> E: Start Export-Mode
+activate E
+E -> DOE: Enable Export-Mode for Dogus
+activate DOE
+note right
+Adds the Exporter-Sidecar
+to all Dogu-Pods
+end note
+E <-- DOE: Export-Mode for Dogus enabled
+deactivate DOE
+I <-- E: Export-Mode started
+deactivate E
+
+||80||
+
+'Start Import-Job
+I -> IJ: Start Import Job
+note right
+The Import-Job-Pod has
+all Dogu-Volumes mounted
+end note
+activate IJ
+
+'System-Info
+IJ -> E: Get System-Info
+activate E
+IJ <-- E: System-Info
+deactivate E
+IJ -> IJ: Validate System-Info
+
+|||
+
+'Configuration
+IJ -> E: Get Configuration
+activate E
+IJ <-- E: Configuration
+deactivate E
+IJ -> IJ: Apply Configuration
+
+|||
+
+loop Dogus
+'Get Data from Dogu
+IJ -> E: Export "Dogu"
+activate E
+E -> E: Configure Export-Service for "Dogu"
+IJ <-- E: "Dogu" ready for Export
+deactivate E
+IJ -> DP: Import Data from "Dogu"
+activate DP
+|||
+IJ <-- DP: Data-Import for "Dogu" done
+deactivate DP
+end
+
+I <-- IJ: Import Job finished
+deactivate IJ
+
+|||
+
+'Stop Dogus
+I -> DOI: Start Dogus
+activate DOI
+I <-- DOI: Dogus started
+deactivate DOI
+
+deactivate I
+
+...Migration complete...
+@enduml
