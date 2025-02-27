@@ -6,14 +6,368 @@ info:
 servers:
   - url: https://192.168.56.2/ces-exporter
     description: The CES-Exporter running on a local dev-machine
+security:
+  - ApiKeyAuth: []
+
 paths:
   /system-info:
     get:
       summary: Returns information about the current state of the ecosystem.
+      tags: [System]
       responses:
-        "200": # status code
-          description: A JSON array of user names
+        "200":
+          description: A JSON object with of the ecosystem to export
           content:
             application/json:
               schema:
-                $ref: "/system-info.schema.json"
+                $ref: "#/components/schemas/SystemInfo"
+              examples:
+                systemInfo:
+                  $ref: '#/components/examples/systemInfo'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /configuration:
+    get:
+      summary: Returns the configuration of the exporting ecosystem.
+      tags: [Configuration]
+      responses:
+        "200":
+          description: A JSON object with the configurations of the ecosystem to export
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Configuration"
+              examples:
+                systemInfo:
+                  $ref: '#/components/examples/config'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /export/dogu:
+    get:
+      summary: Gets info of the currently prepared dogu for export
+      tags: [Dogu]
+      responses:
+        "200":
+          description: A JSON object with information about the volume-export of the dogu which is ready for export
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DoguExportInfo"
+              examples:
+                systemInfo:
+                  $ref: '#/components/examples/doguExportInfo'
+        "404":
+          description: Not Found - there is no dogu ready for export
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                code: 404
+                message: "Not Found message"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /export/dogu/{doguName}:
+    post:
+      summary: Prepares the given dogu for export
+      tags: [Dogu]
+      parameters:
+        - in: path
+          name: doguName
+          schema:
+            type: string
+          required: true
+          description: The name of the dogu to prepare for export
+      responses:
+        "200":
+          description: A JSON object with information about the volume-export
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DoguExportInfo"
+              examples:
+                systemInfo:
+                  $ref: '#/components/examples/doguExportInfo'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /export/mode/enable:
+    post:
+      summary: Enables the export-mode the ecosystem to export
+      tags: [Export-Mode]
+      description: Prepares this ecosystem instance for export
+      responses:
+        "204":
+          description: The ecosystem is prepared for export
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /export/mode/disable:
+    post:
+      summary: Disables the export-mode in the ecosystem
+      tags: [Export-Mode]
+      responses:
+        "204":
+          description: The export-mode is disabled
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /maintenance/mode/enable:
+    post:
+      summary: Enables the maintenance-mode the ecosystem to export
+      tags: [Maintenance-Mode]
+      description: Prepares this ecosystem instance for the "final" export. The ecosystem
+      responses:
+        "204":
+          description: The maintenance-mode is enabled
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /maintenance/mode/disable:
+    post:
+      summary: Disables the maintenance-mode in the ecosystem
+      tags: [Maintenance-Mode]
+      responses:
+        "204":
+          description: The maintenance-mode is disabled
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-CES-EXPORTER-API-KEY
+  responses:
+    InternalError:
+      description: An unexpected error occurred
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: 500
+            message: "Error message for internale error"
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            code: 401
+            message: "Unauthoorized access message"
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+    SystemInfo:
+      type: object
+      properties:
+        fqdn:
+          type: string
+        isMultinode:
+          type: boolean
+        dogus:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              version:
+                type: string
+              volume:
+                type: object
+                properties:
+                  path:
+                    type: string
+                  sizeInBytes:
+                    type: integer
+                required:
+                  - path
+                  - sizeInBytes
+            required:
+              - name
+              - version
+              - volume
+        packages:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              version:
+                type: string
+            required:
+              - name
+              - version
+        components:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              version:
+                type: string
+            required:
+              - name
+              - version
+      required:
+        - fqdn
+        - isMultinode
+        - dogus
+
+    Configuration:
+      type: object
+      properties:
+        global:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConfigKey"
+        dogu:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              normal:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ConfigKey"
+              local:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ConfigKey"
+              sensitive:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ConfigKey"
+            required:
+              - name
+              - normal
+              - local
+              - sensitive
+      required:
+        - global
+        - dogu
+
+    ConfigKey:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+      required:
+        - key
+        - value
+
+    DoguExportInfo:
+      type: object
+      properties:
+        dogu:
+          type: string
+        volumePath:
+          type: string
+        exporterPort:
+          type: integer
+      required:
+        - dogu
+        - volumePath
+        - exporterPort
+
+  examples:
+    systemInfo:
+      value:
+        fqdn: 192.168.56.2
+        isMultinode: false
+        dogus:
+          - name: premium/cas
+            version: 7.0.8-10
+            volume:
+              path: "/data/cas"
+              sizeInBytes: 18885
+          - name: official/sonar
+            version: 9.9.7-1
+            volume:
+              path: "/data/sonar"
+              sizeInBytes: 352950770
+        packages:
+          - name: backup-watcher
+            version: 1.3.0
+          - name: ces-setup
+            version: 1.10.5
+          - name: ces-commons
+            version: 1.4.0
+        components:
+          - name: k8s/k8s-dogu-operator
+            version: 1.0.1
+          - name: k8s/k8s-dogu-operator-crd
+            version: 1.0.1
+    config:
+      value:
+        global:
+          - key: fqdn
+            value: "192.168.66.2"
+          - key: certificate/type
+            value: "selfsigned"
+        dogu:
+          - name: cas
+            normal:
+              - key: "logging/root"
+                value: "DEBUG"
+              - key: "ldap/host"
+                value: "ldap"
+              - key: "ldap/port"
+                value: "389"
+            local:
+              - key: "local_state"
+                value: "RUNNING"
+            sensitive:
+              - key: "sa-ldap/username"
+                value: "cn=cas_R0IJaN,ou=Special Users,o=coder.cloudogu.com,dc=cloudogu,dc=com"
+              - key: "sa-ldap/password"
+                value: "5cYGA5zgmFnOAwO7"
+          - name: usermgt
+            normal:
+              - key: "logging/root"
+                value: "INFO"
+            local: []
+            sensitive:
+              - key: "sa-cas/cas_client_id"
+                value: "usermgt"
+    doguExportInfo:
+      value:
+        dogu: "cas"
+        volumePath: "/data/cas"
+        exporterPort: 7022
