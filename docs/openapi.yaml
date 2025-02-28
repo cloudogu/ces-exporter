@@ -51,7 +51,7 @@ paths:
   /export/dogu:
     get:
       summary: Gets info of the currently prepared dogu for export
-      tags: [Dogu]
+      tags: [Export Dogu]
       responses:
         "200":
           description: A JSON object with information about the volume-export of the dogu which is ready for export
@@ -79,7 +79,7 @@ paths:
   /export/dogu/{doguName}:
     post:
       summary: Prepares the given dogu for export
-      tags: [Dogu]
+      tags: [Export Dogu]
       parameters:
         - in: path
           name: doguName
@@ -102,49 +102,94 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /export/mode/enable:
-    post:
-      summary: Enables the export-mode the ecosystem to export
-      tags: [Export-Mode]
-      description: Prepares this ecosystem instance for export
+  /export/mode:
+    get:
+      summary: Gets whether the export-mode is active in this ecosystem instance
+      tags: [ Export-Mode ]
       responses:
-        "204":
-          description: The ecosystem is prepared for export
+        "200":
+          description: A JSON object with showing if the export-mode is active
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModeStatus"
+              example:
+                isActive: true
         "401":
           $ref: "#/components/responses/Unauthorized"
         "500":
           $ref: "#/components/responses/InternalError"
-  /export/mode/disable:
     post:
-      summary: Disables the export-mode in the ecosystem
+      summary: Activates or deactivates the export-mode the ecosystem to export
+      description: If activated, this ecosystem instance is prepared for export
       tags: [Export-Mode]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                activate:
+                  type: boolean
+              required:
+                - activate
+            example:
+              activate: true
       responses:
-        "204":
-          description: The export-mode is disabled
+        "200":
+          description: A JSON object with showing if the export-mode is active
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModeStatus"
+              example:
+                isActive: true
         "401":
           $ref: "#/components/responses/Unauthorized"
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /maintenance/mode/enable:
-    post:
-      summary: Enables the maintenance-mode the ecosystem to export
-      tags: [Maintenance-Mode]
-      description: Prepares this ecosystem instance for the "final" export. The ecosystem
+  /maintenance/mode:
+    get:
+      summary: Gets whether the maintenance-mode is active in this ecosystem instance
+      tags: [ Maintenance-Mode ]
       responses:
-        "204":
-          description: The maintenance-mode is enabled
+        "200":
+          description: A JSON object with showing if the maintenance-mode is active
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModeStatus"
+              example:
+                isActive: true
         "401":
           $ref: "#/components/responses/Unauthorized"
         "500":
           $ref: "#/components/responses/InternalError"
-  /maintenance/mode/disable:
     post:
-      summary: Disables the maintenance-mode in the ecosystem
-      tags: [Maintenance-Mode]
+      summary: Activates or deactivates the maintenance-mode the ecosystem
+      tags: [ Maintenance-Mode ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                activate:
+                  type: boolean
+              required:
+                - activate
+            example:
+              activate: true
       responses:
-        "204":
-          description: The maintenance-mode is disabled
+        "200":
+          description: A JSON object with showing if the maintenance-mode is active
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModeStatus"
+              example:
+                isActive: true
         "401":
           $ref: "#/components/responses/Unauthorized"
         "500":
@@ -305,6 +350,14 @@ components:
         - dogu
         - volumePath
         - exporterPort
+
+    ModeStatus:
+      type: object
+      properties:
+        isActive:
+          type: boolean
+      required:
+        - isActive
 
   examples:
     systemInfo:
