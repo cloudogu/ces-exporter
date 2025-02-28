@@ -119,35 +119,6 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "500":
           $ref: "#/components/responses/InternalError"
-    post:
-      summary: Activates or deactivates the export-mode the ecosystem to export
-      description: If activated, this ecosystem instance is prepared for export
-      tags: [Export-Mode]
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                activate:
-                  type: boolean
-              required:
-                - activate
-            example:
-              activate: true
-      responses:
-        "200":
-          description: A JSON object with showing if the export-mode is active
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ModeStatus"
-              example:
-                isActive: true
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "500":
-          $ref: "#/components/responses/InternalError"
 
   /maintenance/mode:
     get:
@@ -251,8 +222,6 @@ components:
               volume:
                 type: object
                 properties:
-                  path:
-                    type: string
                   sizeInBytes:
                     type: integer
                 required:
@@ -262,18 +231,6 @@ components:
               - name
               - version
               - volume
-        packages:
-          type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-              version:
-                type: string
-            required:
-              - name
-              - version
         components:
           type: array
           items:
@@ -322,6 +279,16 @@ components:
               - normal
               - local
               - sensitive
+        backupSchedules:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              schedule:
+                type: string
+                description: A string representing the schedule for this backup in a crontab format.
       required:
         - global
         - dogu
@@ -368,20 +335,11 @@ components:
           - name: premium/cas
             version: 7.0.8-10
             volume:
-              path: "/data/cas"
               sizeInBytes: 18885
           - name: official/sonar
             version: 9.9.7-1
             volume:
-              path: "/data/sonar"
               sizeInBytes: 352950770
-        packages:
-          - name: backup-watcher
-            version: 1.3.0
-          - name: ces-setup
-            version: 1.10.5
-          - name: ces-commons
-            version: 1.4.0
         components:
           - name: k8s/k8s-dogu-operator
             version: 1.0.1
@@ -419,6 +377,9 @@ components:
             sensitive:
               - key: "sa-cas/cas_client_id"
                 value: "usermgt"
+        backupSchedules:
+          - name: "daily-backup"
+            schedule: "0 0 * * *"
     doguExportInfo:
       value:
         dogu: "cas"
