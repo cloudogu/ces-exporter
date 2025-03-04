@@ -41,17 +41,24 @@ paths:
               schema:
                 $ref: "#/components/schemas/Configuration"
               examples:
-                systemInfo:
+                configuration:
                   $ref: '#/components/examples/config'
         "401":
           $ref: "#/components/responses/Unauthorized"
         "500":
           $ref: "#/components/responses/InternalError"
 
-  /export/dogu:
+  /export/dogu/{doguName}:
     get:
       summary: Gets info of the currently prepared dogu for export
-      tags: [Export Dogu]
+      parameters:
+        - in: path
+          name: doguName
+          schema:
+            type: string
+          required: true
+          description: The name of the dogu to get export information for
+      tags: [ Export Dogu ]
       responses:
         "200":
           description: A JSON object with information about the volume-export of the dogu which is ready for export
@@ -60,7 +67,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/DoguExportInfo"
               examples:
-                systemInfo:
+                doguExportInfo:
                   $ref: '#/components/examples/doguExportInfo'
         "404":
           description: Not Found - there is no dogu ready for export
@@ -74,9 +81,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
         "500":
-          $ref: "#/components/responses/InternalError"
-
-  /export/dogu/{doguName}:
+          $ref: "#/components/responses/InternalError"    
     post:
       summary: Prepares the given dogu for export
       tags: [Export Dogu]
@@ -95,7 +100,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/DoguExportInfo"
               examples:
-                systemInfo:
+                doguExportInfo:
                   $ref: '#/components/examples/doguExportInfo'
         "401":
           $ref: "#/components/responses/Unauthorized"
