@@ -12,7 +12,15 @@ spec:
   podSelector:
     matchLabels:
       app: ces
-      {{- include "ces-exporter.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/name: {{ include "ces-exporter.name" . }}
   policyTypes:
     - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              dogu.name: nginx-ingress
+      ports:
+        - port: 8080
+          protocol: TCP
 {{- end }}

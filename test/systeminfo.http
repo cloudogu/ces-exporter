@@ -1,0 +1,2 @@
+### GET SystemInfo
+GET {{host}}/ces-exporter/system-info

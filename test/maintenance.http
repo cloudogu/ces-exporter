@@ -1,0 +1,12 @@
+### GET Maintenance-Mode
+GET {{host}}/ces-exporter/maintenance/mode
+
+### Set Maintenance-Mode
+POST {{host}}/ces-exporter/maintenance/mode
+Content-Type: application/json
+
+{
+  "activate": true,
+  "title": "Migration in progress",
+  "message": "This CES is migrating to a new instance"
+}

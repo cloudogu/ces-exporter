@@ -14,6 +14,10 @@ RUN go mod download
 # Copy the go source
 COPY main.go main.go
 COPY core core
+COPY configuration configuration
+COPY export export
+COPY maintenance maintenance
+COPY systeminfo systeminfo
 
 # Build
 RUN go mod vendor

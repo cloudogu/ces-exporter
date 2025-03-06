@@ -26,7 +26,7 @@ goVersion = "1.24.1"
 helmTargetDir = "target/k8s"
 helmChartDir = "${helmTargetDir}/helm"
 
-imageRepository = "cloudogu/${repositoryName}-auth"
+imageRepository = "cloudogu/${repositoryName}"
 
 node('docker') {
     timestamps {
@@ -81,19 +81,20 @@ node('docker') {
                 try {
                     Makefile makefile = new Makefile(this)
                     String releaseVersion = makefile.getVersion()
+                    String localImageName = "${imageRepository}:${releaseVersion}"
+                    String imageName = ""
 
                     stage('Set up k3d cluster') {
                         k3d.startK3d()
                     }
 
-                    def imageName = ""
                     stage('Build & Push Image') {
                         imageName = k3d.buildAndPushToLocalRegistry(imageRepository, releaseVersion)
                     }
 
                     stage('Trivy scan') {
                         Trivy trivy = new Trivy(this)
-                        trivy.scanImage(imageName, TrivySeverityLevel.CRITICAL, TrivyScanStrategy.UNSTABLE)
+                        trivy.scanImage(localImageName, TrivySeverityLevel.CRITICAL, TrivyScanStrategy.UNSTABLE)
                         trivy.saveFormattedTrivyReport(TrivyScanFormat.TABLE)
                         trivy.saveFormattedTrivyReport(TrivyScanFormat.JSON)
                         trivy.saveFormattedTrivyReport(TrivyScanFormat.HTML)

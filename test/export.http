@@ -1,0 +1,8 @@
+### GET Export dogu
+GET {{host}}/ces-exporter/export/cas
+
+### POST Export dogu
+POST {{host}}/ces-exporter/export/sonar
+
+### GET Export-Mode
+GET {{host}}/ces-exporter/export/mode

@@ -3,7 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/cloudogu/ces-exporter/configuration"
 	"github.com/cloudogu/ces-exporter/core"
+	"github.com/cloudogu/ces-exporter/export"
+	"github.com/cloudogu/ces-exporter/maintenance"
+	"github.com/cloudogu/ces-exporter/systeminfo"
 	"log/slog"
 	"net/http"
 	"os"
@@ -63,6 +67,17 @@ func run(ctx context.Context) error {
 func createServer(config core.Configuration) http.Handler {
 	rootHandler := http.NewServeMux()
 	rootHandler.HandleFunc("GET /health", core.Health)
+
+	rootHandler.HandleFunc("GET /system-info", systeminfo.GetSystemInfo)
+
+	rootHandler.HandleFunc("GET /configuration", configuration.GetConfig)
+
+	rootHandler.HandleFunc("GET /export/{doguName}", export.GetExportDogu)
+	rootHandler.HandleFunc("POST /export/{doguName}", export.SetExportDogu)
+	rootHandler.HandleFunc("GET /export/mode", export.GetExportMode)
+
+	rootHandler.HandleFunc("GET /maintenance/mode", maintenance.GetMaintenanceMode)
+	rootHandler.HandleFunc("POST /maintenance/mode", maintenance.SetMaintenanceMode)
 
 	router := http.NewServeMux()
 	router.Handle(fmt.Sprintf("%s/", config.BasePath), http.StripPrefix(config.BasePath, rootHandler))
