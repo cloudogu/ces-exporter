@@ -1,0 +1,17 @@
+global:
+  networkPolicies:
+    enabled: true
+  imagePullSecrets:
+    - name: "ces-container-registries"
+image:
+  registry: docker.io
+  repository: cloudogu/ces-exporter
+  tag: 0.0.1
+imagePullPolicy: IfNotPresent
+env:
+  logLevel: info
+  basePath: "/ces-exporter"
+  apiKey: "Test1234"
+manager:
+  image:
+    tag: 0.0.1

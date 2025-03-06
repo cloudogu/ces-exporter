@@ -1,0 +1,41 @@
+package core
+
+import (
+	"fmt"
+	"os"
+	"strings"
+)
+
+const logLevelEnv = "LOG_LEVEL"
+const basePathEnv = "BASE_PATH"
+const apiKeyEnv = "API_KEY"
+
+const errorFormat = "environment variable %s is not set"
+
+type Configuration struct {
+	LogLevel string
+	BasePath string
+	ApiKey   string
+}
+
+func ReadConfigFromEnv() (Configuration, error) {
+	conf := Configuration{}
+
+	conf.LogLevel = os.Getenv(logLevelEnv)
+	if conf.LogLevel == "" {
+		conf.LogLevel = "INFO"
+	}
+
+	conf.BasePath = os.Getenv(basePathEnv)
+	if conf.BasePath == "" {
+		conf.BasePath = "/ces-exporter"
+	}
+	conf.BasePath = strings.TrimSuffix(conf.BasePath, "/")
+
+	conf.ApiKey = os.Getenv(apiKeyEnv)
+	if conf.ApiKey == "" {
+		return conf, fmt.Errorf(errorFormat, apiKeyEnv)
+	}
+
+	return conf, nil
+}
