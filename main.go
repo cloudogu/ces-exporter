@@ -19,8 +19,7 @@ import (
 func main() {
 	ctx := context.Background()
 	if err := run(ctx); err != nil {
-		fmt.Printf("%s\n", err)
-		os.Exit(1)
+		panic(err)
 	}
 }
 
