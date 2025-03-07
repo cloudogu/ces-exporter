@@ -1,0 +1,140 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+skinparam maxMessageSize 160
+skinparam sequenceMessageAlign center
+autonumber
+
+title __Automatic Migration from Multinode CES -> Multinode CES__
+
+actor Admin
+participant "CES-Importer" as I
+participant "Importer Job" as IJ
+participant "Dogu-Operator (Importer)" as DOI
+participant "CES-Exporter" as E
+participant "Dogu-Operator (Exporter)" as DOE
+participant "Dogu-Pod" as DP
+
+'Install Exporter
+Admin --> E ++: Install Exporter
+note right
+Install Exporter
+Configure:
+ - ApiKey
+ - SSH-PublicKey
+ - SSH Exporter-Port
+ - Schedule to activate Export-Mode
+end note
+E -> DOE ++: Enable Export-Mode for Dogus
+note right
+Adds the Exporter-Sidecar
+to all Dogu-Pods
+end note
+E <-- DOE --: Export-Mode for Dogus enabled
+deactivate E
+
+Admin --> I++ : Install Importer
+note right
+Install Importer
+Configure:
+ - ApiKey
+ - SSH-PrivateKey
+ - FQDN of Exporter
+ - Schedule to start Migration
+end note
+
+||50||
+
+I -> I: Start Migration on Schedule
+
+I -> E++: Get Export-Mode
+I <-- E--: Export-Mode Status
+
+|||
+
+I -> I: Validate Export-Mode is active
+
+'Stop Dogus
+I -> DOI ++: Stop Dogus
+I <-- DOI --: Dogus stopped
+
+|||
+
+'System-Info
+I -> E ++: Get System-Info
+I <-- E --: System-Info
+I -> I: Validate System-Info
+
+alt Volumes need resizing
+    I -> DOI++: Resize Volume for Dogu
+    I <-- DOI--: Dogu-Volumes Resized
+    ||5||
+end
+
+alt Is final Migration
+    I -> E++: Activate Maintenance-Mode
+    I <-- E--: Maintenance-Mode is activated
+    ||5||
+end
+
+
+'Start Import-Job
+I -> IJ++: Start Import Job
+note right
+The Import-Job-Pod has
+all Dogu-Volumes mounted
+end note
+
+|||
+
+'Configuration
+IJ -> E ++: Get Configuration
+IJ <-- E --: Configuration
+IJ -> IJ: Apply Configuration
+
+|||
+
+loop Dogus
+    'Get Data from Dogu
+    IJ -> E ++: Export "Dogu"
+    E -> E: Configure Export-Service for "Dogu"
+    IJ <-- E --: "Dogu" ready for Export
+    IJ -> DP ++: Import Data from "Dogu"
+    |||
+    IJ <-- DP --: Data-Import for "Dogu" done
+    ||5||
+end
+
+|||
+
+'FQDN-Change
+alt FQDN-Change needed
+    IJ -> IJ: Trigger FQDN-Change
+    ||5||
+end
+
+|||
+
+I <-- IJ --: Import Job finished
+
+|||
+
+alt Is final Migration && Error during Migration
+    I -> E++: deactivate Maintenance-Mode
+    I <-- E--: Maintenance-Mode is deactivated
+    ||5||
+end
+
+|||
+
+'Create Migration Log
+I -> I: Create Migration-Log
+
+|||
+
+'Start Dogus
+I -> DOI ++: Start Dogus
+I <-- DOI --: Dogus started
+
+...Migration complete...
+@enduml
