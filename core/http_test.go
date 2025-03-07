@@ -68,6 +68,7 @@ func TestJSON(t *testing.T) {
 
 		JSON(rr, http.StatusOK, make(chan int))
 
+		require.Equal(t, http.StatusInternalServerError, rr.Code)
 		assert.Equal(t, "text/plain; charset=utf-8", rr.Header().Get("Content-Type"))
 		assert.Equal(t, "json: unsupported type: chan int\n", rr.Body.String())
 	})

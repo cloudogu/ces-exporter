@@ -22,10 +22,18 @@ func ErrorResponse(w http.ResponseWriter, status int, message string) {
 
 func JSON[T any](w http.ResponseWriter, status int, v T) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(v); err != nil {
-		slog.Error("error while encoding JSON-Response", "err", err)
+
+	bytes, err := json.Marshal(v)
+	if err != nil {
+		slog.Error("error while encoding JSON response", "err", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(status)
+	if _, err := fmt.Fprintln(w, string(bytes)); err != nil {
+		slog.Error("error writing JSON response", "err", err)
+		return
 	}
 }
 
