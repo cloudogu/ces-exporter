@@ -16,6 +16,10 @@ func BadRequest(w http.ResponseWriter, message string) {
 	ErrorResponse(w, http.StatusBadRequest, message)
 }
 
+func Unauthorized(w http.ResponseWriter, message string) {
+	ErrorResponse(w, http.StatusUnauthorized, message)
+}
+
 func ErrorResponse(w http.ResponseWriter, status int, message string) {
 	JSON(w, status, &ApiError{Code: status, Message: message})
 }

@@ -1,9 +1,11 @@
 ### GET Maintenance-Mode
 GET {{host}}/ces-exporter/maintenance/mode
+X-CES-EXPORTER-API-KEY: {{apiKey}}
 
 ### Set Maintenance-Mode
 POST {{host}}/ces-exporter/maintenance/mode
 Content-Type: application/json
+X-CES-EXPORTER-API-KEY: {{apiKey}}
 
 {
   "activate": true,

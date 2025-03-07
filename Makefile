@@ -74,7 +74,7 @@ template-image-pull-policy: $(BINARY_YQ)
     fi
 
 .PHONY: template-importer-public-key
-template-image-pull-policy: $(BINARY_YQ)
+template-importer-public-key: $(BINARY_YQ)
 	@if [[ "${STAGE}" == "development" ]]; then \
           echo "Setting importer-public-key from environment-variable 'IMPORTER_PUBLIC_KEY'" ; \
           $(BINARY_YQ) -i e ".publicKey.data=\"${IMPORTER_PUBLIC_KEY}\"" "${K8S_COMPONENT_TARGET_VALUES}" ; \

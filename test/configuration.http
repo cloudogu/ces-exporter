@@ -1,2 +1,3 @@
 ### GET Configuration
 GET {{host}}/ces-exporter/configuration
+X-CES-EXPORTER-API-KEY: {{apiKey}}

@@ -1,2 +1,3 @@
 ### GET SystemInfo
 GET {{host}}/ces-exporter/system-info
+X-CES-EXPORTER-API-KEY: {{apiKey}}
