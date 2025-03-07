@@ -34,7 +34,10 @@ spec:
             - name: BASE_PATH
               value: '{{ .Values.env.basePath }}'
             - name: API_KEY
-              value: '{{ .Values.env.apiKey }}'
+              valueFrom:
+                secretKeyRef:
+                  key: {{ .Values.apiKey.secretDataKey }}
+                  name: {{ .Values.apiKey.secretName }}
             - name: NAMESPACE
               valueFrom:
                 fieldRef:

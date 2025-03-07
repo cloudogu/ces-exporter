@@ -11,7 +11,10 @@ imagePullPolicy: IfNotPresent
 env:
   logLevel: info
   basePath: "/ces-exporter"
-  apiKey: "Test1234"
-manager:
-  image:
-    tag: 0.0.1
+apiKey:
+  secretName: "ces-exporter-api"
+  secretDataKey: "apiKey"
+publicKey:
+  configMapName: "ces-importer-public-key"
+  configMapDataKey: "publicKey"
+  data: ""

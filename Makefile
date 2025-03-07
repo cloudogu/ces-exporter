@@ -14,7 +14,7 @@ K8S_RESOURCE_DIR=${WORKDIR}/k8s
 K8S_COMPONENT_SOURCE_VALUES = ${HELM_SOURCE_DIR}/values.yaml
 K8S_COMPONENT_TARGET_VALUES = ${HELM_TARGET_DIR}/values.yaml
 HELM_PRE_GENERATE_TARGETS = helm-values-update-image-version
-HELM_POST_GENERATE_TARGETS = helm-values-replace-image-repo template-stage template-log-level template-image-pull-policy
+HELM_POST_GENERATE_TARGETS = helm-values-replace-image-repo template-stage template-log-level template-image-pull-policy template-importer-public-key
 CHECK_VAR_TARGETS=check-all-vars
 IMAGE_IMPORT_TARGET=image-import
 
@@ -72,3 +72,15 @@ template-image-pull-policy: $(BINARY_YQ)
           echo "Setting pull policy to always!" ; \
           $(BINARY_YQ) -i e ".imagePullPolicy=\"Always\"" "${K8S_COMPONENT_TARGET_VALUES}" ; \
     fi
+
+.PHONY: template-importer-public-key
+template-image-pull-policy: $(BINARY_YQ)
+	@if [[ "${STAGE}" == "development" ]]; then \
+          echo "Setting importer-public-key from environment-variable 'IMPORTER_PUBLIC_KEY'" ; \
+          $(BINARY_YQ) -i e ".publicKey.data=\"${IMPORTER_PUBLIC_KEY}\"" "${K8S_COMPONENT_TARGET_VALUES}" ; \
+    fi
+
+.PHONY: apikey-secret
+apikey-secret: $(BINARY_YQ)
+	@kubectl create secret generic ces-exporter-api --from-literal=apiKey=${EXPORTER_API_KEY} --namespace="${NAMESPACE}" --context="${KUBE_CONTEXT_NAME}"
+
