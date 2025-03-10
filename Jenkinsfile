@@ -111,6 +111,8 @@ node('docker') {
                     }
 
                     stage('Deploy ces-exporter') {
+                        // add apikey-secret
+                        k3d.kubectl("create secret generic ces-exporter-api --from-literal=apiKey=test123 ")
                         k3d.helm("install ${repositoryName} ${helmChartDir}")
                     }
 
