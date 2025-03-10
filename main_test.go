@@ -58,6 +58,7 @@ func Test_main(t *testing.T) {
 
 	t.Run("should start server", func(t *testing.T) {
 		err := os.Setenv("API_KEY", "myApiKey")
+		err = os.Setenv("NAMESPACE", "ecosystem")
 		require.NoError(t, err)
 
 		// Create a channel to receive signals

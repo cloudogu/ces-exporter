@@ -9,13 +9,15 @@ import (
 const logLevelEnv = "LOG_LEVEL"
 const basePathEnv = "BASE_PATH"
 const apiKeyEnv = "API_KEY"
+const namespaceEnv = "NAMESPACE"
 
 const errorFormat = "environment variable %s is not set"
 
 type Configuration struct {
-	LogLevel string
-	BasePath string
-	ApiKey   string
+	LogLevel  string
+	BasePath  string
+	ApiKey    string
+	Namespace string
 }
 
 func ReadConfigFromEnv() (Configuration, error) {
@@ -35,6 +37,11 @@ func ReadConfigFromEnv() (Configuration, error) {
 	conf.ApiKey = os.Getenv(apiKeyEnv)
 	if conf.ApiKey == "" {
 		return conf, fmt.Errorf(errorFormat, apiKeyEnv)
+	}
+
+	conf.Namespace = os.Getenv(namespaceEnv)
+	if conf.Namespace == "" {
+		return conf, fmt.Errorf(errorFormat, namespaceEnv)
 	}
 
 	return conf, nil

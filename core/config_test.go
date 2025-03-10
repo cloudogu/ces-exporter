@@ -16,6 +16,8 @@ func TestReadConfigFromEnv(t *testing.T) {
 		require.NoError(t, err)
 		err = os.Setenv("API_KEY", "myApiKey")
 		require.NoError(t, err)
+		err = os.Setenv("NAMESPACE", "ecosystem")
+		require.NoError(t, err)
 
 		conf, err := ReadConfigFromEnv()
 
@@ -23,6 +25,7 @@ func TestReadConfigFromEnv(t *testing.T) {
 		assert.Equal(t, "DEBUG", conf.LogLevel)
 		assert.Equal(t, "/base-path", conf.BasePath)
 		assert.Equal(t, "myApiKey", conf.ApiKey)
+		assert.Equal(t, "ecosystem", conf.Namespace)
 	})
 
 	t.Run("should fail for missing api-key", func(t *testing.T) {
@@ -34,8 +37,21 @@ func TestReadConfigFromEnv(t *testing.T) {
 		assert.ErrorContains(t, err, "environment variable API_KEY is not set")
 	})
 
+	t.Run("should fail for missing namespace", func(t *testing.T) {
+		err := os.Setenv("API_KEY", "apiKey")
+		require.NoError(t, err)
+		err = os.Unsetenv("NAMESPACE")
+		require.NoError(t, err)
+		_, err = ReadConfigFromEnv()
+
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "environment variable NAMESPACE is not set")
+	})
+
 	t.Run("should read config from env and set default basePath if missing env", func(t *testing.T) {
 		err := os.Setenv("API_KEY", "myApiKey")
+		require.NoError(t, err)
+		err = os.Setenv("NAMESPACE", "ecosystem")
 		require.NoError(t, err)
 		err = os.Unsetenv("BASE_PATH")
 		require.NoError(t, err)
@@ -49,6 +65,8 @@ func TestReadConfigFromEnv(t *testing.T) {
 
 	t.Run("should read config from env and set default log level if missing env", func(t *testing.T) {
 		err := os.Setenv("API_KEY", "myApiKey")
+		require.NoError(t, err)
+		err = os.Setenv("NAMESPACE", "ecosystem")
 		require.NoError(t, err)
 		err = os.Unsetenv("LOG_LEVEL")
 		require.NoError(t, err)
