@@ -19,7 +19,8 @@ import (
 func main() {
 	ctx := context.Background()
 	if err := run(ctx); err != nil {
-		panic(err)
+		slog.Error("error starting ces-exporter", "err", err)
+		os.Exit(1)
 	}
 }
 
