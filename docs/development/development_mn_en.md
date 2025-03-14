@@ -18,10 +18,10 @@ This creates the secret `ces-exporter-api` with the ApiKey from the environment 
 This environment variable can also be specified in the `.env` file.
 
 ### Importer SSH public key
-To give the `ces-importer` access to the data of the `ces-exproter`, the SSH public key of the `ces-importer` must be stored in the `ces-exporter`.
+To give the `ces-importer` access to the data of the `ces-exporter`, the SSH public key of the `ces-importer` must be stored in the `ces-exporter`.
 The SSH-PublicKey in the Exporter-SideCar-Container to the Dogus is used to grant access to the volume data of the Dogus.
 
-When installing the `ces-expoter`, the ConfigMap `ces-importer-public-key` is created with the PublicKey.
+When installing the `ces-exporter`, the ConfigMap `ces-importer-public-key` is created with the PublicKey.
 The environment variable `IMPORTER_PUBLIC_KEY` can be used for development.
 The value of this variable is templated in the `values.yaml`.
 This environment variable can also be specified in the `.env` file.

@@ -18,7 +18,8 @@ Dieses erstellt das Secret `ces-exporter-api` mit dem ApiKey aus der Umgebungsva
 Diese Umgebungsvariable kann auch im `.env`-File angegeben werden.
 
 ### Importer SSH Public-Key
-Damit der `ces-importer` Zugriff auf die Daten des `ces-exproter` bekommt muss der SSH-PublicKey des `ces-importer` im `ces-exporter` hinterlegt werden.
+Damit der `ces-importer` Zugriff auf die Daten des `ces-exporter` bekommt muss der SSH-PublicKey des `ces-importer` 
+im `ces-exporter` hinterlegt werden.
 Der SSH-PublicKey in den Exporter-SideCar-Container an den Dogus verwendet, um Zugriff auf die Volume-Daten des Dogus zu gewähren.
 
 Bei der Installation des `ces-exporter` wird die ConfigMap `ces-importer-public-key` mit den PublicKey erstellt. 
