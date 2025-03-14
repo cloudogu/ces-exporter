@@ -73,8 +73,8 @@ func createServer(config core.Configuration) http.Handler {
 
 	rootHandler.HandleFunc("GET /configuration", authMiddleware(configuration.GetConfig))
 
-	rootHandler.HandleFunc("GET /export/{doguName}", authMiddleware(export.GetExportDogu))
-	rootHandler.HandleFunc("POST /export/{doguName}", authMiddleware(export.SetExportDogu))
+	rootHandler.HandleFunc("GET /export/dogu/{doguName}", authMiddleware(export.GetExportDogu))
+	rootHandler.HandleFunc("POST /export/dogu/{doguName}", authMiddleware(export.SetExportDogu))
 	rootHandler.HandleFunc("GET /export/mode", authMiddleware(export.GetExportMode))
 
 	rootHandler.HandleFunc("GET /maintenance/mode", authMiddleware(maintenance.GetMaintenanceMode))
