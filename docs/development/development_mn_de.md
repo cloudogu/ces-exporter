@@ -22,7 +22,7 @@ Damit der `ces-importer` Zugriff auf die Daten des `ces-exproter` bekommt muss d
 Der SSH-PublicKey in den Exporter-SideCar-Container an den Dogus verwendet, um Zugriff auf die Volume-Daten des Dogus zu gewähren.
 
 Bei der Installation des `ces-exporter` wird die ConfigMap `ces-importer-public-key` mit den PublicKey erstellt. 
-Dür die Entwicklung kann die Umgebungsvariable `IMPORTER_PUBLIC_KEY` verwendet werden. 
+Für die Entwicklung kann die Umgebungsvariable `IMPORTER_PUBLIC_KEY` verwendet werden. 
 Der Wert dieser Variable wird in die `values.yaml` getemplatet.
 Diese Umgebungsvariable kann auch im `.env`-File angegeben werden.
 
