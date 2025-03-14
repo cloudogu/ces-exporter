@@ -1,0 +1,2 @@
+### GET Health
+GET {{host}}/ces-exporter/health

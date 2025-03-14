@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ces-exporter.name" . }}-dogu-exporter
+  labels:
+    {{- include "ces-exporter.labels" . | nindent 4 }}
+  annotations:
+    {{/* This annotation is used by k8s-service-discovery to expose the TCP-Port 7022 via the ces-loadbalancer-service and the nginx ingress-controller  */}}
+    k8s-dogu-operator.cloudogu.com/ces-exposed-ports: '[{"protocol":"tcp","port":7022,"targetPort":7022}]'
+spec:
+  type: ClusterIP
+  ports:
+    - name: "7022"
+      port: 7022
+      targetPort: 22
+  selector:
+    dogu.name: "not_defined"

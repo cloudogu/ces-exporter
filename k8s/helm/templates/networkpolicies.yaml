@@ -1,0 +1,26 @@
+{{- if .Values.global.networkPolicies.enabled }}
+---
+# This NetworkPolicy allows ingress to ces-exporter from the ingress-controller.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ printf "%s-ingress-controller" (include "ces-exporter.name" .) | trunc 63 | trimSuffix "-" }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "ces-exporter.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: ces
+      app.kubernetes.io/name: {{ include "ces-exporter.name" . }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              dogu.name: nginx-ingress
+      ports:
+        - port: 8080
+          protocol: TCP
+{{- end }}
