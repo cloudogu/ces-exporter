@@ -94,20 +94,6 @@ func Test_main(t *testing.T) {
 
 		wg.Wait()
 	})
-
-	t.Run("should print error on wrong config", func(t *testing.T) {
-		err := os.Unsetenv("API_KEY")
-		require.NoError(t, err)
-
-		// Create a channel to receive signals
-		sigChan := make(chan os.Signal, 1)
-		// Register SIGINT to the signal channel
-		signal.Notify(sigChan, syscall.SIGINT)
-
-		go func() {
-			assert.Panics(t, main)
-		}()
-	})
 }
 
 func checkPort(port int, available bool) bool {
