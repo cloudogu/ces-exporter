@@ -30,6 +30,10 @@ imageRepository = "cloudogu/${repositoryName}"
 
 node('docker') {
     timestamps {
+        properties([
+                // Don't run concurrent builds for a branch, because they use the same workspace directory
+                disableConcurrentBuilds(),
+        ])
 
         catchError {
             timeout(activity: false, time: 60, unit: 'MINUTES') {
