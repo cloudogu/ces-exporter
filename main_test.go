@@ -57,6 +57,7 @@ func Test_createServer(t *testing.T) {
 func Test_main(t *testing.T) {
 
 	t.Run("should start server", func(t *testing.T) {
+		t.Fail()
 		err := os.Setenv("API_KEY", "myApiKey")
 		err = os.Setenv("NAMESPACE", "ecosystem")
 		require.NoError(t, err)
