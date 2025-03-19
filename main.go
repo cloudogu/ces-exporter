@@ -8,13 +8,19 @@ import (
 	"github.com/cloudogu/ces-exporter/export"
 	"github.com/cloudogu/ces-exporter/maintenance"
 	"github.com/cloudogu/ces-exporter/systeminfo"
+	componentEcoClient "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
+	"k8s.io/client-go/kubernetes"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
+	ctrl "sigs.k8s.io/controller-runtime"
+	clientConfig "sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sync"
 	"time"
 )
+
+const namespace = "ecosystem"
 
 func main() {
 	ctx := context.Background()
@@ -35,7 +41,24 @@ func run(ctx context.Context) error {
 
 	configureLogger(config)
 
-	srv := createServer(config)
+	clusterConfig, err := ctrl.GetConfig()
+	if err != nil {
+		return fmt.Errorf("failed to get k8s cluster config: %w", err)
+	}
+
+	restConfig := clientConfig.GetConfigOrDie()
+
+	componentsInterface, err := componentEcoClient.NewForConfig(restConfig)
+	if err != nil {
+		return fmt.Errorf("failed to create config client: %w", err)
+	}
+
+	client, err := kubernetes.NewForConfig(clusterConfig)
+	if err != nil {
+		return fmt.Errorf("failed to create k8s client: %w", err)
+	}
+
+	srv := createServer(config, client, componentsInterface)
 
 	httpServer := &http.Server{
 		Addr:    ":8080",
@@ -64,13 +87,15 @@ func run(ctx context.Context) error {
 	return nil
 }
 
-func createServer(config core.Configuration) http.Handler {
+func createServer(config core.Configuration, client *kubernetes.Clientset, ecoClient *componentEcoClient.V1Alpha1Client) http.Handler {
+	systemInfoController := systeminfo.NewController(client, namespace, ecoClient)
+
 	authMiddleware := core.NewAuthMiddleware(config)
 
 	rootHandler := http.NewServeMux()
 	rootHandler.HandleFunc("GET /health", core.Health)
 
-	rootHandler.HandleFunc("GET /system-info", authMiddleware(systeminfo.GetSystemInfo))
+	rootHandler.HandleFunc("GET /system-info", authMiddleware(systemInfoController.GetSystemInfo))
 
 	rootHandler.HandleFunc("GET /configuration", authMiddleware(configuration.GetConfig))
 
