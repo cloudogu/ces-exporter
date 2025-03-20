@@ -22,6 +22,36 @@ import (
 
 const namespace = "ecosystem"
 
+type exporterContext struct {
+	ecosystemClient *componentEcoClient.V1Alpha1Client
+	client          *kubernetes.Clientset
+	namespace       string
+}
+
+func newExporterContext() (*exporterContext, error) {
+	clusterConfig, err := ctrl.GetConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get k8s cluster config: %w", err)
+	}
+
+	restConfig := clientConfig.GetConfigOrDie()
+
+	ecosystemClient, err := componentEcoClient.NewForConfig(restConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create config client: %w", err)
+	}
+
+	client, err := kubernetes.NewForConfig(clusterConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create k8s client: %w", err)
+	}
+	return &exporterContext{
+		ecosystemClient,
+		client,
+		namespace,
+	}, nil
+}
+
 func main() {
 	ctx := context.Background()
 	if err := run(ctx); err != nil {
@@ -41,24 +71,12 @@ func run(ctx context.Context) error {
 
 	configureLogger(config)
 
-	clusterConfig, err := ctrl.GetConfig()
+	eCtx, err := newExporterContext()
 	if err != nil {
-		return fmt.Errorf("failed to get k8s cluster config: %w", err)
+		return fmt.Errorf("failed to create exporter context: %w", err)
 	}
 
-	restConfig := clientConfig.GetConfigOrDie()
-
-	componentsInterface, err := componentEcoClient.NewForConfig(restConfig)
-	if err != nil {
-		return fmt.Errorf("failed to create config client: %w", err)
-	}
-
-	client, err := kubernetes.NewForConfig(clusterConfig)
-	if err != nil {
-		return fmt.Errorf("failed to create k8s client: %w", err)
-	}
-
-	srv := createServer(config, client, componentsInterface)
+	srv := eCtx.createServer(config)
 
 	httpServer := &http.Server{
 		Addr:    ":8080",
@@ -87,8 +105,8 @@ func run(ctx context.Context) error {
 	return nil
 }
 
-func createServer(config core.Configuration, client *kubernetes.Clientset, ecoClient *componentEcoClient.V1Alpha1Client) http.Handler {
-	systemInfoController := systeminfo.NewController(client, namespace, ecoClient)
+func (ec exporterContext) createServer(config core.Configuration) http.Handler {
+	systemInfoController := systeminfo.NewController(ec.client, ec.namespace, ec.ecosystemClient)
 
 	authMiddleware := core.NewAuthMiddleware(config)
 
