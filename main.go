@@ -104,7 +104,7 @@ func run(ctx context.Context) error {
 }
 
 func (ec exporterContext) createServer() http.Handler {
-	systemInfoProvider := systeminfo.NewMultinodeSystemInfoProvider(ec.client, ec.config.Namespace, ec.ecosystemClient)
+	systemInfoProvider := systeminfo.NewMultinodeSystemInfoProvider(ec.client.CoreV1(), ec.config.Namespace, ec.ecosystemClient.Components(ec.config.Namespace))
 	systemInfoController := systeminfo.NewController(systemInfoProvider)
 
 	authMiddleware := core.NewAuthMiddleware(ec.config)
