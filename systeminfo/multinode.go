@@ -11,8 +11,12 @@ import (
 	"log/slog"
 )
 
-type corev1Client interface {
-	corev1.CoreV1Interface
+type configMaps interface {
+	corev1.ConfigMapInterface
+}
+
+type pvcClaim interface {
+	corev1.PersistentVolumeClaimInterface
 }
 
 type componentLister interface {
@@ -20,14 +24,16 @@ type componentLister interface {
 }
 
 type MultinodeSystemInfoProvider struct {
-	client          corev1Client
+	configMaps      configMaps
+	pvc             pvcClaim
 	namespace       string
 	componentLister componentLister
 }
 
-func NewMultinodeSystemInfoProvider(client corev1Client, namespace string, componentLister componentLister) *MultinodeSystemInfoProvider {
+func NewMultinodeSystemInfoProvider(configMaps configMaps, pvc pvcClaim, namespace string, componentLister componentLister) *MultinodeSystemInfoProvider {
 	return &MultinodeSystemInfoProvider{
-		client:          client,
+		configMaps:      configMaps,
+		pvc:             pvc,
 		namespace:       namespace,
 		componentLister: componentLister,
 	}
@@ -58,7 +64,7 @@ func (m *MultinodeSystemInfoProvider) getComponents(ctx context.Context) ([]comp
 
 func (m *MultinodeSystemInfoProvider) getDogus(ctx context.Context) ([]dogu, error) {
 	slog.Debug("collect dogus from local dogu registry...")
-	localDoguReg := libdogu.NewDoguVersionRegistry(m.client.ConfigMaps(m.namespace))
+	localDoguReg := libdogu.NewDoguVersionRegistry(m.configMaps)
 
 	var dogus []dogu
 	localDogus, err := localDoguReg.GetCurrentOfAll(ctx)
@@ -69,7 +75,7 @@ func (m *MultinodeSystemInfoProvider) getDogus(ctx context.Context) ([]dogu, err
 	for _, d := range localDogus {
 		slog.Debug(fmt.Sprintf("found dogu %s in version %s in local dogu registry", d.Name.String(), d.Version.String()))
 		var size int64
-		pvc, err := m.client.PersistentVolumeClaims(m.namespace).Get(context.TODO(), d.Name.String(), metav1.GetOptions{})
+		pvc, err := m.pvc.Get(context.TODO(), d.Name.String(), metav1.GetOptions{})
 		if err != nil {
 			slog.Debug(fmt.Sprintf("no pvc found for dogu %s so size is set to 0.", d.Name.String()))
 		} else {
@@ -90,7 +96,7 @@ func (m *MultinodeSystemInfoProvider) getDogus(ctx context.Context) ([]dogu, err
 
 func (m *MultinodeSystemInfoProvider) getFqdn(ctx context.Context) (string, error) {
 	slog.Debug("get fqdn from global registry")
-	globalConfigRepo := repository.NewGlobalConfigRepository(m.client.ConfigMaps(m.namespace))
+	globalConfigRepo := repository.NewGlobalConfigRepository(m.configMaps)
 
 	globalConfig, err := globalConfigRepo.Get(ctx)
 	if err != nil {
