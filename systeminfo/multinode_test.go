@@ -53,6 +53,7 @@ func TestMultinodeSystemInfoProvider(t *testing.T) {
 			assert.Nil(t, components)
 		})
 	})
+
 	t.Run("getDogus()", func(t *testing.T) {
 		t.Run("can find dogus", func(t *testing.T) {
 			cm := newMockConfigMaps(t)
@@ -94,6 +95,7 @@ func TestMultinodeSystemInfoProvider(t *testing.T) {
 			assert.Error(t, err)
 			assert.Nil(t, components)
 		})
+
 		t.Run("fail on get volume size - no error => volume size zero", func(t *testing.T) {
 			cm := newMockConfigMaps(t)
 			cm.EXPECT().List(mock.Anything, mock.Anything).Return(&corev1.ConfigMapList{
@@ -120,5 +122,54 @@ func TestMultinodeSystemInfoProvider(t *testing.T) {
 			assert.Equal(t, expectedDogus, dogus)
 		})
 
+	})
+
+	t.Run("getFqdn()", func(t *testing.T) {
+		t.Run("can get fqdn from configmap", func(t *testing.T) {
+			cm := newMockConfigMaps(t)
+			cm.EXPECT().List(mock.Anything, mock.Anything).Return(&corev1.ConfigMapList{
+				Items: []corev1.ConfigMap{
+					{Data: map[string]string{
+						"config.yaml": "fqdn: fqdn",
+					}},
+				},
+			}, nil)
+			provider := NewMultinodeSystemInfoProvider(cm, nil, "", nil)
+			fqdn, err := provider.getFqdn(context.Background())
+			assert.NoError(t, err)
+			assert.Equal(t, "fqdn", fqdn)
+		})
+
+		t.Run("fail on get global config repo", func(t *testing.T) {
+			cm := newMockConfigMaps(t)
+			cm.EXPECT().List(mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
+			provider := NewMultinodeSystemInfoProvider(cm, nil, "", nil)
+			_, err := provider.getFqdn(context.Background())
+			assert.Error(t, err)
+			assert.Equal(
+				t,
+				"failed to get global config: could not get global config: unable to get data 'global-config' from cluster: unable to list config-map from cluster: testerror",
+				err.Error(),
+			)
+		})
+
+		t.Run("fail on get global config key for fqdn", func(t *testing.T) {
+			cm := newMockConfigMaps(t)
+			cm.EXPECT().List(mock.Anything, mock.Anything).Return(&corev1.ConfigMapList{
+				Items: []corev1.ConfigMap{
+					{Data: map[string]string{
+						"config.yaml": "{}",
+					}},
+				},
+			}, nil)
+			provider := NewMultinodeSystemInfoProvider(cm, nil, "", nil)
+			_, err := provider.getFqdn(context.Background())
+			assert.Error(t, err)
+			assert.Equal(
+				t,
+				"critical error: no fqdn is configured in registry",
+				err.Error(),
+			)
+		})
 	})
 }
