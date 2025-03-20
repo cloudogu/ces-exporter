@@ -30,7 +30,7 @@ func TestGetSystemInfo(t *testing.T) {
 		fqdn := "random-fqdn"
 
 		rr := httptest.NewRecorder()
-		provider := &MockSystemInfoProvider{}
+		provider := NewMockSystemInfoProvider(t)
 		provider.EXPECT().getFqdn(mock.Anything).Return(fqdn, nil)
 		provider.EXPECT().getComponents(mock.Anything).Return(components, nil)
 		provider.EXPECT().getDogus(mock.Anything).Return(dogus, nil)
@@ -59,7 +59,7 @@ func TestGetSystemInfo(t *testing.T) {
 		require.NoError(t, err)
 
 		rr := httptest.NewRecorder()
-		provider := &MockSystemInfoProvider{}
+		provider := NewMockSystemInfoProvider(t)
 		provider.EXPECT().getFqdn(mock.Anything).Return("", fmt.Errorf("testerror"))
 
 		controller := NewController(provider)
@@ -68,7 +68,6 @@ func TestGetSystemInfo(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		requireHttpError(t, http.StatusInternalServerError, "failed to get fqdn: testerror", rr)
-		provider.AssertExpectations(t)
 	})
 
 	t.Run("fails on get dogus", func(t *testing.T) {
@@ -76,7 +75,7 @@ func TestGetSystemInfo(t *testing.T) {
 		require.NoError(t, err)
 
 		rr := httptest.NewRecorder()
-		provider := &MockSystemInfoProvider{}
+		provider := NewMockSystemInfoProvider(t)
 		provider.EXPECT().getFqdn(mock.Anything).Return("fqdn", nil)
 		provider.EXPECT().getDogus(mock.Anything).Return(nil, fmt.Errorf("testerror"))
 
@@ -86,6 +85,7 @@ func TestGetSystemInfo(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		requireHttpError(t, http.StatusInternalServerError, "failed to get dogus: testerror", rr)
+		provider.AssertExpectations(t)
 	})
 
 	t.Run("fails on get components", func(t *testing.T) {
@@ -93,7 +93,7 @@ func TestGetSystemInfo(t *testing.T) {
 		require.NoError(t, err)
 
 		rr := httptest.NewRecorder()
-		provider := &MockSystemInfoProvider{}
+		provider := NewMockSystemInfoProvider(t)
 		provider.EXPECT().getFqdn(mock.Anything).Return("fqdn", nil)
 		provider.EXPECT().getDogus(mock.Anything).Return(nil, nil)
 		provider.EXPECT().getComponents(mock.Anything).Return(nil, fmt.Errorf("testerror"))
@@ -104,6 +104,7 @@ func TestGetSystemInfo(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		requireHttpError(t, http.StatusInternalServerError, "failed to get components: testerror", rr)
+		provider.AssertExpectations(t)
 	})
 
 }

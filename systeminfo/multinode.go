@@ -42,9 +42,7 @@ func (m *MultinodeSystemInfoProvider) getComponents(ctx context.Context) ([]comp
 	var components []component
 	componentsList, err := m.componentLister.List(ctx, metav1.ListOptions{})
 	if err != nil {
-		if err != nil {
-			return nil, fmt.Errorf("failed to get installed components: %w", err)
-		}
+		return nil, fmt.Errorf("failed to get installed components: %w", err)
 	}
 
 	for _, c := range componentsList.Items {
