@@ -20,15 +20,13 @@ import (
 	"time"
 )
 
-const namespace = "ecosystem"
-
 type exporterContext struct {
 	ecosystemClient *componentEcoClient.V1Alpha1Client
 	client          *kubernetes.Clientset
-	namespace       string
+	config          core.Configuration
 }
 
-func newExporterContext() (*exporterContext, error) {
+func newExporterContext(config core.Configuration) (*exporterContext, error) {
 	clusterConfig, err := ctrl.GetConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get k8s cluster config: %w", err)
@@ -48,7 +46,7 @@ func newExporterContext() (*exporterContext, error) {
 	return &exporterContext{
 		ecosystemClient,
 		client,
-		namespace,
+		config,
 	}, nil
 }
 
@@ -71,12 +69,12 @@ func run(ctx context.Context) error {
 
 	configureLogger(config)
 
-	eCtx, err := newExporterContext()
+	eCtx, err := newExporterContext(config)
 	if err != nil {
 		return fmt.Errorf("failed to create exporter context: %w", err)
 	}
 
-	srv := eCtx.createServer(config)
+	srv := eCtx.createServer()
 
 	httpServer := &http.Server{
 		Addr:    ":8080",
@@ -105,10 +103,11 @@ func run(ctx context.Context) error {
 	return nil
 }
 
-func (ec exporterContext) createServer(config core.Configuration) http.Handler {
-	systemInfoController := systeminfo.NewController(ec.client, ec.namespace, ec.ecosystemClient)
+func (ec exporterContext) createServer() http.Handler {
+	systemInfoProvider := systeminfo.NewMultinodeSystemInfoProvider(ec.client, ec.config.Namespace, ec.ecosystemClient)
+	systemInfoController := systeminfo.NewController(systemInfoProvider)
 
-	authMiddleware := core.NewAuthMiddleware(config)
+	authMiddleware := core.NewAuthMiddleware(ec.config)
 
 	rootHandler := http.NewServeMux()
 	rootHandler.HandleFunc("GET /health", core.Health)
@@ -125,7 +124,7 @@ func (ec exporterContext) createServer(config core.Configuration) http.Handler {
 	rootHandler.HandleFunc("POST /maintenance/mode", authMiddleware(maintenance.SetMaintenanceMode))
 
 	router := http.NewServeMux()
-	router.Handle(fmt.Sprintf("%s/", config.BasePath), http.StripPrefix(config.BasePath, rootHandler))
+	router.Handle(fmt.Sprintf("%s/", ec.config.BasePath), http.StripPrefix(ec.config.BasePath, rootHandler))
 
 	return router
 }

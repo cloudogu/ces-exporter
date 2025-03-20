@@ -13,6 +13,7 @@ func TestGetSystemInfo(t *testing.T) {
 		require.NoError(t, err)
 
 		rr := httptest.NewRecorder()
+		controller := NewController()
 		handler := http.HandlerFunc(GetSystemInfo)
 
 		handler.ServeHTTP(rr, req)
