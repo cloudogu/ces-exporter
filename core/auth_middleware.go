@@ -16,6 +16,8 @@ func NewAuthMiddleware(config Configuration) func(next http.HandlerFunc) http.Ha
 				return
 			}
 
+			w.Header().Add("Access-Control-Allow-Origin", "*")
+
 			next.ServeHTTP(w, r)
 		}
 	}

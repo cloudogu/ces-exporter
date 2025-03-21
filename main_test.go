@@ -5,13 +5,16 @@ import (
 	"fmt"
 	"github.com/cloudogu/ces-exporter/core"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"k8s.io/client-go/rest"
 	"log/slog"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"os/signal"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sync"
 	"syscall"
 	"testing"
@@ -42,7 +45,19 @@ func Test_configureLogger(t *testing.T) {
 
 func Test_createServer(t *testing.T) {
 	conf := core.Configuration{BasePath: "/ces-exporter"}
-	router := createServer(conf)
+	client := newMockKubernetesClient(t)
+	ecosystemClient := newMockV1AlphaClientInterface(t)
+	cv1 := newMockCorev1Interface(t)
+	client.EXPECT().CoreV1().Return(cv1)
+	cv1.EXPECT().ConfigMaps(mock.Anything).Return(nil)
+	cv1.EXPECT().PersistentVolumeClaims(mock.Anything).Return(nil)
+	ecosystemClient.EXPECT().Components(mock.Anything).Return(nil)
+	exCtx := exporterContext{
+		ecosystemClient: ecosystemClient,
+		client:          client,
+		config:          conf,
+	}
+	router := exCtx.createServer()
 	require.NotNil(t, router)
 
 	rr := httptest.NewRecorder()
@@ -55,8 +70,16 @@ func Test_createServer(t *testing.T) {
 }
 
 func Test_main(t *testing.T) {
-
 	t.Run("should start server", func(t *testing.T) {
+		// override default controller method to retrieve a kube config
+		oldGetConfigDelegate := ctrl.GetConfig
+		defer func() {
+			ctrl.GetConfig = oldGetConfigDelegate
+		}()
+		ctrl.GetConfig = func() (*rest.Config, error) {
+			return &rest.Config{}, nil
+		}
+
 		err := os.Setenv("API_KEY", "myApiKey")
 		err = os.Setenv("NAMESPACE", "ecosystem")
 		require.NoError(t, err)
