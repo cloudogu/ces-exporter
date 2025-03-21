@@ -18,7 +18,6 @@ COPY configuration configuration
 COPY export export
 COPY maintenance maintenance
 COPY systeminfo systeminfo
-COPY util util
 
 # Build
 RUN go mod vendor

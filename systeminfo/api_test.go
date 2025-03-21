@@ -3,7 +3,7 @@ package systeminfo
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cloudogu/ces-exporter/util"
+	"github.com/cloudogu/ces-exporter/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -113,7 +113,7 @@ func requireHttpError(t *testing.T, code int, msg string, recorder *httptest.Res
 	t.Helper()
 	assert.Equal(t, code, recorder.Code)
 	body := strings.Replace(recorder.Body.String(), "\n", "", -1)
-	marshalled, err := json.Marshal(&util.ErrorResponse{
+	marshalled, err := json.Marshal(&core.ApiError{
 		Code:    code,
 		Message: msg,
 	})

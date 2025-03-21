@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/cloudogu/ces-exporter/core"
-	"github.com/cloudogu/ces-exporter/util"
 	"net/http"
 )
 
@@ -34,19 +33,19 @@ func (sic Controller) GetSystemInfo(w http.ResponseWriter, _ *http.Request) {
 
 	fqdn, err := sic.systemInfoProvider.getFqdn(ctx)
 	if err != nil {
-		util.HandleUnexpectedError(w, fmt.Errorf("failed to get fqdn: %w", err))
+		core.InternalServerErrorResponse(w, fmt.Errorf("failed to get fqdn: %w", err))
 		return
 	}
 
 	dogus, err := sic.systemInfoProvider.getDogus(ctx)
 	if err != nil {
-		util.HandleUnexpectedError(w, fmt.Errorf("failed to get dogus: %w", err))
+		core.InternalServerErrorResponse(w, fmt.Errorf("failed to get dogus: %w", err))
 		return
 	}
 
 	components, err := sic.systemInfoProvider.getComponents(ctx)
 	if err != nil {
-		util.HandleUnexpectedError(w, fmt.Errorf("failed to get components: %w", err))
+		core.InternalServerErrorResponse(w, fmt.Errorf("failed to get components: %w", err))
 		return
 	}
 
