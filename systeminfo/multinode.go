@@ -15,7 +15,7 @@ type configMaps interface {
 	corev1.ConfigMapInterface
 }
 
-type pvcClaim interface {
+type pvcClient interface {
 	corev1.PersistentVolumeClaimInterface
 }
 
