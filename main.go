@@ -112,13 +112,18 @@ func run(ctx context.Context) error {
 }
 
 func (ec exporterContext) createServer() http.Handler {
+	configMaps := ec.client.CoreV1().ConfigMaps(ec.config.Namespace)
+	secrets := ec.client.CoreV1().Secrets(ec.config.Namespace)
+
 	systemInfoProvider := systeminfo.NewMultinodeSystemInfoProvider(
-		ec.client.CoreV1().ConfigMaps(ec.config.Namespace),
+		configMaps,
 		ec.client.CoreV1().PersistentVolumeClaims(ec.config.Namespace),
 		ec.config.Namespace,
 		ec.ecosystemClient.Components(ec.config.Namespace),
 	)
 	systemInfoController := systeminfo.NewController(systemInfoProvider)
+
+	configController := configuration.NewController(nil, configMaps, secrets)
 
 	authMiddleware := core.NewAuthMiddleware(ec.config)
 
@@ -127,7 +132,7 @@ func (ec exporterContext) createServer() http.Handler {
 
 	rootHandler.HandleFunc("GET /system-info", authMiddleware(systemInfoController.GetSystemInfo))
 
-	rootHandler.HandleFunc("GET /configuration", authMiddleware(configuration.GetConfig))
+	rootHandler.HandleFunc("GET /configuration", authMiddleware(configController.GetConfig))
 
 	rootHandler.HandleFunc("GET /export/dogu/{doguName}", authMiddleware(export.GetExportDogu))
 	rootHandler.HandleFunc("POST /export/dogu/{doguName}", authMiddleware(export.SetExportDogu))

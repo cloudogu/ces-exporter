@@ -28,22 +28,22 @@ func NewController(provider SystemInfoProvider) *Controller {
 	}
 }
 
-func (sic Controller) GetSystemInfo(w http.ResponseWriter, _ *http.Request) {
+func (c Controller) GetSystemInfo(w http.ResponseWriter, _ *http.Request) {
 	ctx := context.Background()
 
-	fqdn, err := sic.systemInfoProvider.getFqdn(ctx)
+	fqdn, err := c.systemInfoProvider.getFqdn(ctx)
 	if err != nil {
 		core.InternalServerErrorResponse(w, fmt.Errorf("failed to get fqdn: %w", err))
 		return
 	}
 
-	dogus, err := sic.systemInfoProvider.getDogus(ctx)
+	dogus, err := c.systemInfoProvider.getDogus(ctx)
 	if err != nil {
 		core.InternalServerErrorResponse(w, fmt.Errorf("failed to get dogus: %w", err))
 		return
 	}
 
-	components, err := sic.systemInfoProvider.getComponents(ctx)
+	components, err := c.systemInfoProvider.getComponents(ctx)
 	if err != nil {
 		core.InternalServerErrorResponse(w, fmt.Errorf("failed to get components: %w", err))
 		return
@@ -51,7 +51,7 @@ func (sic Controller) GetSystemInfo(w http.ResponseWriter, _ *http.Request) {
 
 	info := &systemInfo{
 		FQDN:        fqdn,
-		IsMultinode: sic.systemInfoProvider.isMultinode(),
+		IsMultinode: c.systemInfoProvider.isMultinode(),
 		Dogus:       dogus,
 		Components:  components,
 	}

@@ -17,6 +17,7 @@ rules:
       - ""
     resources:
       - configmaps
+      - secrets
     verbs:
       - list
       - get
