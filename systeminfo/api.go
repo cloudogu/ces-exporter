@@ -28,22 +28,20 @@ func NewController(provider SystemInfoProvider) *Controller {
 	}
 }
 
-func (sic Controller) GetSystemInfo(w http.ResponseWriter, _ *http.Request) {
-	ctx := context.Background()
-
-	fqdn, err := sic.systemInfoProvider.getFqdn(ctx)
+func (sic Controller) GetSystemInfo(w http.ResponseWriter, r *http.Request) {
+	fqdn, err := sic.systemInfoProvider.getFqdn(r.Context())
 	if err != nil {
 		core.InternalServerErrorResponse(w, fmt.Errorf("failed to get fqdn: %w", err))
 		return
 	}
 
-	dogus, err := sic.systemInfoProvider.getDogus(ctx)
+	dogus, err := sic.systemInfoProvider.getDogus(r.Context())
 	if err != nil {
 		core.InternalServerErrorResponse(w, fmt.Errorf("failed to get dogus: %w", err))
 		return
 	}
 
-	components, err := sic.systemInfoProvider.getComponents(ctx)
+	components, err := sic.systemInfoProvider.getComponents(r.Context())
 	if err != nil {
 		core.InternalServerErrorResponse(w, fmt.Errorf("failed to get components: %w", err))
 		return
