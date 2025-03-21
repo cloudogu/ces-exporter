@@ -15,7 +15,6 @@ import (
 	"os"
 	"os/signal"
 	ctrl "sigs.k8s.io/controller-runtime"
-	clientConfig "sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sync"
 	"time"
 )
@@ -40,9 +39,7 @@ func newExporterContext(config core.Configuration) (*exporterContext, error) {
 		return nil, fmt.Errorf("failed to get k8s cluster config: %w", err)
 	}
 
-	restConfig := clientConfig.GetConfigOrDie()
-
-	ecosystemClient, err := componentEcoClient.NewForConfig(restConfig)
+	ecosystemClient, err := componentEcoClient.NewForConfig(clusterConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create config client: %w", err)
 	}
