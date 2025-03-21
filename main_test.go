@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/cloudogu/ces-exporter/core"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"log/slog"
 	"net"
@@ -42,7 +43,19 @@ func Test_configureLogger(t *testing.T) {
 
 func Test_createServer(t *testing.T) {
 	conf := core.Configuration{BasePath: "/ces-exporter"}
-	router := createServer(conf)
+	client := newMockKubernetesClient(t)
+	ecosystemClient := newMockV1AlphaClientInterface(t)
+	cv1 := newMockCorev1Interface(t)
+	client.EXPECT().CoreV1().Return(cv1)
+	cv1.EXPECT().ConfigMaps(mock.Anything).Return(nil)
+	cv1.EXPECT().PersistentVolumeClaims(mock.Anything).Return(nil)
+	ecosystemClient.EXPECT().Components(mock.Anything).Return(nil)
+	exCtx := exporterContext{
+		ecosystemClient: ecosystemClient,
+		client:          client,
+		config:          conf,
+	}
+	router := exCtx.createServer()
 	require.NotNil(t, router)
 
 	rr := httptest.NewRecorder()

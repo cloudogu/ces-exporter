@@ -20,9 +20,17 @@ import (
 	"time"
 )
 
+type v1AlphaClientInterface interface {
+	componentEcoClient.ComponentV1Alpha1Interface
+}
+
+type kubernetesClient interface {
+	kubernetes.Interface
+}
+
 type exporterContext struct {
-	ecosystemClient *componentEcoClient.V1Alpha1Client
-	client          *kubernetes.Clientset
+	ecosystemClient v1AlphaClientInterface
+	client          kubernetesClient
 	config          core.Configuration
 }
 
