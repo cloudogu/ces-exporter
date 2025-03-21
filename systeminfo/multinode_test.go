@@ -68,7 +68,7 @@ func TestMultinodeSystemInfoProvider(t *testing.T) {
 					}, BinaryData: nil},
 				},
 			}, nil)
-			pvc := newMockPvcClaim(t)
+			pvc := newMockPvcClient(t)
 			pvc.EXPECT().Get(mock.Anything, "mydogu", mock.Anything).Return(&corev1.PersistentVolumeClaim{
 				Status: corev1.PersistentVolumeClaimStatus{
 					Capacity: map[corev1.ResourceName]resource.Quantity{
@@ -109,7 +109,7 @@ func TestMultinodeSystemInfoProvider(t *testing.T) {
 					}, BinaryData: nil},
 				},
 			}, nil)
-			pvc := newMockPvcClaim(t)
+			pvc := newMockPvcClient(t)
 			pvc.EXPECT().Get(mock.Anything, "mydogu", mock.Anything).Return(nil, fmt.Errorf(""))
 			provider := NewMultinodeSystemInfoProvider(cm, pvc, "", nil)
 

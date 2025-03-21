@@ -25,12 +25,12 @@ type componentLister interface {
 
 type MultinodeSystemInfoProvider struct {
 	configMaps      configMaps
-	pvc             pvcClaim
+	pvc             pvcClient
 	namespace       string
 	componentLister componentLister
 }
 
-func NewMultinodeSystemInfoProvider(configMaps configMaps, pvc pvcClaim, namespace string, componentLister componentLister) *MultinodeSystemInfoProvider {
+func NewMultinodeSystemInfoProvider(configMaps configMaps, pvc pvcClient, namespace string, componentLister componentLister) *MultinodeSystemInfoProvider {
 	return &MultinodeSystemInfoProvider{
 		configMaps:      configMaps,
 		pvc:             pvc,
