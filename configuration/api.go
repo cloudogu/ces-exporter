@@ -34,6 +34,20 @@ func (c Controller) GetConfig(w http.ResponseWriter, r *http.Request) {
 	var globalConfigs []keyValue
 	var doguConfigs []doguConfig
 
+	globalConfigRepo := repository.NewGlobalConfigRepository(c.configMaps)
+	repo, err := globalConfigRepo.Get(r.Context())
+	if err != nil {
+		core.InternalServerErrorResponse(w, err)
+		return
+	}
+
+	for k, v := range repo.GetAll() {
+		globalConfigs = append(globalConfigs, keyValue{
+			Key:   k.String(),
+			Value: v.String(),
+		})
+	}
+
 	for _, d := range dogus {
 		doguConfigRepo := repository.NewDoguConfigRepository(c.configMaps)
 		dConfig, err := doguConfigRepo.Get(r.Context(), d.Name)
