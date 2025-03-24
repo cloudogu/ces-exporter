@@ -1,9 +1,11 @@
 package configuration
 
 import (
+	"fmt"
 	"github.com/cloudogu/ces-exporter/core"
 	"github.com/cloudogu/k8s-registry-lib/repository"
 	"k8s.io/client-go/kubernetes/typed/core/v1"
+	"log/slog"
 	"net/http"
 )
 
@@ -40,7 +42,9 @@ func (c Controller) GetConfig(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		dConfigKeys := []keyValue{}
+		slog.Debug(fmt.Sprintf("found %d normal config keys for dogu %s", len(dConfig.GetAll()), d.Name.String()))
 		for k, v := range dConfig.GetAll() {
+			slog.Debug(fmt.Sprintf("found normal config key %s for dogu %s", k, d.Name.String()))
 			dConfigKeys = append(dConfigKeys, keyValue{
 				Key:   k.String(),
 				Value: v.String(),
@@ -54,8 +58,10 @@ func (c Controller) GetConfig(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		dSecretKeys := []keyValue{}
+		slog.Debug(fmt.Sprintf("found %d sensitive config keys for dogu %s", len(sConfig.GetAll()), d.Name.String()))
 		for k, v := range sConfig.GetAll() {
-			dConfigKeys = append(dSecretKeys, keyValue{
+			slog.Debug(fmt.Sprintf("found sensitive config key %s for dogu %s", k, d.Name.String()))
+			dSecretKeys = append(dSecretKeys, keyValue{
 				Key:   k.String(),
 				Value: v.String(),
 			})
