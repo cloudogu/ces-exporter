@@ -3,6 +3,8 @@ module github.com/cloudogu/ces-exporter
 go 1.24.1
 
 require (
+	github.com/cloudogu/ces-commons-lib v0.2.0
+	github.com/cloudogu/k8s-backup-operator v1.3.1
 	github.com/cloudogu/k8s-component-operator v1.7.0
 	github.com/cloudogu/k8s-registry-lib v0.5.1
 	github.com/stretchr/testify v1.10.0
@@ -27,7 +29,6 @@ require (
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chai2010/gettext-go v1.0.3 // indirect
-	github.com/cloudogu/ces-commons-lib v0.2.0 // indirect
 	github.com/cloudogu/cesapp-lib v0.15.0 // indirect
 	github.com/cloudogu/retry-lib v0.1.0 // indirect
 	github.com/containerd/containerd v1.7.24 // indirect

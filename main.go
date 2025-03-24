@@ -8,13 +8,17 @@ import (
 	"github.com/cloudogu/ces-exporter/export"
 	"github.com/cloudogu/ces-exporter/maintenance"
 	"github.com/cloudogu/ces-exporter/systeminfo"
+	bup "github.com/cloudogu/k8s-backup-operator/pkg/api/v1"
 	componentEcoClient "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	ctrl "sigs.k8s.io/controller-runtime"
+	rclient "sigs.k8s.io/controller-runtime/pkg/client"
 	clientConfig "sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sync"
 	"time"
@@ -32,6 +36,7 @@ type exporterContext struct {
 	ecosystemClient v1AlphaClientInterface
 	client          kubernetesClient
 	config          core.Configuration
+	bclient         *core.BackupScheduleRuntimeClient
 }
 
 func newExporterContext(config core.Configuration) (*exporterContext, error) {
@@ -42,6 +47,13 @@ func newExporterContext(config core.Configuration) (*exporterContext, error) {
 
 	restConfig := clientConfig.GetConfigOrDie()
 
+	rtclient, err := rclient.New(restConfig, rclient.Options{})
+	if err != nil {
+		log.Fatalf("Error creating client: %v", err)
+	}
+
+	bclient := core.NewBackupScheduleRuntimeClient(rtclient, config.Namespace)
+
 	ecosystemClient, err := componentEcoClient.NewForConfig(restConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create config client: %w", err)
@@ -51,10 +63,12 @@ func newExporterContext(config core.Configuration) (*exporterContext, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create k8s client: %w", err)
 	}
+
 	return &exporterContext{
 		ecosystemClient,
 		client,
 		config,
+		bclient,
 	}, nil
 }
 
@@ -67,6 +81,11 @@ func main() {
 }
 
 func run(ctx context.Context) error {
+	err := bup.AddToScheme(scheme.Scheme)
+	if err != nil {
+		log.Fatalf("Failed to register BackupSchedule scheme: %v", err)
+	}
+
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 
@@ -123,7 +142,7 @@ func (ec exporterContext) createServer() http.Handler {
 	)
 	systemInfoController := systeminfo.NewController(systemInfoProvider)
 
-	configController := configuration.NewController(nil, configMaps, secrets)
+	configController := configuration.NewController(nil, configMaps, secrets, ec.bclient)
 
 	authMiddleware := core.NewAuthMiddleware(ec.config)
 

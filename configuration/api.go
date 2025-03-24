@@ -13,16 +13,18 @@ type Controller struct {
 	systemInfoProvider ConfigurationProvider
 	configMaps         v1.ConfigMapInterface
 	secrets            v1.SecretInterface
+	client             *core.BackupScheduleRuntimeClient
 }
 
 type ConfigurationProvider interface {
 }
 
-func NewController(provider ConfigurationProvider, configMaps v1.ConfigMapInterface, secrets v1.SecretInterface) *Controller {
+func NewController(provider ConfigurationProvider, configMaps v1.ConfigMapInterface, secrets v1.SecretInterface, client *core.BackupScheduleRuntimeClient) *Controller {
 	return &Controller{
 		systemInfoProvider: provider,
 		configMaps:         configMaps,
 		secrets:            secrets,
+		client:             client,
 	}
 }
 
@@ -89,10 +91,24 @@ func (c Controller) GetConfig(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	var schedulesResult []backupSchedule
+
+	schedules, err := c.client.ListBackupSchedules()
+	for _, i := range schedules.Items {
+		slog.Info(fmt.Sprintf("found item: %v", i))
+	}
+
+	for _, schedule := range schedules.Items {
+		schedulesResult = append(schedulesResult, backupSchedule{
+			Name:     schedule.Name,
+			Schedule: schedule.Spec.Schedule,
+		})
+	}
+
 	response := &configuration{
 		GlobalConfig:    globalConfigs,
 		DoguConfigs:     doguConfigs,
-		BackupSchedules: nil,
+		BackupSchedules: schedulesResult,
 	}
 
 	core.JSON(w, http.StatusOK, response)
