@@ -7,10 +7,12 @@ import (
 	rclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+// RuntimeClient wraps sigs.k8s.io/controller-runtime/pkg/client and is used to query custom resources
 type RuntimeClient interface {
 	rclient.Client
 }
 
+// NewBackupScheduleRuntimeClient creates a new NewBackupScheduleRuntimeClient instance
 func NewBackupScheduleRuntimeClient(rclient RuntimeClient, namespace string) *BackupScheduleRuntimeClient {
 	return &BackupScheduleRuntimeClient{
 		rclient,
@@ -18,15 +20,17 @@ func NewBackupScheduleRuntimeClient(rclient RuntimeClient, namespace string) *Ba
 	}
 }
 
+// BackupScheduleRuntimeClient contains the RuntimeClient to query custom resources and is used to query the backup schedule custom resource
 type BackupScheduleRuntimeClient struct {
 	rclient   RuntimeClient
 	namespace string
 }
 
-func (b *BackupScheduleRuntimeClient) ListBackupSchedules() (*bup.BackupScheduleList, error) {
+// ListBackupSchedules returns a list of all backup schedule custom resources
+func (b *BackupScheduleRuntimeClient) ListBackupSchedules(ctx context.Context) (*bup.BackupScheduleList, error) {
 	var backupSchedules bup.BackupScheduleList
 
-	err := b.rclient.List(context.TODO(), &backupSchedules, rclient.InNamespace(b.namespace))
+	err := b.rclient.List(ctx, &backupSchedules, rclient.InNamespace(b.namespace))
 	if err != nil {
 		return nil, fmt.Errorf("failed to list backup schedules: %w", err)
 	}
