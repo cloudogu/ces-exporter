@@ -75,7 +75,7 @@ func (m *MultinodeSystemInfoProvider) getDogus(ctx context.Context) ([]dogu, err
 	for _, d := range localDogus {
 		slog.Debug(fmt.Sprintf("found dogu %s in version %s in local dogu registry", d.Name.String(), d.Version.String()))
 		var size int64
-		pvc, err := m.pvc.Get(context.TODO(), d.Name.String(), metav1.GetOptions{})
+		pvc, err := m.pvc.Get(ctx, d.Name.String(), metav1.GetOptions{})
 		if err != nil {
 			slog.Debug(fmt.Sprintf("no pvc found for dogu %s so size is set to 0.", d.Name.String()))
 		} else {
