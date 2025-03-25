@@ -9,10 +9,18 @@ import (
 	"log/slog"
 )
 
+type configMapsInterface interface {
+	v1.ConfigMapInterface
+}
+
+type secretsInterface interface {
+	v1.SecretInterface
+}
+
 type MultinodeConfigurationProvider struct {
 	namespace  string
-	configMaps v1.ConfigMapInterface
-	secrets    v1.SecretInterface
+	configMaps configMapsInterface
+	secrets    secretsInterface
 	client     *core.BackupScheduleRuntimeClient
 }
 
