@@ -3,6 +3,7 @@ package core
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -83,5 +84,17 @@ func TestBadRequest(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, rr.Code)
 		assert.Equal(t, "application/json", rr.Header().Get("Content-Type"))
 		assert.Equal(t, "{\"code\":400,\"message\":\"missing property\"}\n", rr.Body.String())
+	})
+}
+
+func TestInternalServerError(t *testing.T) {
+	t.Run("should write bad-request response", func(t *testing.T) {
+		rr := httptest.NewRecorder()
+
+		InternalServerErrorResponse(rr, fmt.Errorf("testerror"))
+
+		require.Equal(t, http.StatusInternalServerError, rr.Code)
+		assert.Equal(t, "application/json", rr.Header().Get("Content-Type"))
+		assert.Equal(t, "{\"code\":500,\"message\":\"testerror\"}\n", rr.Body.String())
 	})
 }
