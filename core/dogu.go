@@ -7,7 +7,11 @@ import (
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
-func GetInstalledDogus(ctx context.Context, configMaps v1.ConfigMapInterface) ([]dogu.SimpleNameVersion, error) {
+type configmaps interface {
+	v1.ConfigMapInterface
+}
+
+func GetInstalledDogus(ctx context.Context, configMaps configmaps) ([]dogu.SimpleNameVersion, error) {
 	localDoguReg := libdogu.NewDoguVersionRegistry(configMaps)
 	return localDoguReg.GetCurrentOfAll(ctx)
 }
