@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/cloudogu/ces-exporter/core"
+	bup "github.com/cloudogu/k8s-backup-operator/pkg/api/v1"
 	"github.com/cloudogu/k8s-registry-lib/repository"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"log/slog"
@@ -17,18 +18,23 @@ type secretsInterface interface {
 	v1.SecretInterface
 }
 
+type backupScheduleRuntimeClient interface {
+	ListBackupSchedules(ctx context.Context) (*bup.BackupScheduleList, error)
+}
+
 type MultinodeConfigurationProvider struct {
 	namespace  string
 	configMaps configMapsInterface
 	secrets    secretsInterface
-	client     *core.BackupScheduleRuntimeClient
+	client     backupScheduleRuntimeClient
 }
 
-func NewMultinodeConfigurationProvider(namespace string, configMaps v1.ConfigMapInterface, secrets v1.SecretInterface) *MultinodeConfigurationProvider {
+func NewMultinodeConfigurationProvider(namespace string, configMaps v1.ConfigMapInterface, secrets v1.SecretInterface, client backupScheduleRuntimeClient) *MultinodeConfigurationProvider {
 	return &MultinodeConfigurationProvider{
 		namespace:  namespace,
 		configMaps: configMaps,
 		secrets:    secrets,
+		client:     client,
 	}
 }
 

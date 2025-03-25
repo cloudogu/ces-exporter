@@ -142,7 +142,7 @@ func (ec exporterContext) createServer() http.Handler {
 	)
 	systemInfoController := systeminfo.NewController(systemInfoProvider)
 
-	configurationProvider := configuration.NewMultinodeConfigurationProvider(ec.config.Namespace, configMaps, secrets)
+	configurationProvider := configuration.NewMultinodeConfigurationProvider(ec.config.Namespace, configMaps, secrets, ec.bclient)
 	configController := configuration.NewController(configurationProvider)
 
 	authMiddleware := core.NewAuthMiddleware(ec.config)
