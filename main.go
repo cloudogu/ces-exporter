@@ -145,6 +145,9 @@ func (ec exporterContext) createServer() http.Handler {
 	configurationProvider := configuration.NewMultinodeConfigurationProvider(ec.config.Namespace, configMaps, secrets, ec.bclient)
 	configController := configuration.NewController(configurationProvider)
 
+	maintenanceModeProvider := maintenance.NewMultinodeMaintenanceModeProvider(configMaps)
+	maintenanceModeController := maintenance.NewMultinodeMaintenanceModeController(maintenanceModeProvider)
+
 	authMiddleware := core.NewAuthMiddleware(ec.config)
 
 	rootHandler := http.NewServeMux()
@@ -158,8 +161,8 @@ func (ec exporterContext) createServer() http.Handler {
 	rootHandler.HandleFunc("POST /export/dogu/{doguName}", authMiddleware(export.SetExportDogu))
 	rootHandler.HandleFunc("GET /export/mode", authMiddleware(export.GetExportMode))
 
-	rootHandler.HandleFunc("GET /maintenance/mode", authMiddleware(maintenance.GetMaintenanceMode))
-	rootHandler.HandleFunc("POST /maintenance/mode", authMiddleware(maintenance.SetMaintenanceMode))
+	rootHandler.HandleFunc("GET /maintenance/mode", authMiddleware(maintenanceModeController.GetMaintenanceMode))
+	rootHandler.HandleFunc("POST /maintenance/mode", authMiddleware(maintenanceModeController.SetMaintenanceMode))
 
 	router := http.NewServeMux()
 	router.Handle(fmt.Sprintf("%s/", ec.config.BasePath), http.StripPrefix(ec.config.BasePath, rootHandler))

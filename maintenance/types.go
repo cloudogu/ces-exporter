@@ -6,6 +6,6 @@ type maintenanceModeRequest struct {
 	Message  string `json:"message"`
 }
 
-type maintenanceModeStatus struct {
+type MaintenanceModeStatus struct {
 	IsActive bool `json:"isActive"`
 }
