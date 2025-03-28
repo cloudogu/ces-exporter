@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/cloudogu/ces-exporter/core"
+	"log/slog"
 	"net/http"
 )
 
@@ -27,7 +28,7 @@ checks if the maintenance mode is currently active
 */
 func (m *MultinodeMaintenanceModeController) GetMaintenanceMode(w http.ResponseWriter, r *http.Request) {
 	status, err := m.provider.GetMaintenanceMode(r.Context())
-	if err == nil {
+	if err != nil {
 		core.InternalServerErrorResponse(w, err)
 		return
 	}
@@ -54,7 +55,7 @@ func (m *MultinodeMaintenanceModeController) SetMaintenanceMode(w http.ResponseW
 		status, err = m.provider.DeactivateMaintenanceMode(r.Context())
 	}
 
-	if err == nil {
+	if err != nil {
 		core.InternalServerErrorResponse(w, err)
 		return
 	}

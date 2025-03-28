@@ -6,6 +6,7 @@ import (
 	"github.com/cloudogu/k8s-registry-lib/config"
 	"github.com/cloudogu/k8s-registry-lib/repository"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	"log/slog"
 	"strings"
 )
 
@@ -36,10 +37,6 @@ func (m MultinodeMaintenanceModeProvider) ActivateMaintenanceMode(mReq maintenan
 		return nil, fmt.Errorf("failed to get global config: %w", err)
 	}
 
-	status := &MaintenanceModeStatus{
-		IsActive: true,
-	}
-
 	_, exists := globalConfig.Get(maintenanceModeKey)
 	if exists {
 		// remove the key if it already exists to update title and message afterward
@@ -51,10 +48,16 @@ func (m MultinodeMaintenanceModeProvider) ActivateMaintenanceMode(mReq maintenan
 		return nil, fmt.Errorf("could not set maintenance mode: %w", err)
 	}
 
-	_, err = globalConfigRepo.SaveOrMerge(ctx, globalConfig)
+	_, err = globalConfigRepo.Update(ctx, globalConfig)
 	if err != nil {
-		return nil, fmt.Errorf("failed to save global config: %w", err)
+		return nil, fmt.Errorf("failed to update global config: %w", err)
 	}
+
+	status := &MaintenanceModeStatus{
+		IsActive: true,
+	}
+
+	slog.Info("Maintenance-Mode activated")
 
 	return status, nil
 }
@@ -72,13 +75,18 @@ func (m MultinodeMaintenanceModeProvider) DeactivateMaintenanceMode(ctx context.
 
 	// this just returns the new configmap, which can be ignored
 	globalConfig.Delete(maintenanceModeKey)
-	_, err = globalConfigRepo.SaveOrMerge(ctx, globalConfig)
+
+	_, err = globalConfigRepo.Update(ctx, globalConfig)
 	if err != nil {
-		return nil, fmt.Errorf("failed to save global config: %w", err)
+		return nil, fmt.Errorf("failed to update global config: %w", err)
 	}
+
 	status := &MaintenanceModeStatus{
 		IsActive: false,
 	}
+
+	slog.Info("Maintenance-Mode deactivated")
+
 	return status, nil
 }
 
@@ -113,7 +121,7 @@ func BuildMaintenanceJSON(mReq maintenanceModeRequest) config.Value {
 	}
 	message := ""
 	if mReq.Message != "" {
-		title = mReq.Message
+		message = mReq.Message
 	}
 	var sb strings.Builder
 	sb.WriteString("{\"title\": \"")
