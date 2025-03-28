@@ -51,6 +51,11 @@ func (m MultinodeMaintenanceModeProvider) ActivateMaintenanceMode(mReq maintenan
 		return nil, fmt.Errorf("could not set maintenance mode: %w", err)
 	}
 
+	_, err = globalConfigRepo.SaveOrMerge(ctx, globalConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to save global config: %w", err)
+	}
+
 	return status, nil
 }
 
@@ -67,6 +72,10 @@ func (m MultinodeMaintenanceModeProvider) DeactivateMaintenanceMode(ctx context.
 
 	// this just returns the new configmap, which can be ignored
 	globalConfig.Delete(maintenanceModeKey)
+	_, err = globalConfigRepo.SaveOrMerge(ctx, globalConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to save global config: %w", err)
+	}
 	status := &MaintenanceModeStatus{
 		IsActive: false,
 	}
