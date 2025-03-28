@@ -144,7 +144,6 @@ func (ec exporterContext) createServer() http.Handler {
 
 	configurationProvider := configuration.NewMultinodeConfigurationProvider(ec.config.Namespace, configMaps, secrets, ec.bclient)
 	configController := configuration.NewController(configurationProvider)
-
 	maintenanceModeProvider := maintenance.NewMultinodeMaintenanceModeProvider(configMaps)
 	maintenanceModeController := maintenance.NewMultinodeMaintenanceModeController(maintenanceModeProvider)
 
