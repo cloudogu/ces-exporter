@@ -64,7 +64,7 @@ func TestMNBuildMaintenanceJSON(t *testing.T) {
 			Message:  "testmessage",
 		}
 		status := BuildMaintenanceJSON(mmReq)
-		require.Equal(t, status.String(), "{\"title\": \"test\", \"message\": \"testmessage\"}")
+		require.Equal(t, status.String(), "{\"title\": \"test\", \"text\": \"testmessage\"}")
 	})
 
 	t.Run("should build maintenance mode json with empty request", func(t *testing.T) {
@@ -74,7 +74,7 @@ func TestMNBuildMaintenanceJSON(t *testing.T) {
 			Message:  "",
 		}
 		status := BuildMaintenanceJSON(mmReq)
-		require.Equal(t, status.String(), "{\"title\": \"\", \"message\": \"\"}")
+		require.Equal(t, status.String(), "{\"title\": \"\", \"text\": \"\"}")
 	})
 }
 
