@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/cloudogu/ces-exporter/core"
-	"log/slog"
 	"net/http"
 )
 
