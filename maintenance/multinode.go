@@ -115,11 +115,20 @@ BuildMaintenanceJSON
 results in this json format: {"title": "some title", "message": "some message"}
 */
 func BuildMaintenanceJSON(mReq maintenanceModeRequest) config.Value {
+	title := ""
+	if mReq.Title != "" {
+		title = strings.Replace(mReq.Title, `"`, `\"`, -1)
+	}
+
+	message := ""
+	if mReq.Message != "" {
+		message = strings.Replace(mReq.Message, `"`, `\"`, -1)
+	}
 	var sb strings.Builder
 	sb.WriteString("{\"title\": \"")
-	sb.WriteString(mReq.Title)
-	sb.WriteString("\", \"message\": \"")
-	sb.WriteString(mReq.Message)
+	sb.WriteString(title)
+	sb.WriteString("\", \"text\": \"")
+	sb.WriteString(message)
 	sb.WriteString("\"}")
 	return config.Value(sb.String())
 }
