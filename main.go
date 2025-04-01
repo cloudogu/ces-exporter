@@ -161,3 +161,19 @@ func configureLogger(conf core.Configuration) {
 
 	slog.Info("configured logger", "level", level.String())
 }
+
+// this starts a asynchronous task - it can not return anything but will log error if the job fails
+func (ec exporterContext) startCronJob() {
+	cron_expr := os.Getenv(export.ExportCronJobEnv)
+	if cron_expr == "" {
+		// step out if no expression is configured
+		return
+	}
+
+	cj := export.NewCronJob(cron_expr)
+	err := cj.Run()
+
+	if err != nil {
+		slog.Error("Failed to start cronjob:", err)
+	}
+}
