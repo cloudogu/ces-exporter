@@ -117,6 +117,9 @@ func (ec exporterContext) createServer() http.Handler {
 	)
 	systemInfoController := systeminfo.NewController(systemInfoProvider)
 
+	exportModeProvider := export.NewMultinodeExportModeProvider()
+	exportModeController := export.NewMultinodeExportModeController(exportModeProvider)
+
 	authMiddleware := core.NewAuthMiddleware(ec.config)
 
 	rootHandler := http.NewServeMux()
@@ -126,9 +129,9 @@ func (ec exporterContext) createServer() http.Handler {
 
 	rootHandler.HandleFunc("GET /configuration", authMiddleware(configuration.GetConfig))
 
-	rootHandler.HandleFunc("GET /export/dogu/{doguName}", authMiddleware(export.GetExportDogu))
-	rootHandler.HandleFunc("POST /export/dogu/{doguName}", authMiddleware(export.SetExportDogu))
-	rootHandler.HandleFunc("GET /export/mode", authMiddleware(export.GetExportMode))
+	rootHandler.HandleFunc("GET /export/dogu/{doguName}", authMiddleware(exportModeController.GetExportDogu))
+	rootHandler.HandleFunc("POST /export/dogu/{doguName}", authMiddleware(exportModeController.SetExportDogu))
+	rootHandler.HandleFunc("GET /export/mode", authMiddleware(exportModeController.GetExportMode))
 
 	rootHandler.HandleFunc("GET /maintenance/mode", authMiddleware(maintenance.GetMaintenanceMode))
 	rootHandler.HandleFunc("POST /maintenance/mode", authMiddleware(maintenance.SetMaintenanceMode))

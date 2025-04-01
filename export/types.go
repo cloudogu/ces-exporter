@@ -1,11 +1,11 @@
 package export
 
-type doguExport struct {
+type DoguExport struct {
 	Dogu         string `json:"dogu"`
 	VolumePath   string `json:"volumePath"`
 	ExporterPort int    `json:"exporterPort"`
 }
 
-type exportModeStatus struct {
+type ExportModeStatus struct {
 	IsActive bool `json:"isActive"`
 }

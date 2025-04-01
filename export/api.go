@@ -1,11 +1,26 @@
 package export
 
 import (
+	"context"
 	"github.com/cloudogu/ces-exporter/core"
 	"net/http"
 )
 
-func GetExportDogu(w http.ResponseWriter, r *http.Request) {
+type Provider interface {
+	GetExportDogu(ctx context.Context) (*DoguExport, error)
+	SetExportDogu(doguName string, ctx context.Context) (*DoguExport, error)
+	GetExportMode(ctx context.Context) (*ExportModeStatus, error)
+}
+
+type MultinodeExportModeController struct {
+	provider Provider
+}
+
+func NewMultinodeExportModeController(provider Provider) *MultinodeExportModeController {
+	return &MultinodeExportModeController{provider: provider}
+}
+
+func (m *MultinodeExportModeController) GetExportDogu(w http.ResponseWriter, r *http.Request) {
 	doguName := r.PathValue("doguName")
 	if doguName == "" {
 		core.BadRequest(w, "doguName must not be empty")
@@ -14,14 +29,14 @@ func GetExportDogu(w http.ResponseWriter, r *http.Request) {
 
 	//TODO implement me
 
-	doguExp := &doguExport{
+	doguExp := &DoguExport{
 		Dogu: doguName,
 	}
 
 	core.JSON(w, http.StatusOK, doguExp)
 }
 
-func SetExportDogu(w http.ResponseWriter, r *http.Request) {
+func (m *MultinodeExportModeController) SetExportDogu(w http.ResponseWriter, r *http.Request) {
 	doguName := r.PathValue("doguName")
 	if doguName == "" {
 		core.BadRequest(w, "doguName must not be empty")
@@ -30,15 +45,15 @@ func SetExportDogu(w http.ResponseWriter, r *http.Request) {
 
 	//TODO implement me
 
-	doguExp := &doguExport{
+	doguExp := &DoguExport{
 		Dogu: doguName,
 	}
 
 	core.JSON(w, http.StatusOK, doguExp)
 }
 
-func GetExportMode(w http.ResponseWriter, r *http.Request) {
-	status := &exportModeStatus{
+func (m *MultinodeExportModeController) GetExportMode(w http.ResponseWriter, r *http.Request) {
+	status := &ExportModeStatus{
 		IsActive: false,
 	}
 
