@@ -24,21 +24,18 @@ RUN go mod vendor
 RUN go build -mod=vendor -o target/ces-exporter
 
 
-# Use distroless as minimal base image to package the manager binary
-# Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+FROM alpine:3.21
 LABEL maintainer="hello@cloudogu.com" \
       NAME="ces-exporter" \
       VERSION="0.0.1"
 
-ENV MODE=multinode
+ENV MODE=classic
 
 WORKDIR /
+
 COPY --from=builder /workspace/target/ces-exporter .
 
-# the linter has a problem with the valid colon-syntax
-# dockerfile_lint - ignore
-USER 65532:65532
+RUN apk update && apk upgrade && apk add --no-cache bash openssh-server rsync
 
 EXPOSE 8080
 

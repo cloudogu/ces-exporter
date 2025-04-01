@@ -1,0 +1,15 @@
+#!/bin/bash
+set -o errexit
+set -o nounset
+set -o pipefail
+
+docker image load -i /tmp/exporter-image.tar
+rm -f /tmp/exporter-image.tar
+echo "================================================================================================================"
+echo "===============================================================================================================!"
+echo "================================================================================================================"
+
+installed_version=$(dpkg-query -W -f='${Version}' ces-exporter)
+echo "Installed version: $installed_version"
+
+#docker run --restart=always -d

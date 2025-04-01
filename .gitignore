@@ -4,3 +4,4 @@ target
 .bin
 k8s/helm/charts
 vendor
+deb/tmp/exporter-image.tar

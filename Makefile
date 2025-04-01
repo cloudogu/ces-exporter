@@ -17,12 +17,15 @@ HELM_PRE_GENERATE_TARGETS = helm-values-update-image-version
 HELM_POST_GENERATE_TARGETS = helm-values-replace-image-repo template-stage template-log-level template-image-pull-policy template-importer-public-key
 CHECK_VAR_TARGETS=check-all-vars
 IMAGE_IMPORT_TARGET=image-import
+IMAGE=ces-exporter:${VERSION}
+
+include build/make/variables.mk
+PREPARE_PACKAGE=$(DEBIAN_CONTENT_DIR)/control/postinst prepare-classic-docker
 
 ADDITIONAL_CLEAN=clean_charts
 clean_charts:
 	rm -rf ${K8S_HELM_RESSOURCES}/charts
 
-include build/make/variables.mk
 include build/make/dependencies-gomod.mk
 include build/make/build.mk
 include build/make/test-common.mk
@@ -33,6 +36,18 @@ include build/make/mocks.mk
 include build/make/release.mk
 include build/make/self-update.mk
 include build/make/k8s-component.mk
+include build/make/package-debian.mk
+
+$(DEBIAN_CONTENT_DIR)/control/postinst: $(DEBIAN_CONTENT_DIR)/control
+	@install -p -m 0755 $(WORKDIR)/deb/DEBIAN/postinst $@
+
+.PHONY: prepare-classic-docker
+prepare-classic-docker:
+	echo "Classic docker build for ces-exporter:${VERSION}"
+	mkdir -p ./deb/tmp
+	rm -f ${DEBIAN_CONTENT_DIR}/data/tmp/exporter-image.tar
+	docker build -t ${IMAGE} -f ./classic/Dockerfile .
+	docker image save -o ${DEBIAN_CONTENT_DIR}/data/tmp/exporter-image.tar ${IMAGE}
 
 .PHONY: mocks
 mocks: ${MOCKERY_BIN} ${MOCKERY_YAML} ## target is used to generate mocks for all interfaces in a project.

@@ -6,6 +6,10 @@ import (
 	"strings"
 )
 
+const (
+	modeClassic = "classic"
+)
+
 const logLevelEnv = "LOG_LEVEL"
 const basePathEnv = "BASE_PATH"
 const apiKeyEnv = "API_KEY"
@@ -18,6 +22,7 @@ type Configuration struct {
 	BasePath  string
 	ApiKey    string
 	Namespace string
+	IsClassic bool
 }
 
 func ReadConfigFromEnv() (Configuration, error) {
@@ -43,6 +48,9 @@ func ReadConfigFromEnv() (Configuration, error) {
 	if conf.Namespace == "" {
 		return conf, fmt.Errorf(errorFormat, namespaceEnv)
 	}
+
+	mode := os.Getenv("MODE")
+	conf.IsClassic = mode == modeClassic
 
 	return conf, nil
 }
