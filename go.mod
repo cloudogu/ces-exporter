@@ -3,6 +3,7 @@ module github.com/cloudogu/ces-exporter
 go 1.24.1
 
 require (
+	github.com/adhocore/gronx v1.19.5
 	github.com/cloudogu/k8s-component-operator v1.7.0
 	github.com/cloudogu/k8s-registry-lib v0.5.1
 	github.com/stretchr/testify v1.10.0
