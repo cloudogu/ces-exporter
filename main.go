@@ -109,6 +109,9 @@ func run(ctx context.Context) error {
 }
 
 func (ec exporterContext) createServer() http.Handler {
+
+	configMaps := ec.client.CoreV1().ConfigMaps(ec.config.Namespace)
+
 	systemInfoProvider := systeminfo.NewMultinodeSystemInfoProvider(
 		ec.client.CoreV1().ConfigMaps(ec.config.Namespace),
 		ec.client.CoreV1().PersistentVolumeClaims(ec.config.Namespace),
@@ -117,7 +120,7 @@ func (ec exporterContext) createServer() http.Handler {
 	)
 	systemInfoController := systeminfo.NewController(systemInfoProvider)
 
-	exportModeProvider := export.NewMultinodeExportModeProvider()
+	exportModeProvider := export.NewMultinodeExportModeProvider(configMaps)
 	exportModeController := export.NewMultinodeExportModeController(exportModeProvider)
 
 	authMiddleware := core.NewAuthMiddleware(ec.config)

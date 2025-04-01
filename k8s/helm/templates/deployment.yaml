@@ -43,6 +43,8 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: metadata.namespace
+            - name: EXPORT_CRON
+              value: '{{ .Values.env.exportCron}}'
           startupProbe:
             httpGet:
               path: "{{ .Values.env.basePath }}/health"
