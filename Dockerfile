@@ -34,11 +34,13 @@ WORKDIR /
 
 COPY --from=builder /workspace/target/ces-exporter .
 
-RUN apk update && apk upgrade && apk add --no-cache bash openssh-server rsync
+RUN apk update && apk upgrade && \
+  apk --no-cache add bash openssh rsync nfs-utils && \
+  ssh-keygen -A && sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 
 EXPOSE 8080
 
-ENTRYPOINT ["/ces-exporter"]
+ENTRYPOINT ["/usr/sbin/sshd", "-e", "-D"]
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
