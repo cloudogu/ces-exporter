@@ -28,6 +28,9 @@ type Configuration struct {
 func ReadConfigFromEnv() (Configuration, error) {
 	conf := Configuration{}
 
+	mode := os.Getenv("MODE")
+	conf.IsClassic = mode == modeClassic
+
 	conf.LogLevel = os.Getenv(logLevelEnv)
 	if conf.LogLevel == "" {
 		conf.LogLevel = "INFO"
@@ -45,12 +48,9 @@ func ReadConfigFromEnv() (Configuration, error) {
 	}
 
 	conf.Namespace = os.Getenv(namespaceEnv)
-	if conf.Namespace == "" {
+	if conf.Namespace == "" && !conf.IsClassic {
 		return conf, fmt.Errorf(errorFormat, namespaceEnv)
 	}
-
-	mode := os.Getenv("MODE")
-	conf.IsClassic = mode == modeClassic
 
 	return conf, nil
 }

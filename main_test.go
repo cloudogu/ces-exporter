@@ -53,12 +53,12 @@ func Test_createServer(t *testing.T) {
 	cv1.EXPECT().PersistentVolumeClaims(mock.Anything).Return(nil)
 	cv1.EXPECT().Secrets("").Return(nil)
 	ecosystemClient.EXPECT().Components(mock.Anything).Return(nil)
-	exCtx := exporterContext{
+	exCtx := server{
 		ecosystemClient: ecosystemClient,
 		client:          client,
 		config:          conf,
 	}
-	router := exCtx.createServer()
+	router := exCtx.createEndpoints()
 	require.NotNil(t, router)
 
 	rr := httptest.NewRecorder()

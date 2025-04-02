@@ -13,10 +13,11 @@ installed_version=$(dpkg-query -W -f='${Version}' ces-exporter)
 echo "Installed version: $installed_version"
 
 function etcdctl(){
-  echo ""
+  echo "result"
 }
 
 API_KEY="$(etcdctl get config/ces-exporter/authentication/api_key)"
+PUBLIC_KEY="$(etcdctl get config/ces-exporter/authentication/public_key)"
 
 docker rm -f ces-exporter
-docker run -e API_KEY="${API_KEY}" --name ces-exporter --restart=always -d "ces-exporter:${installed_version}"
+docker run -e PUBLIC_KEY="${PUBLIC_KEY}" -e API_KEY="${API_KEY}" --name ces-exporter --restart=always -d "ces-exporter:${installed_version}"

@@ -13,6 +13,8 @@ RUN go mod download
 
 # Copy the go source
 COPY main.go main.go
+COPY logger.go logger.go
+COPY server.go server.go
 COPY core core
 COPY configuration configuration
 COPY export export
@@ -30,6 +32,8 @@ LABEL maintainer="hello@cloudogu.com" \
 
 ENV MODE=classic
 
+COPY resources /
+
 WORKDIR /
 
 COPY --from=builder /workspace/target/ces-exporter .
@@ -40,7 +44,7 @@ RUN apk update && apk upgrade && \
 
 EXPOSE 8080
 
-ENTRYPOINT ["/usr/sbin/sshd", "-e", "-D"]
+ENTRYPOINT ["/startup.sh"]
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
