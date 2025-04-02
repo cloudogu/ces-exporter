@@ -4,6 +4,8 @@ go 1.24.1
 
 require (
 	github.com/adhocore/gronx v1.19.5
+	github.com/cloudogu/ces-commons-lib v0.2.0
+	github.com/cloudogu/k8s-backup-operator v1.3.1
 	github.com/cloudogu/k8s-component-operator v1.7.0
 	github.com/cloudogu/k8s-dogu-operator/v3 v3.4.0
 	github.com/cloudogu/k8s-registry-lib v0.5.1

@@ -17,6 +17,7 @@ rules:
       - ""
     resources:
       - configmaps
+      - secrets
     verbs:
       - list
       - get
@@ -47,8 +48,15 @@ rules:
     verbs:
       - get
       - list
-      - watch
       - update
+  - apiGroups:
+      - "k8s.cloudogu.com"
+      - "k8s.cloudogu.com/v1"
+    resources:
+      - backupschedules
+    verbs:
+      - list
+      - get
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
