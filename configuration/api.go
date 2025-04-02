@@ -8,16 +8,16 @@ import (
 )
 
 type Controller struct {
-	systemInfoProvider ConfigurationProvider
+	systemInfoProvider Provider
 }
 
-type ConfigurationProvider interface {
+type Provider interface {
 	getGlobalConfigs(ctx context.Context) ([]keyValue, error)
 	getDoguConfigs(ctx context.Context) ([]doguConfig, error)
 	getBackupSchedules(ctx context.Context) ([]backupSchedule, error)
 }
 
-func NewController(provider ConfigurationProvider) *Controller {
+func NewController(provider Provider) *Controller {
 	return &Controller{
 		systemInfoProvider: provider,
 	}
