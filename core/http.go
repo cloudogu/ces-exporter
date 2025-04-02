@@ -25,6 +25,7 @@ func ErrorResponse(w http.ResponseWriter, status int, message string) {
 }
 
 func InternalServerErrorResponse(w http.ResponseWriter, err error) {
+	slog.Error(err.Error())
 	ErrorResponse(w, http.StatusInternalServerError, err.Error())
 }
 
