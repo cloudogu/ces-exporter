@@ -11,6 +11,7 @@ imagePullPolicy: IfNotPresent
 env:
   logLevel: info
   basePath: "/ces-exporter"
+  exportCron: "*/2 * * * *"
 apiKey:
   secretName: "ces-exporter-api"
   secretDataKey: "apiKey"

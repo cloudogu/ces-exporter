@@ -48,11 +48,14 @@ func (m *MultinodeExportModeController) SetExportDogu(w http.ResponseWriter, r *
 }
 
 func (m *MultinodeExportModeController) GetExportMode(w http.ResponseWriter, r *http.Request) {
-	status := &ExportModeStatus{
-		IsActive: false,
+	// delegate call to multinode or classic provider
+	mode, err := m.provider.GetExportMode(r.Context())
+
+	// internal error if provider fails
+	if err != nil {
+		core.InternalServerErrorResponse(w, err)
+		return
 	}
 
-	//TODO implement me
-
-	core.JSON(w, http.StatusOK, status)
+	core.JSON(w, http.StatusOK, mode)
 }
