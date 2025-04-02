@@ -42,7 +42,7 @@ func (cj *CronJob) Run() error {
 	taskr.Task(cj.expr, func(ctx context.Context) (int, error) {
 		defer func() {
 			if err := recover(); err != nil {
-				slog.Error("Panic at the disco: ", "err", err)
+				slog.Error("Error while setting export mode: ", "err", err)
 			}
 		}()
 		return cj.callCronJob()
@@ -53,7 +53,7 @@ func (cj *CronJob) Run() error {
 	return nil
 }
 
-// this handles the actual exporter
+/* this handles the actual exporter */
 func (cj *CronJob) callCronJob() (int, error) {
 	slog.Info("start export mode cronjob due to timetable ")
 	dogus, _ := cj.doguClient.Dogus(cj.namespace).List(context.Background(), metav1.ListOptions{})

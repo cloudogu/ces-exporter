@@ -10,7 +10,6 @@ import (
 	"github.com/cloudogu/ces-exporter/systeminfo"
 	componentEcoClient "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
 	ecoSystemV2 "github.com/cloudogu/k8s-dogu-operator/v3/api/ecoSystem"
-	librepo "github.com/cloudogu/k8s-registry-lib/repository"
 	"k8s.io/client-go/kubernetes"
 	"log/slog"
 	"net/http"
@@ -174,39 +173,20 @@ func configureLogger(conf core.Configuration) {
 	slog.Info("configured logger", "level", level.String())
 }
 
-// this starts a asynchronous task - it can not return anything but will log error if the job fails
+/*
+this starts an asynchronous task - it can not return anything but will log error if the job fails
+*/
 func (ec exporterContext) startCronJob() {
-	cron_expr := os.Getenv(export.ExportCronJobEnv)
-	if cron_expr == "" {
+	cronExpr := os.Getenv(export.CronJobEnv)
+	if cronExpr == "" {
 		// step out if no expression is configured
 		return
 	}
 
-	cj := export.NewCronJob(cron_expr)
-	err := cj.Run(ec.callCronJob)
+	cj := export.NewCronJob(cronExpr, ec.doguClient, ec.config.Namespace)
+	err := cj.Run()
 
 	if err != nil {
 		slog.Error("Failed to start cronjob:", "err", err)
 	}
-}
-
-// this handles the actuall exporter
-func (ec exporterContext) callCronJob() (int, error) {
-	slog.Info("Hallo Welt")
-	configMaps := ec.client.CoreV1().ConfigMaps(ec.config.Namespace)
-	slog.Info("Hallo Welt2")
-	doguRepo := librepo.NewDoguConfigRepository(configMaps)
-	slog.Info("Hallo Welt3")
-	conf, err := doguRepo.Get(context.Background(), "usermgt")
-	slog.Info("Hallo Wel4")
-	if err != nil {
-		return 1, fmt.Errorf("Error getting dogu config for", "err", err)
-	}
-	slog.Info("Hallo Welt5")
-	for _, e := range conf.GetAll() {
-		slog.Info("Hallo Welt6")
-		slog.Info(fmt.Sprintf("%v", e))
-	}
-	slog.Info("Hallo Welt7")
-	return 0, nil
 }
