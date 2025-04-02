@@ -21,123 +21,6 @@ func (_m *MockProvider) EXPECT() *MockProvider_Expecter {
 	return &MockProvider_Expecter{mock: &_m.Mock}
 }
 
-// ActivateMaintenanceMode provides a mock function with given fields: mReq, ctx
-func (_m *MockProvider) ActivateMaintenanceMode(mReq maintenanceModeRequest, ctx context.Context) (*MaintenanceModeStatus, error) {
-	ret := _m.Called(mReq, ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ActivateMaintenanceMode")
-	}
-
-	var r0 *MaintenanceModeStatus
-	var r1 error
-	if rf, ok := ret.Get(0).(func(maintenanceModeRequest, context.Context) (*MaintenanceModeStatus, error)); ok {
-		return rf(mReq, ctx)
-	}
-	if rf, ok := ret.Get(0).(func(maintenanceModeRequest, context.Context) *MaintenanceModeStatus); ok {
-		r0 = rf(mReq, ctx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*MaintenanceModeStatus)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(maintenanceModeRequest, context.Context) error); ok {
-		r1 = rf(mReq, ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockProvider_ActivateMaintenanceMode_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ActivateMaintenanceMode'
-type MockProvider_ActivateMaintenanceMode_Call struct {
-	*mock.Call
-}
-
-// ActivateMaintenanceMode is a helper method to define mock.On call
-//   - mReq maintenanceModeRequest
-//   - ctx context.Context
-func (_e *MockProvider_Expecter) ActivateMaintenanceMode(mReq interface{}, ctx interface{}) *MockProvider_ActivateMaintenanceMode_Call {
-	return &MockProvider_ActivateMaintenanceMode_Call{Call: _e.mock.On("ActivateMaintenanceMode", mReq, ctx)}
-}
-
-func (_c *MockProvider_ActivateMaintenanceMode_Call) Run(run func(mReq maintenanceModeRequest, ctx context.Context)) *MockProvider_ActivateMaintenanceMode_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(maintenanceModeRequest), args[1].(context.Context))
-	})
-	return _c
-}
-
-func (_c *MockProvider_ActivateMaintenanceMode_Call) Return(_a0 *MaintenanceModeStatus, _a1 error) *MockProvider_ActivateMaintenanceMode_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockProvider_ActivateMaintenanceMode_Call) RunAndReturn(run func(maintenanceModeRequest, context.Context) (*MaintenanceModeStatus, error)) *MockProvider_ActivateMaintenanceMode_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// DeactivateMaintenanceMode provides a mock function with given fields: ctx
-func (_m *MockProvider) DeactivateMaintenanceMode(ctx context.Context) (*MaintenanceModeStatus, error) {
-	ret := _m.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeactivateMaintenanceMode")
-	}
-
-	var r0 *MaintenanceModeStatus
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (*MaintenanceModeStatus, error)); ok {
-		return rf(ctx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context) *MaintenanceModeStatus); ok {
-		r0 = rf(ctx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*MaintenanceModeStatus)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockProvider_DeactivateMaintenanceMode_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeactivateMaintenanceMode'
-type MockProvider_DeactivateMaintenanceMode_Call struct {
-	*mock.Call
-}
-
-// DeactivateMaintenanceMode is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *MockProvider_Expecter) DeactivateMaintenanceMode(ctx interface{}) *MockProvider_DeactivateMaintenanceMode_Call {
-	return &MockProvider_DeactivateMaintenanceMode_Call{Call: _e.mock.On("DeactivateMaintenanceMode", ctx)}
-}
-
-func (_c *MockProvider_DeactivateMaintenanceMode_Call) Run(run func(ctx context.Context)) *MockProvider_DeactivateMaintenanceMode_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
-	})
-	return _c
-}
-
-func (_c *MockProvider_DeactivateMaintenanceMode_Call) Return(_a0 *MaintenanceModeStatus, _a1 error) *MockProvider_DeactivateMaintenanceMode_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockProvider_DeactivateMaintenanceMode_Call) RunAndReturn(run func(context.Context) (*MaintenanceModeStatus, error)) *MockProvider_DeactivateMaintenanceMode_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetMaintenanceMode provides a mock function with given fields: ctx
 func (_m *MockProvider) GetMaintenanceMode(ctx context.Context) (*MaintenanceModeStatus, error) {
 	ret := _m.Called(ctx)
@@ -192,6 +75,65 @@ func (_c *MockProvider_GetMaintenanceMode_Call) Return(_a0 *MaintenanceModeStatu
 }
 
 func (_c *MockProvider_GetMaintenanceMode_Call) RunAndReturn(run func(context.Context) (*MaintenanceModeStatus, error)) *MockProvider_GetMaintenanceMode_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SetMaintenanceMode provides a mock function with given fields: mReq, ctx
+func (_m *MockProvider) SetMaintenanceMode(mReq maintenanceModeRequest, ctx context.Context) (*MaintenanceModeStatus, error) {
+	ret := _m.Called(mReq, ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetMaintenanceMode")
+	}
+
+	var r0 *MaintenanceModeStatus
+	var r1 error
+	if rf, ok := ret.Get(0).(func(maintenanceModeRequest, context.Context) (*MaintenanceModeStatus, error)); ok {
+		return rf(mReq, ctx)
+	}
+	if rf, ok := ret.Get(0).(func(maintenanceModeRequest, context.Context) *MaintenanceModeStatus); ok {
+		r0 = rf(mReq, ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*MaintenanceModeStatus)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(maintenanceModeRequest, context.Context) error); ok {
+		r1 = rf(mReq, ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockProvider_SetMaintenanceMode_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetMaintenanceMode'
+type MockProvider_SetMaintenanceMode_Call struct {
+	*mock.Call
+}
+
+// SetMaintenanceMode is a helper method to define mock.On call
+//   - mReq maintenanceModeRequest
+//   - ctx context.Context
+func (_e *MockProvider_Expecter) SetMaintenanceMode(mReq interface{}, ctx interface{}) *MockProvider_SetMaintenanceMode_Call {
+	return &MockProvider_SetMaintenanceMode_Call{Call: _e.mock.On("SetMaintenanceMode", mReq, ctx)}
+}
+
+func (_c *MockProvider_SetMaintenanceMode_Call) Run(run func(mReq maintenanceModeRequest, ctx context.Context)) *MockProvider_SetMaintenanceMode_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(maintenanceModeRequest), args[1].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockProvider_SetMaintenanceMode_Call) Return(_a0 *MaintenanceModeStatus, _a1 error) *MockProvider_SetMaintenanceMode_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockProvider_SetMaintenanceMode_Call) RunAndReturn(run func(maintenanceModeRequest, context.Context) (*MaintenanceModeStatus, error)) *MockProvider_SetMaintenanceMode_Call {
 	_c.Call.Return(run)
 	return _c
 }

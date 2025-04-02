@@ -8,8 +8,7 @@ import (
 )
 
 type Provider interface {
-	ActivateMaintenanceMode(mReq maintenanceModeRequest, ctx context.Context) (*MaintenanceModeStatus, error)
-	DeactivateMaintenanceMode(ctx context.Context) (*MaintenanceModeStatus, error)
+	SetMaintenanceMode(mReq maintenanceModeRequest, ctx context.Context) (*MaintenanceModeStatus, error)
 	GetMaintenanceMode(ctx context.Context) (*MaintenanceModeStatus, error)
 }
 
@@ -47,12 +46,7 @@ func (m *MultinodeMaintenanceModeController) SetMaintenanceMode(w http.ResponseW
 	}
 
 	status := &MaintenanceModeStatus{}
-
-	if mReq.Activate {
-		status, err = m.provider.ActivateMaintenanceMode(mReq, r.Context())
-	} else {
-		status, err = m.provider.DeactivateMaintenanceMode(r.Context())
-	}
+	status, err = m.provider.SetMaintenanceMode(mReq, r.Context())
 
 	if err != nil {
 		core.InternalServerErrorResponse(w, err)

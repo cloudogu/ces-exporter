@@ -10,6 +10,7 @@ import (
 	"github.com/cloudogu/ces-exporter/systeminfo"
 	bup "github.com/cloudogu/k8s-backup-operator/pkg/api/v1"
 	componentEcoClient "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
+	"github.com/cloudogu/k8s-registry-lib/repository"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"log"
@@ -133,6 +134,7 @@ func run(ctx context.Context) error {
 func (ec exporterContext) createServer() http.Handler {
 	configMaps := ec.client.CoreV1().ConfigMaps(ec.config.Namespace)
 	secrets := ec.client.CoreV1().Secrets(ec.config.Namespace)
+	globalConfigRepo := repository.NewGlobalConfigRepository(configMaps)
 
 	systemInfoProvider := systeminfo.NewMultinodeSystemInfoProvider(
 		configMaps,
@@ -144,7 +146,7 @@ func (ec exporterContext) createServer() http.Handler {
 
 	configurationProvider := configuration.NewMultinodeConfigurationProvider(ec.config.Namespace, configMaps, secrets, ec.bclient)
 	configController := configuration.NewController(configurationProvider)
-	maintenanceModeProvider := maintenance.NewMultinodeMaintenanceModeProvider(configMaps)
+	maintenanceModeProvider := maintenance.NewMultinodeMaintenanceModeProvider(globalConfigRepo)
 	maintenanceModeController := maintenance.NewMultinodeMaintenanceModeController(maintenanceModeProvider)
 
 	authMiddleware := core.NewAuthMiddleware(ec.config)

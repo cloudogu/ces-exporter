@@ -3,6 +3,7 @@ package maintenance
 import (
 	"context"
 	"fmt"
+	"github.com/cloudogu/k8s-registry-lib/repository"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
@@ -12,6 +13,7 @@ import (
 func TestMNGetMaintenanceMode(t *testing.T) {
 	t.Run("should return maintenance mode is inactive", func(t *testing.T) {
 		configMaps := newMockConfigMaps(t)
+		globalConfigRepo := repository.NewGlobalConfigRepository(configMaps)
 		configMaps.EXPECT().List(mock.Anything, mock.Anything).Return(&corev1.ConfigMapList{
 			Items: []corev1.ConfigMap{
 				{Data: map[string]string{
@@ -19,7 +21,7 @@ func TestMNGetMaintenanceMode(t *testing.T) {
 				}},
 			},
 		}, nil)
-		provider := NewMultinodeMaintenanceModeProvider(configMaps)
+		provider := NewMultinodeMaintenanceModeProvider(globalConfigRepo)
 
 		status, err := provider.GetMaintenanceMode(context.TODO())
 		require.NoError(t, err)
@@ -28,6 +30,7 @@ func TestMNGetMaintenanceMode(t *testing.T) {
 
 	t.Run("should return maintenance mode is active", func(t *testing.T) {
 		configMaps := newMockConfigMaps(t)
+		globalConfigRepo := repository.NewGlobalConfigRepository(configMaps)
 		configMaps.EXPECT().List(mock.Anything, mock.Anything).Return(&corev1.ConfigMapList{
 			Items: []corev1.ConfigMap{
 				{Data: map[string]string{
@@ -35,7 +38,7 @@ func TestMNGetMaintenanceMode(t *testing.T) {
 				}},
 			},
 		}, nil)
-		provider := NewMultinodeMaintenanceModeProvider(configMaps)
+		provider := NewMultinodeMaintenanceModeProvider(globalConfigRepo)
 
 		status, err := provider.GetMaintenanceMode(context.TODO())
 		require.NoError(t, err)
@@ -44,12 +47,13 @@ func TestMNGetMaintenanceMode(t *testing.T) {
 
 	t.Run("should fail on get global config", func(t *testing.T) {
 		configMaps := newMockConfigMaps(t)
+		globalConfigRepo := repository.NewGlobalConfigRepository(configMaps)
 		configMaps.EXPECT().List(mock.Anything, mock.Anything).Return(&corev1.ConfigMapList{
 			Items: []corev1.ConfigMap{
 				{Data: map[string]string{}},
 			},
 		}, nil)
-		provider := NewMultinodeMaintenanceModeProvider(configMaps)
+		provider := NewMultinodeMaintenanceModeProvider(globalConfigRepo)
 
 		_, err := provider.GetMaintenanceMode(context.TODO())
 		require.Contains(t, err.Error(), "failed to get global config:")
@@ -61,26 +65,32 @@ func TestMNBuildMaintenanceJSON(t *testing.T) {
 		mmReq := maintenanceModeRequest{
 			Activate: false,
 			Title:    "test",
-			Message:  "testmessage",
+			Text:     "testmessage",
 		}
-		status := BuildMaintenanceJSON(mmReq)
-		require.Equal(t, status.String(), "{\"title\": \"test\", \"text\": \"testmessage\"}")
+		status, _ := BuildMaintenanceJSON(mmReq)
+		require.Equal(t, status.String(), "{\"activate\":false,\"title\":\"test\",\"text\":\"testmessage\"}")
 	})
 
 	t.Run("should build maintenance mode json with empty request", func(t *testing.T) {
 		mmReq := maintenanceModeRequest{
 			Activate: false,
 			Title:    "",
-			Message:  "",
+			Text:     "",
 		}
-		status := BuildMaintenanceJSON(mmReq)
-		require.Equal(t, status.String(), "{\"title\": \"\", \"text\": \"\"}")
+		status, _ := BuildMaintenanceJSON(mmReq)
+		require.Equal(t, status.String(), "{\"activate\":false,\"title\":\"\",\"text\":\"\"}")
 	})
 }
 
 func TestMNDeactivateMaintenanceMode(t *testing.T) {
 	t.Run("should return maintenance mode is inactive", func(t *testing.T) {
 		configMaps := newMockConfigMaps(t)
+		globalConfigRepo := repository.NewGlobalConfigRepository(configMaps)
+		mmReq := maintenanceModeRequest{
+			Activate: false,
+			Title:    "test",
+			Text:     "testmessage",
+		}
 		configMaps.EXPECT().List(mock.Anything, mock.Anything).Return(&corev1.ConfigMapList{
 			Items: []corev1.ConfigMap{
 				{Data: map[string]string{
@@ -93,14 +103,20 @@ func TestMNDeactivateMaintenanceMode(t *testing.T) {
 				"config.yaml": "key: value",
 			},
 		}, nil)
-		provider := NewMultinodeMaintenanceModeProvider(configMaps)
+		provider := NewMultinodeMaintenanceModeProvider(globalConfigRepo)
 
-		status, err := provider.DeactivateMaintenanceMode(context.TODO())
+		status, err := provider.SetMaintenanceMode(mmReq, context.TODO())
 		require.NoError(t, err)
 		require.Equal(t, status.IsActive, false)
 	})
 	t.Run("should return error", func(t *testing.T) {
 		configMaps := newMockConfigMaps(t)
+		globalConfigRepo := repository.NewGlobalConfigRepository(configMaps)
+		mmReq := maintenanceModeRequest{
+			Activate: false,
+			Title:    "test",
+			Text:     "testmessage",
+		}
 		configMaps.EXPECT().List(mock.Anything, mock.Anything).Return(&corev1.ConfigMapList{
 			Items: []corev1.ConfigMap{
 				{Data: map[string]string{
@@ -109,22 +125,28 @@ func TestMNDeactivateMaintenanceMode(t *testing.T) {
 			},
 		}, nil)
 		configMaps.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
-		provider := NewMultinodeMaintenanceModeProvider(configMaps)
+		provider := NewMultinodeMaintenanceModeProvider(globalConfigRepo)
 
-		_, err := provider.DeactivateMaintenanceMode(context.TODO())
+		_, err := provider.SetMaintenanceMode(mmReq, context.TODO())
 		require.Contains(t, err.Error(), "failed to update global config:")
 		require.Contains(t, err.Error(), "testerror")
 	})
 	t.Run("should fail on get global config", func(t *testing.T) {
 		configMaps := newMockConfigMaps(t)
+		globalConfigRepo := repository.NewGlobalConfigRepository(configMaps)
+		mmReq := maintenanceModeRequest{
+			Activate: false,
+			Title:    "test",
+			Text:     "testmessage",
+		}
 		configMaps.EXPECT().List(mock.Anything, mock.Anything).Return(&corev1.ConfigMapList{
 			Items: []corev1.ConfigMap{
 				{Data: map[string]string{}},
 			},
 		}, nil)
-		provider := NewMultinodeMaintenanceModeProvider(configMaps)
+		provider := NewMultinodeMaintenanceModeProvider(globalConfigRepo)
 
-		_, err := provider.DeactivateMaintenanceMode(context.TODO())
+		_, err := provider.SetMaintenanceMode(mmReq, context.TODO())
 		require.Contains(t, err.Error(), "failed to get global config:")
 	})
 }
@@ -132,6 +154,7 @@ func TestMNDeactivateMaintenanceMode(t *testing.T) {
 func TestMNActivateMaintenanceMode(t *testing.T) {
 	t.Run("should return maintenance mode is active", func(t *testing.T) {
 		configMaps := newMockConfigMaps(t)
+		globalConfigRepo := repository.NewGlobalConfigRepository(configMaps)
 		configMaps.EXPECT().List(mock.Anything, mock.Anything).Return(&corev1.ConfigMapList{
 			Items: []corev1.ConfigMap{
 				{Data: map[string]string{
@@ -144,17 +167,18 @@ func TestMNActivateMaintenanceMode(t *testing.T) {
 				"config.yaml": "maintenance: value",
 			},
 		}, nil)
-		provider := NewMultinodeMaintenanceModeProvider(configMaps)
+		provider := NewMultinodeMaintenanceModeProvider(globalConfigRepo)
 		req := maintenanceModeRequest{
 			Activate: true,
 		}
-		status, err := provider.ActivateMaintenanceMode(req, context.TODO())
+		status, err := provider.SetMaintenanceMode(req, context.TODO())
 		require.NoError(t, err)
 		require.Equal(t, status.IsActive, true)
 	})
 
 	t.Run("should return error", func(t *testing.T) {
 		configMaps := newMockConfigMaps(t)
+		globalConfigRepo := repository.NewGlobalConfigRepository(configMaps)
 		configMaps.EXPECT().List(mock.Anything, mock.Anything).Return(&corev1.ConfigMapList{
 			Items: []corev1.ConfigMap{
 				{Data: map[string]string{
@@ -163,26 +187,27 @@ func TestMNActivateMaintenanceMode(t *testing.T) {
 			},
 		}, nil)
 		configMaps.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
-		provider := NewMultinodeMaintenanceModeProvider(configMaps)
+		provider := NewMultinodeMaintenanceModeProvider(globalConfigRepo)
 		req := maintenanceModeRequest{
 			Activate: true,
 		}
-		_, err := provider.ActivateMaintenanceMode(req, context.TODO())
+		_, err := provider.SetMaintenanceMode(req, context.TODO())
 		require.Contains(t, err.Error(), "failed to update global config:")
 		require.Contains(t, err.Error(), "testerror")
 	})
 	t.Run("should fail on get global config", func(t *testing.T) {
 		configMaps := newMockConfigMaps(t)
+		globalConfigRepo := repository.NewGlobalConfigRepository(configMaps)
 		configMaps.EXPECT().List(mock.Anything, mock.Anything).Return(&corev1.ConfigMapList{
 			Items: []corev1.ConfigMap{
 				{Data: map[string]string{}},
 			},
 		}, nil)
-		provider := NewMultinodeMaintenanceModeProvider(configMaps)
+		provider := NewMultinodeMaintenanceModeProvider(globalConfigRepo)
 		req := maintenanceModeRequest{
 			Activate: true,
 		}
-		_, err := provider.ActivateMaintenanceMode(req, context.TODO())
+		_, err := provider.SetMaintenanceMode(req, context.TODO())
 		require.Contains(t, err.Error(), "failed to get global config:")
 	})
 }

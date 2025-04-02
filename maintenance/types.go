@@ -3,7 +3,7 @@ package maintenance
 type maintenanceModeRequest struct {
 	Activate bool   `json:"activate"`
 	Title    string `json:"title"`
-	Message  string `json:"message"`
+	Text     string `json:"text"`
 }
 
 type MaintenanceModeStatus struct {

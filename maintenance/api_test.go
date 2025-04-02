@@ -2,6 +2,7 @@ package maintenance
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/cloudogu/ces-exporter/core"
@@ -56,7 +57,7 @@ func TestSetMaintenanceMode(t *testing.T) {
 		mmReq := &maintenanceModeRequest{
 			Activate: true,
 			Title:    "Test Title",
-			Message:  "Test Message!!!",
+			Text:     "Test Message!!!",
 		}
 		body, err := json.Marshal(mmReq)
 		require.NoError(t, err)
@@ -66,7 +67,7 @@ func TestSetMaintenanceMode(t *testing.T) {
 
 		mms := MaintenanceModeStatus{IsActive: true}
 		maintenanceModeProvider := NewMockProvider(t)
-		maintenanceModeProvider.EXPECT().ActivateMaintenanceMode(*mmReq, mock.Anything).Return(&mms, nil)
+		maintenanceModeProvider.EXPECT().SetMaintenanceMode(*mmReq, context.Background()).Return(&mms, nil)
 		mmc := NewMultinodeMaintenanceModeController(maintenanceModeProvider)
 
 		rr := httptest.NewRecorder()
@@ -80,9 +81,9 @@ func TestSetMaintenanceMode(t *testing.T) {
 
 	t.Run("should return internal server error", func(t *testing.T) {
 		mmReq := &maintenanceModeRequest{
-			Activate: true,
+			Activate: false,
 			Title:    "Test Title",
-			Message:  "Test Message!!!",
+			Text:     "Test Message!!!",
 		}
 		body, err := json.Marshal(mmReq)
 		require.NoError(t, err)
@@ -91,7 +92,7 @@ func TestSetMaintenanceMode(t *testing.T) {
 		require.NoError(t, err)
 
 		maintenanceModeProvider := NewMockProvider(t)
-		maintenanceModeProvider.EXPECT().ActivateMaintenanceMode(*mmReq, mock.Anything).Return(nil, fmt.Errorf("testerror"))
+		maintenanceModeProvider.EXPECT().SetMaintenanceMode(*mmReq, context.Background()).Return(nil, fmt.Errorf("testerror"))
 		mmc := NewMultinodeMaintenanceModeController(maintenanceModeProvider)
 
 		rr := httptest.NewRecorder()
@@ -106,7 +107,7 @@ func TestSetMaintenanceMode(t *testing.T) {
 		mmReq := &maintenanceModeRequest{
 			Activate: false,
 			Title:    "Test Title",
-			Message:  "Test Message!!!",
+			Text:     "Test Message!!!",
 		}
 		body, err := json.Marshal(mmReq)
 		require.NoError(t, err)
@@ -116,7 +117,7 @@ func TestSetMaintenanceMode(t *testing.T) {
 
 		mms := MaintenanceModeStatus{IsActive: false}
 		maintenanceModeProvider := NewMockProvider(t)
-		maintenanceModeProvider.EXPECT().DeactivateMaintenanceMode(mock.Anything).Return(&mms, nil)
+		maintenanceModeProvider.EXPECT().SetMaintenanceMode(*mmReq, mock.Anything).Return(&mms, nil)
 		mmc := NewMultinodeMaintenanceModeController(maintenanceModeProvider)
 
 		rr := httptest.NewRecorder()

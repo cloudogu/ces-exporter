@@ -156,9 +156,9 @@ paths:
                 title:
                   type: string
                   description: Title for the maintenance-mode page. Only needed when activating the maintenance-mode.
-                message:
+                text:
                   type: string
-                  description: Message for the maintenance-mode page. Only needed when activating the maintenance-mode.
+                  description: Text for the maintenance-mode page. Only needed when activating the maintenance-mode.
               required:
                 - activate
             examples:
@@ -166,7 +166,7 @@ paths:
                 value:
                   activate: true
                   title: "Migration in progress"
-                  message: "This CES is migrating to a new instance"
+                  text: "This CES is migrating to a new instance"
               deactivate:
                 value:
                   activate: false
