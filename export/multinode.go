@@ -3,12 +3,10 @@ package export
 import (
 	"context"
 	"fmt"
-	"github.com/cloudogu/k8s-dogu-operator/v3/api/ecoSystem"
-	libdogu "github.com/cloudogu/k8s-registry-lib/dogu"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	ecoSystemV2 "github.com/cloudogu/k8s-dogu-operator/v3/api/ecoSystem"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	"log/slog"
 )
 
 type configMaps interface {
@@ -22,10 +20,10 @@ type MultinodeExportModeProvider struct {
 	client     kubernetesClient
 	namespace  string
 	configMaps configMaps
-	doguclient ecoSystem.EcoSystemV2Interface
+	doguclient ecoSystemV2.EcoSystemV2Interface
 }
 
-func NewMultinodeExportModeProvider(client kubernetesClient, namespace string, configMaps configMaps, doguclient ecoSystem.EcoSystemV2Interface) *MultinodeExportModeProvider {
+func NewMultinodeExportModeProvider(client kubernetesClient, namespace string, configMaps configMaps, doguclient ecoSystemV2.EcoSystemV2Interface) *MultinodeExportModeProvider {
 	return &MultinodeExportModeProvider{
 		client:     client,
 		namespace:  namespace,
@@ -83,15 +81,20 @@ func (m MultinodeExportModeProvider) SetExportDogu(doguName string, ctx context.
 
 func (m MultinodeExportModeProvider) GetExportMode(ctx context.Context) (*ExportModeStatus, error) {
 
-	localDoguReg := libdogu.NewDoguVersionRegistry(m.configMaps)
+	dogus, err := m.doguclient.Dogus(m.namespace).List(ctx, metav1.ListOptions{})
 
-	localDogus, err := localDoguReg.GetCurrentOfAll(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error getting dogu list: %s", err)
 	}
-	for _, element := range localDogus {
-		slog.Info(element.Name.String())
+
+	for _, d := range dogus.Items {
+		if !d.Spec.ExportMode {
+			// if just one dogu is not in export mode, the global export-mode-status is false
+			return &ExportModeStatus{IsActive: false}, nil
+		}
 	}
-	return nil, nil
+
+	// since we did not step out until now - the global export-mode-status is true
+	return &ExportModeStatus{IsActive: true}, nil
 
 }

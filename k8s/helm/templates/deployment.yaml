@@ -45,6 +45,8 @@ spec:
                   fieldPath: metadata.namespace
             - name: EXPORT_CRON
               value: '{{ .Values.env.exportCron}}'
+            - name: EXPORT_CRON_VERBOSE
+              value: '{{ .Values.env.exportCronVerbose}}'
           startupProbe:
             httpGet:
               path: "{{ .Values.env.basePath }}/health"

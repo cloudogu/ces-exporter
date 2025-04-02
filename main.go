@@ -121,7 +121,8 @@ func run(ctx context.Context) error {
 func (ec exporterContext) createServer() http.Handler {
 	configMaps := ec.client.CoreV1().ConfigMaps(ec.config.Namespace)
 
-	//go ec.startCronJob()
+	// start cron job for setting export mode. See env variable "EXPORT_CRON" for timetable
+	go ec.startCronJob()
 
 	systemInfoProvider := systeminfo.NewMultinodeSystemInfoProvider(
 		configMaps,
