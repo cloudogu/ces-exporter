@@ -1,6 +1,6 @@
 ARTIFACT_ID=ces-exporter
 MAKEFILES_VERSION=9.8.0
-VERSION=0.0.4
+VERSION=0.0.1
 
 GOTAG=1.24.1
 MOCKERY_VERSION=v2.53.0
@@ -84,3 +84,8 @@ template-importer-public-key: $(BINARY_YQ)
 apikey-secret: $(BINARY_YQ)
 	@kubectl create secret generic ces-exporter-api --from-literal=apiKey=${EXPORTER_API_KEY} --namespace="${NAMESPACE}" --context="${KUBE_CONTEXT_NAME}"
 
+.PHONY: helm-apply-dev
+helm-apply-dev:
+	@sed -i -E "s/(^VERSION=[[:digit:]].[[:digit:]].[[:digit:]])/\1-$$(date +%s)/g" Makefile
+	@make helm-apply
+	@sed -i -E "s/(^VERSION=[[:digit:]].[[:digit:]].[[:digit:]])-.*/\1/g" Makefile

@@ -9,6 +9,9 @@ import (
 	"github.com/cloudogu/ces-exporter/maintenance"
 	"github.com/cloudogu/ces-exporter/systeminfo"
 	componentEcoClient "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
+	ecoSystemV2 "github.com/cloudogu/k8s-dogu-operator/v3/api/ecoSystem"
+	librepo "github.com/cloudogu/k8s-registry-lib/repository"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"log/slog"
 	"net/http"
@@ -29,6 +32,7 @@ type kubernetesClient interface {
 
 type exporterContext struct {
 	ecosystemClient v1AlphaClientInterface
+	doguClient      ecoSystemV2.EcoSystemV2Interface
 	client          kubernetesClient
 	config          core.Configuration
 }
@@ -48,8 +52,15 @@ func newExporterContext(config core.Configuration) (*exporterContext, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create k8s client: %w", err)
 	}
+
+	doguClient, err := ecoSystemV2.NewForConfig(clusterConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create dogu client: %w", err)
+	}
+
 	return &exporterContext{
 		ecosystemClient,
+		doguClient,
 		client,
 		config,
 	}, nil
@@ -112,6 +123,17 @@ func (ec exporterContext) createServer() http.Handler {
 
 	configMaps := ec.client.CoreV1().ConfigMaps(ec.config.Namespace)
 
+	dogus, _ := ec.doguClient.Dogus(ec.config.Namespace).List(context.Background(), metav1.ListOptions{})
+	slog.Info("dogus list-:")
+	for _, d := range dogus.Items {
+		slog.Info("at least one")
+		slog.Info(d.Name)
+		d.Spec.ExportMode
+	}
+	slog.Info(fmt.Sprintf("%d", len(dogus.Items)))
+
+	//go ec.startCronJob()
+
 	systemInfoProvider := systeminfo.NewMultinodeSystemInfoProvider(
 		ec.client.CoreV1().ConfigMaps(ec.config.Namespace),
 		ec.client.CoreV1().PersistentVolumeClaims(ec.config.Namespace),
@@ -171,9 +193,30 @@ func (ec exporterContext) startCronJob() {
 	}
 
 	cj := export.NewCronJob(cron_expr)
-	err := cj.Run()
+	err := cj.Run(ec.callCronJob)
 
 	if err != nil {
-		slog.Error("Failed to start cronjob:", err)
+		slog.Error("Failed to start cronjob:", "err", err)
 	}
+}
+
+// this handles the actuall exporter
+func (ec exporterContext) callCronJob() (int, error) {
+	slog.Info("Hallo Welt")
+	configMaps := ec.client.CoreV1().ConfigMaps(ec.config.Namespace)
+	slog.Info("Hallo Welt2")
+	doguRepo := librepo.NewDoguConfigRepository(configMaps)
+	slog.Info("Hallo Welt3")
+	conf, err := doguRepo.Get(context.Background(), "usermgt")
+	slog.Info("Hallo Wel4")
+	if err != nil {
+		return 1, fmt.Errorf("Error getting dogu config for", "err", err)
+	}
+	slog.Info("Hallo Welt5")
+	for _, e := range conf.GetAll() {
+		slog.Info("Hallo Welt6")
+		slog.Info(fmt.Sprintf("%v", e))
+	}
+	slog.Info("Hallo Welt7")
+	return 0, nil
 }
