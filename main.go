@@ -10,6 +10,8 @@ import (
 	"github.com/cloudogu/ces-exporter/systeminfo"
 	bup "github.com/cloudogu/k8s-backup-operator/pkg/api/v1"
 	componentEcoClient "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
+	libdogu "github.com/cloudogu/k8s-registry-lib/dogu"
+	"github.com/cloudogu/k8s-registry-lib/repository"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"log"
@@ -133,6 +135,10 @@ func run(ctx context.Context) error {
 func (ec exporterContext) createServer() http.Handler {
 	configMaps := ec.client.CoreV1().ConfigMaps(ec.config.Namespace)
 	secrets := ec.client.CoreV1().Secrets(ec.config.Namespace)
+	globalConfigRepo := repository.NewGlobalConfigRepository(configMaps)
+	sensitiveRepo := repository.NewSensitiveDoguConfigRepository(secrets)
+	doguRepo := repository.NewDoguConfigRepository(configMaps)
+	doguVersionReg := libdogu.NewDoguVersionRegistry(configMaps)
 
 	systemInfoProvider := systeminfo.NewMultinodeSystemInfoProvider(
 		configMaps,
@@ -142,7 +148,7 @@ func (ec exporterContext) createServer() http.Handler {
 	)
 	systemInfoController := systeminfo.NewController(systemInfoProvider)
 
-	configurationProvider := configuration.NewMultinodeConfigurationProvider(ec.config.Namespace, configMaps, secrets, ec.bclient)
+	configurationProvider := configuration.NewMultinodeConfigurationProvider(ec.config.Namespace, sensitiveRepo, doguRepo, globalConfigRepo, doguVersionReg, ec.bclient)
 	configController := configuration.NewController(configurationProvider)
 
 	authMiddleware := core.NewAuthMiddleware(ec.config)
