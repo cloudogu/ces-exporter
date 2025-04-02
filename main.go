@@ -21,7 +21,6 @@ import (
 	"os/signal"
 	ctrl "sigs.k8s.io/controller-runtime"
 	rclient "sigs.k8s.io/controller-runtime/pkg/client"
-	clientConfig "sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sync"
 	"time"
 )
@@ -47,16 +46,14 @@ func newExporterContext(config core.Configuration) (*exporterContext, error) {
 		return nil, fmt.Errorf("failed to get k8s cluster config: %w", err)
 	}
 
-	restConfig := clientConfig.GetConfigOrDie()
-
-	rtclient, err := rclient.New(restConfig, rclient.Options{})
+	rtclient, err := rclient.New(clusterConfig, rclient.Options{})
 	if err != nil {
 		log.Fatalf("Error creating client: %v", err)
 	}
 
 	bclient := core.NewBackupScheduleRuntimeClient(rtclient, config.Namespace)
 
-	ecosystemClient, err := componentEcoClient.NewForConfig(restConfig)
+	ecosystemClient, err := componentEcoClient.NewForConfig(clusterConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create config client: %w", err)
 	}
