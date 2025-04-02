@@ -45,8 +45,7 @@ func (m *MultinodeMaintenanceModeController) SetMaintenanceMode(w http.ResponseW
 		return
 	}
 
-	status := &MaintenanceModeStatus{}
-	status, err = m.provider.SetMaintenanceMode(mReq, r.Context())
+	status, err := m.provider.SetMaintenanceMode(mReq, r.Context())
 
 	if err != nil {
 		core.InternalServerErrorResponse(w, err)

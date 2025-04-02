@@ -44,7 +44,7 @@ func (m MultinodeMaintenanceModeProvider) SetMaintenanceMode(mReq maintenanceMod
 		}
 	}
 
-	globalConfig, err = m.globalConfigRepo.Update(ctx, globalConfig)
+	_, err = m.globalConfigRepo.Update(ctx, globalConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update global config: %w", err)
 	}
