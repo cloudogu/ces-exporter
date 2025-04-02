@@ -23,10 +23,26 @@ COPY systeminfo systeminfo
 RUN go mod vendor
 RUN go build -mod=vendor -o target/ces-exporter
 
+FROM alpine:3.21 AS classic
+LABEL maintainer="hello@cloudogu.com" \
+      NAME="ces-exporter" \
+      VERSION="0.0.1"
+
+ENV MODE=classic
+
+WORKDIR /
+
+COPY --from=builder /workspace/target/ces-exporter .
+
+RUN apk update && apk upgrade && apk add --no-cache bash openssh-server rsync
+
+EXPOSE 8080
+
+ENTRYPOINT ["/ces-exporter"]
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+FROM gcr.io/distroless/static:nonroot AS multinode
 LABEL maintainer="hello@cloudogu.com" \
       NAME="ces-exporter" \
       VERSION="0.0.1"
