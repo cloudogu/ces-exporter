@@ -8,13 +8,19 @@ import (
 	"github.com/cloudogu/ces-exporter/export"
 	"github.com/cloudogu/ces-exporter/maintenance"
 	"github.com/cloudogu/ces-exporter/systeminfo"
+	bup "github.com/cloudogu/k8s-backup-operator/pkg/api/v1"
 	componentEcoClient "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
+	libdogu "github.com/cloudogu/k8s-registry-lib/dogu"
+	"github.com/cloudogu/k8s-registry-lib/repository"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	ctrl "sigs.k8s.io/controller-runtime"
+	rclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sync"
 	"time"
 )
@@ -31,6 +37,7 @@ type exporterContext struct {
 	ecosystemClient v1AlphaClientInterface
 	client          kubernetesClient
 	config          core.Configuration
+	bclient         *core.BackupScheduleRuntimeClient
 }
 
 func newExporterContext(config core.Configuration) (*exporterContext, error) {
@@ -38,6 +45,13 @@ func newExporterContext(config core.Configuration) (*exporterContext, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get k8s cluster config: %w", err)
 	}
+
+	rtclient, err := rclient.New(clusterConfig, rclient.Options{})
+	if err != nil {
+		log.Fatalf("Error creating client: %v", err)
+	}
+
+	bclient := core.NewBackupScheduleRuntimeClient(rtclient, config.Namespace)
 
 	ecosystemClient, err := componentEcoClient.NewForConfig(clusterConfig)
 	if err != nil {
@@ -48,10 +62,12 @@ func newExporterContext(config core.Configuration) (*exporterContext, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create k8s client: %w", err)
 	}
+
 	return &exporterContext{
 		ecosystemClient,
 		client,
 		config,
+		bclient,
 	}, nil
 }
 
@@ -64,6 +80,11 @@ func main() {
 }
 
 func run(ctx context.Context) error {
+	err := bup.AddToScheme(scheme.Scheme)
+	if err != nil {
+		log.Fatalf("Failed to register BackupSchedule scheme: %v", err)
+	}
+
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 
@@ -109,13 +130,23 @@ func run(ctx context.Context) error {
 }
 
 func (ec exporterContext) createServer() http.Handler {
+	configMaps := ec.client.CoreV1().ConfigMaps(ec.config.Namespace)
+	secrets := ec.client.CoreV1().Secrets(ec.config.Namespace)
+	globalConfigRepo := repository.NewGlobalConfigRepository(configMaps)
+	sensitiveRepo := repository.NewSensitiveDoguConfigRepository(secrets)
+	doguRepo := repository.NewDoguConfigRepository(configMaps)
+	doguVersionReg := libdogu.NewDoguVersionRegistry(configMaps)
+
 	systemInfoProvider := systeminfo.NewMultinodeSystemInfoProvider(
-		ec.client.CoreV1().ConfigMaps(ec.config.Namespace),
+		configMaps,
 		ec.client.CoreV1().PersistentVolumeClaims(ec.config.Namespace),
 		ec.config.Namespace,
 		ec.ecosystemClient.Components(ec.config.Namespace),
 	)
 	systemInfoController := systeminfo.NewController(systemInfoProvider)
+
+	configurationProvider := configuration.NewMultinodeConfigurationProvider(ec.config.Namespace, sensitiveRepo, doguRepo, globalConfigRepo, doguVersionReg, ec.bclient)
+	configController := configuration.NewController(configurationProvider)
 
 	authMiddleware := core.NewAuthMiddleware(ec.config)
 
@@ -124,7 +155,7 @@ func (ec exporterContext) createServer() http.Handler {
 
 	rootHandler.HandleFunc("GET /system-info", authMiddleware(systemInfoController.GetSystemInfo))
 
-	rootHandler.HandleFunc("GET /configuration", authMiddleware(configuration.GetConfig))
+	rootHandler.HandleFunc("GET /configuration", authMiddleware(configController.GetConfig))
 
 	rootHandler.HandleFunc("GET /export/dogu/{doguName}", authMiddleware(export.GetExportDogu))
 	rootHandler.HandleFunc("POST /export/dogu/{doguName}", authMiddleware(export.SetExportDogu))

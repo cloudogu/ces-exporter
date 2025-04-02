@@ -51,6 +51,7 @@ func Test_createServer(t *testing.T) {
 	client.EXPECT().CoreV1().Return(cv1)
 	cv1.EXPECT().ConfigMaps(mock.Anything).Return(nil)
 	cv1.EXPECT().PersistentVolumeClaims(mock.Anything).Return(nil)
+	cv1.EXPECT().Secrets("").Return(nil)
 	ecosystemClient.EXPECT().Components(mock.Anything).Return(nil)
 	exCtx := exporterContext{
 		ecosystemClient: ecosystemClient,
