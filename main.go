@@ -126,9 +126,8 @@ func (ec exporterContext) createServer() http.Handler {
 	dogus, _ := ec.doguClient.Dogus(ec.config.Namespace).List(context.Background(), metav1.ListOptions{})
 	slog.Info("dogus list-:")
 	for _, d := range dogus.Items {
-		slog.Info("at least one")
 		slog.Info(d.Name)
-		d.Spec.ExportMode
+		slog.Info(fmt.Sprintf("%v", d.Spec.ExportMode))
 	}
 	slog.Info(fmt.Sprintf("%d", len(dogus.Items)))
 
