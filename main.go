@@ -78,7 +78,7 @@ func main() {
 	ctx := context.Background()
 	if err := run(ctx); err != nil {
 		slog.Error("error starting ces-exporter", "err", err)
-		panic(err.Error())
+		os.Exit(1)
 	}
 }
 
