@@ -40,6 +40,7 @@ func newExporterContext(config core.Configuration) (*exporterContext, error) {
 	}
 
 	ecosystemClient, err := componentEcoClient.NewForConfig(clusterConfig)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to create config client: %w", err)
 	}
@@ -78,7 +79,6 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create exporter context: %w", err)
 	}
-
 	srv := eCtx.createServer()
 
 	httpServer := &http.Server{
@@ -117,7 +117,7 @@ func (ec exporterContext) createServer() http.Handler {
 	)
 	systemInfoController := systeminfo.NewController(systemInfoProvider)
 
-	exportModeProvider := export.NewMultinodeExportModeProvider()
+	exportModeProvider := export.NewMultinodeExportModeProvider(ec.client, ec.config.Namespace)
 	exportModeController := export.NewMultinodeExportModeController(exportModeProvider)
 
 	authMiddleware := core.NewAuthMiddleware(ec.config)
@@ -129,7 +129,7 @@ func (ec exporterContext) createServer() http.Handler {
 
 	rootHandler.HandleFunc("GET /configuration", authMiddleware(configuration.GetConfig))
 
-	rootHandler.HandleFunc("GET /export/dogu/{doguName}", authMiddleware(exportModeController.GetExportDogu))
+	rootHandler.HandleFunc("GET /export/dogu", authMiddleware(exportModeController.GetExportDogu))
 	rootHandler.HandleFunc("POST /export/dogu/{doguName}", authMiddleware(exportModeController.SetExportDogu))
 	rootHandler.HandleFunc("GET /export/mode", authMiddleware(exportModeController.GetExportMode))
 

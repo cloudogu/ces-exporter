@@ -2,7 +2,9 @@ package export
 
 import (
 	"context"
+	"fmt"
 	"github.com/cloudogu/ces-exporter/core"
+	"log/slog"
 	"net/http"
 )
 
@@ -21,16 +23,9 @@ func NewMultinodeExportModeController(provider Provider) *MultinodeExportModeCon
 }
 
 func (m *MultinodeExportModeController) GetExportDogu(w http.ResponseWriter, r *http.Request) {
-	doguName := r.PathValue("doguName")
-	if doguName == "" {
-		core.BadRequest(w, "doguName must not be empty")
-		return
-	}
-
-	//TODO implement me
-
-	doguExp := &DoguExport{
-		Dogu: doguName,
+	doguExp, err := m.provider.GetExportDogu(r.Context())
+	if err != nil {
+		slog.Info("error %s", err.Error())
 	}
 
 	core.JSON(w, http.StatusOK, doguExp)
@@ -43,10 +38,10 @@ func (m *MultinodeExportModeController) SetExportDogu(w http.ResponseWriter, r *
 		return
 	}
 
-	//TODO implement me
-
-	doguExp := &DoguExport{
-		Dogu: doguName,
+	doguExp, err := m.provider.SetExportDogu(doguName, r.Context())
+	if err != nil {
+		slog.Info("error %s", err.Error())
+		core.InternalServerErrorResponse(w, fmt.Errorf("failed to set export dogu: %w", err))
 	}
 
 	core.JSON(w, http.StatusOK, doguExp)

@@ -32,6 +32,14 @@ rules:
       - components
     verbs:
       - list
+  - apiGroups:
+      - ""
+    resources:
+      - services
+    verbs:
+      - list
+      - get
+      - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
