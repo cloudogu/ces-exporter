@@ -3,9 +3,9 @@ package export
 import (
 	"context"
 	"fmt"
+	ecoSystemV2 "github.com/cloudogu/k8s-dogu-operator/v3/api/ecoSystem"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	ecoSystemV2 "github.com/cloudogu/k8s-dogu-operator/v3/api/ecoSystem"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
@@ -61,14 +61,14 @@ func (m MultinodeExportModeProvider) SetExportDogu(doguName string, ctx context.
 	service.Spec.Selector["dogu.name"] = doguName
 	port := service.Spec.Ports[0]
 
-	service, err := m.client.CoreV1().Services(m.namespace).Update(ctx, service, metav1.UpdateOptions{})
-	if err != nil {
-		return nil, err
-	}
-
 	dogu, err := m.doguclient.Dogus(m.namespace).Get(ctx, doguName, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("could not get dogu resource for current export dogu: %s", err)
+	}
+
+	_, err = m.client.CoreV1().Services(m.namespace).Update(ctx, service, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, err
 	}
 
 	doguExport := DoguExport{
