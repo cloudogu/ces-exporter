@@ -11,7 +11,6 @@ import (
 	componentEcoClient "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
 	ecoSystemV2 "github.com/cloudogu/k8s-dogu-operator/v3/api/ecoSystem"
 	librepo "github.com/cloudogu/k8s-registry-lib/repository"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"log/slog"
 	"net/http"
@@ -120,28 +119,19 @@ func run(ctx context.Context) error {
 }
 
 func (ec exporterContext) createServer() http.Handler {
-
 	configMaps := ec.client.CoreV1().ConfigMaps(ec.config.Namespace)
-
-	dogus, _ := ec.doguClient.Dogus(ec.config.Namespace).List(context.Background(), metav1.ListOptions{})
-	slog.Info("dogus list-:")
-	for _, d := range dogus.Items {
-		slog.Info(d.Name)
-		slog.Info(fmt.Sprintf("%v", d.Spec.ExportMode))
-	}
-	slog.Info(fmt.Sprintf("%d", len(dogus.Items)))
 
 	//go ec.startCronJob()
 
 	systemInfoProvider := systeminfo.NewMultinodeSystemInfoProvider(
-		ec.client.CoreV1().ConfigMaps(ec.config.Namespace),
+		configMaps,
 		ec.client.CoreV1().PersistentVolumeClaims(ec.config.Namespace),
 		ec.config.Namespace,
 		ec.ecosystemClient.Components(ec.config.Namespace),
 	)
 	systemInfoController := systeminfo.NewController(systemInfoProvider)
 
-	exportModeProvider := export.NewMultinodeExportModeProvider(ec.client, ec.config.Namespace)
+	exportModeProvider := export.NewMultinodeExportModeProvider(ec.client, ec.config.Namespace, configMaps, ec.doguClient)
 	exportModeController := export.NewMultinodeExportModeController(exportModeProvider)
 
 	authMiddleware := core.NewAuthMiddleware(ec.config)
