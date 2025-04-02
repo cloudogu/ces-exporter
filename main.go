@@ -10,6 +10,7 @@ import (
 	"github.com/cloudogu/ces-exporter/systeminfo"
 	bup "github.com/cloudogu/k8s-backup-operator/pkg/api/v1"
 	componentEcoClient "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
+	libdogu "github.com/cloudogu/k8s-registry-lib/dogu"
 	"github.com/cloudogu/k8s-registry-lib/repository"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -20,7 +21,6 @@ import (
 	"os/signal"
 	ctrl "sigs.k8s.io/controller-runtime"
 	rclient "sigs.k8s.io/controller-runtime/pkg/client"
-	clientConfig "sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sync"
 	"time"
 )
@@ -46,16 +46,14 @@ func newExporterContext(config core.Configuration) (*exporterContext, error) {
 		return nil, fmt.Errorf("failed to get k8s cluster config: %w", err)
 	}
 
-	restConfig := clientConfig.GetConfigOrDie()
-
-	rtclient, err := rclient.New(restConfig, rclient.Options{})
+	rtclient, err := rclient.New(clusterConfig, rclient.Options{})
 	if err != nil {
 		log.Fatalf("Error creating client: %v", err)
 	}
 
 	bclient := core.NewBackupScheduleRuntimeClient(rtclient, config.Namespace)
 
-	ecosystemClient, err := componentEcoClient.NewForConfig(restConfig)
+	ecosystemClient, err := componentEcoClient.NewForConfig(clusterConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create config client: %w", err)
 	}
@@ -77,7 +75,7 @@ func main() {
 	ctx := context.Background()
 	if err := run(ctx); err != nil {
 		slog.Error("error starting ces-exporter", "err", err)
-		panic(err.Error())
+		os.Exit(1)
 	}
 }
 
@@ -135,6 +133,9 @@ func (ec exporterContext) createServer() http.Handler {
 	configMaps := ec.client.CoreV1().ConfigMaps(ec.config.Namespace)
 	secrets := ec.client.CoreV1().Secrets(ec.config.Namespace)
 	globalConfigRepo := repository.NewGlobalConfigRepository(configMaps)
+	sensitiveRepo := repository.NewSensitiveDoguConfigRepository(secrets)
+	doguRepo := repository.NewDoguConfigRepository(configMaps)
+	doguVersionReg := libdogu.NewDoguVersionRegistry(configMaps)
 
 	systemInfoProvider := systeminfo.NewMultinodeSystemInfoProvider(
 		configMaps,
@@ -144,7 +145,7 @@ func (ec exporterContext) createServer() http.Handler {
 	)
 	systemInfoController := systeminfo.NewController(systemInfoProvider)
 
-	configurationProvider := configuration.NewMultinodeConfigurationProvider(ec.config.Namespace, configMaps, secrets, ec.bclient)
+	configurationProvider := configuration.NewMultinodeConfigurationProvider(ec.config.Namespace, sensitiveRepo, doguRepo, globalConfigRepo, doguVersionReg, ec.bclient)
 	configController := configuration.NewController(configurationProvider)
 	maintenanceModeProvider := maintenance.NewMultinodeMaintenanceModeProvider(globalConfigRepo)
 	maintenanceModeController := maintenance.NewMultinodeMaintenanceModeController(maintenanceModeProvider)

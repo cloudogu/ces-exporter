@@ -3,45 +3,59 @@ package configuration
 import (
 	"context"
 	"fmt"
-	"github.com/cloudogu/ces-exporter/core"
+	"github.com/cloudogu/ces-commons-lib/dogu"
 	bup "github.com/cloudogu/k8s-backup-operator/pkg/api/v1"
-	"github.com/cloudogu/k8s-registry-lib/repository"
-	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	"github.com/cloudogu/k8s-registry-lib/config"
 	"log/slog"
 )
 
-type configMapsInterface interface {
-	v1.ConfigMapInterface
-}
-
-type secretsInterface interface {
-	v1.SecretInterface
+type doguVersionRegistry interface {
+	GetCurrentOfAll(ctx context.Context) ([]dogu.SimpleNameVersion, error)
 }
 
 type backupScheduleRuntimeClient interface {
 	ListBackupSchedules(ctx context.Context) (*bup.BackupScheduleList, error)
 }
 
-type MultinodeConfigurationProvider struct {
-	namespace  string
-	configMaps configMapsInterface
-	secrets    secretsInterface
-	client     backupScheduleRuntimeClient
+type doguConfigRepository interface {
+	Get(ctx context.Context, name dogu.SimpleName) (config.DoguConfig, error)
 }
 
-func NewMultinodeConfigurationProvider(namespace string, configMaps v1.ConfigMapInterface, secrets v1.SecretInterface, client backupScheduleRuntimeClient) *MultinodeConfigurationProvider {
+type globalConfigRepository interface {
+	Get(ctx context.Context) (config.GlobalConfig, error)
+}
+
+var _ Provider = (*MultinodeConfigurationProvider)(nil)
+
+type MultinodeConfigurationProvider struct {
+	namespace           string
+	sensitiveRepo       doguConfigRepository
+	doguConfigRepo      doguConfigRepository
+	globalConfigRepo    globalConfigRepository
+	doguVersionRegistry doguVersionRegistry
+	client              backupScheduleRuntimeClient
+}
+
+func NewMultinodeConfigurationProvider(
+	namespace string,
+	sensitiveRepo doguConfigRepository,
+	doguConfigRepo doguConfigRepository,
+	globalConfigRepo globalConfigRepository,
+	doguVersionRegistry doguVersionRegistry,
+	client backupScheduleRuntimeClient,
+) *MultinodeConfigurationProvider {
 	return &MultinodeConfigurationProvider{
-		namespace:  namespace,
-		configMaps: configMaps,
-		secrets:    secrets,
-		client:     client,
+		namespace:           namespace,
+		sensitiveRepo:       sensitiveRepo,
+		doguConfigRepo:      doguConfigRepo,
+		globalConfigRepo:    globalConfigRepo,
+		client:              client,
+		doguVersionRegistry: doguVersionRegistry,
 	}
 }
 
 func (c MultinodeConfigurationProvider) getGlobalConfigs(ctx context.Context) ([]keyValue, error) {
-	globalConfigRepo := repository.NewGlobalConfigRepository(c.configMaps)
-
-	repo, err := globalConfigRepo.Get(ctx)
+	repo, err := c.globalConfigRepo.Get(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get global config: %w", err)
 	}
@@ -59,7 +73,7 @@ func (c MultinodeConfigurationProvider) getGlobalConfigs(ctx context.Context) ([
 
 func (c MultinodeConfigurationProvider) getDoguConfigs(ctx context.Context) ([]doguConfig, error) {
 	slog.Debug("get dogu configs...")
-	dogus, err := core.GetInstalledDogus(ctx, c.configMaps)
+	dogus, err := c.doguVersionRegistry.GetCurrentOfAll(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get installed dogus: %w", err)
 	}
@@ -67,8 +81,7 @@ func (c MultinodeConfigurationProvider) getDoguConfigs(ctx context.Context) ([]d
 	var doguConfigs []doguConfig
 	for _, d := range dogus {
 		slog.Debug(fmt.Sprintf("get configs for dogu %s", d.Name))
-		doguConfigRepo := repository.NewDoguConfigRepository(c.configMaps)
-		dConfig, err := doguConfigRepo.Get(ctx, d.Name)
+		dConfig, err := c.doguConfigRepo.Get(ctx, d.Name)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get dogu config for dogu %s: %w", d.Name, err)
 		}
@@ -82,8 +95,7 @@ func (c MultinodeConfigurationProvider) getDoguConfigs(ctx context.Context) ([]d
 			})
 		}
 
-		sensitiveConfigRepo := repository.NewSensitiveDoguConfigRepository(c.secrets)
-		sConfig, err := sensitiveConfigRepo.Get(ctx, d.Name)
+		sConfig, err := c.sensitiveRepo.Get(ctx, d.Name)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get sensitive dogu config for dogu %s: %w", d.Name, err)
 		}

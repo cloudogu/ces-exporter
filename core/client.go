@@ -9,7 +9,7 @@ import (
 
 // RuntimeClient wraps sigs.k8s.io/controller-runtime/pkg/client and is used to query custom resources
 type RuntimeClient interface {
-	rclient.Client
+	rclient.Reader
 }
 
 // NewBackupScheduleRuntimeClient creates a new NewBackupScheduleRuntimeClient instance

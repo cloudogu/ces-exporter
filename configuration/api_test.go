@@ -18,7 +18,7 @@ func TestGetConfig(t *testing.T) {
 		req, err := http.NewRequest("GET", "/configuration", nil)
 		require.NoError(t, err)
 
-		provider := NewMockConfigurationProvider(t)
+		provider := NewMockProvider(t)
 		globalConfigs := []keyValue{
 			{
 				Key:   "a",
@@ -80,7 +80,7 @@ func TestGetConfig(t *testing.T) {
 		req, err := http.NewRequest("GET", "/configuration", nil)
 		require.NoError(t, err)
 
-		provider := NewMockConfigurationProvider(t)
+		provider := NewMockProvider(t)
 		provider.EXPECT().getGlobalConfigs(mock.Anything).Return(nil, nil)
 		provider.EXPECT().getDoguConfigs(mock.Anything).Return(nil, nil)
 		provider.EXPECT().getBackupSchedules(mock.Anything).Return(nil, fmt.Errorf("testerror"))
@@ -97,7 +97,7 @@ func TestGetConfig(t *testing.T) {
 		req, err := http.NewRequest("GET", "/configuration", nil)
 		require.NoError(t, err)
 
-		provider := NewMockConfigurationProvider(t)
+		provider := NewMockProvider(t)
 		provider.EXPECT().getGlobalConfigs(mock.Anything).Return(nil, nil)
 		provider.EXPECT().getDoguConfigs(mock.Anything).Return(nil, fmt.Errorf("testerror"))
 		controller := NewController(provider)
@@ -113,7 +113,7 @@ func TestGetConfig(t *testing.T) {
 		req, err := http.NewRequest("GET", "/configuration", nil)
 		require.NoError(t, err)
 
-		provider := NewMockConfigurationProvider(t)
+		provider := NewMockProvider(t)
 		provider.EXPECT().getGlobalConfigs(mock.Anything).Return(nil, fmt.Errorf("testerror"))
 		controller := NewController(provider)
 
