@@ -103,7 +103,7 @@ func TestSetExportDogu(t *testing.T) {
 		require.NoError(t, err)
 
 		ep := NewMockProvider(t)
-		ep.EXPECT().GetExportDogu(mock.Anything).Return(_, fmt.Errorf("testerror"))
+		ep.EXPECT().GetExportDogu(mock.Anything).Return(nil, fmt.Errorf("testerror"))
 		mec := NewMultinodeExportModeController(ep)
 
 		rr := httptest.NewRecorder()
