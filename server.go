@@ -157,7 +157,6 @@ func (s *server) createEndpoints() http.Handler {
 	var configController *configuration.Controller
 
 	if !s.config.IsClassic {
-		slog.Error(fmt.Sprintf("%v", s.config))
 		systemInfoController, configController = s.createMultinodeControllers()
 	} else {
 		systemInfoController = &systeminfo.Controller{}
