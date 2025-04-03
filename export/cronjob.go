@@ -18,6 +18,7 @@ type CronJob struct {
 	namespace  string
 	doguClient DoguClientInterface
 	expr       string
+	taskr      *tasker.Tasker
 }
 
 func NewCronJob(expr string, doguClient DoguClientInterface, namespace string) *CronJob {
@@ -33,32 +34,37 @@ func (cj *CronJob) Run() error {
 		return fmt.Errorf("configured exporter cron expression '%s' is invalid", cj.expr)
 	}
 	verbose := os.Getenv(CronJobVerboseEnv) == "true"
-	taskr := tasker.New(tasker.Option{
+	cj.taskr = tasker.New(tasker.Option{
 		Verbose: verbose,
 	})
 
-	taskr.Task(cj.expr, func(ctx context.Context) (int, error) {
-		defer func() {
-			if err := recover(); err != nil {
-				slog.Error("Error while setting export mode: ", "err", err)
-			}
-		}()
+	cj.taskr.Task(cj.expr, func(ctx context.Context) (int, error) {
 		return cj.callCronJob()
 	})
 
-	taskr.Run()
+	cj.taskr.Run()
 
 	return nil
+}
+
+func (cj *CronJob) Stop() {
+	if cj.taskr != nil && cj.taskr.Running() {
+		cj.taskr.Stop()
+	}
 }
 
 /* this handles the actual exporter */
 func (cj *CronJob) callCronJob() (int, error) {
 	slog.Info("start export mode cronjob due to timetable ")
 	ctx := context.Background()
-	dogus, _ := cj.doguClient.List(ctx)
+	dogus, err := cj.doguClient.List(ctx)
+	if err != nil {
+		slog.Error("Error while getting dogu list", "err", err)
+		return 0, nil
+	}
 	for _, d := range dogus.Items {
 		if !d.Spec.ExportMode {
-			slog.Info(fmt.Sprintf("Activate export mode for dogu '%s'", d.Name))
+			slog.Info(fmt.Sprintf("Activate export mode for dogu '%s'", d.Spec.Name))
 			d.Spec.ExportMode = true
 			_, err := cj.doguClient.Update(ctx, &d)
 			if err != nil {
