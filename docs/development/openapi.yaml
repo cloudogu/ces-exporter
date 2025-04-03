@@ -153,12 +153,14 @@ paths:
               properties:
                 activate:
                   type: boolean
-                title:
-                  type: string
-                  description: Title for the maintenance-mode page. Only needed when activating the maintenance-mode.
-                text:
-                  type: string
-                  description: Text for the maintenance-mode page. Only needed when activating the maintenance-mode.
+                message:
+                  properties:
+                    title:
+                      type: string
+                      description: Title for the maintenance-mode page. Only needed when activating the maintenance-mode.
+                    text:
+                      type: string
+                      description: Text for the maintenance-mode page. Only needed when activating the maintenance-mode.
               required:
                 - activate
             examples:

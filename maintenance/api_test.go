@@ -56,8 +56,10 @@ func TestSetMaintenanceMode(t *testing.T) {
 	t.Run("should activate maintenance mode", func(t *testing.T) {
 		mmReq := &maintenanceModeRequest{
 			Activate: true,
-			Title:    "Test Title",
-			Text:     "Test Message!!!",
+			Message: Message{
+				Title: "Test Title",
+				Text:  "Test Message!!!",
+			},
 		}
 		body, err := json.Marshal(mmReq)
 		require.NoError(t, err)
@@ -82,8 +84,10 @@ func TestSetMaintenanceMode(t *testing.T) {
 	t.Run("should return internal server error", func(t *testing.T) {
 		mmReq := &maintenanceModeRequest{
 			Activate: false,
-			Title:    "Test Title",
-			Text:     "Test Message!!!",
+			Message: Message{
+				Title: "Test Title",
+				Text:  "Test Message!!!",
+			},
 		}
 		body, err := json.Marshal(mmReq)
 		require.NoError(t, err)
@@ -106,8 +110,10 @@ func TestSetMaintenanceMode(t *testing.T) {
 	t.Run("should deactivate maintenance mode", func(t *testing.T) {
 		mmReq := &maintenanceModeRequest{
 			Activate: false,
-			Title:    "Test Title",
-			Text:     "Test Message!!!",
+			Message: Message{
+				Title: "Test Title",
+				Text:  "Test Message!!!",
+			},
 		}
 		body, err := json.Marshal(mmReq)
 		require.NoError(t, err)

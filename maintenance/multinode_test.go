@@ -64,21 +64,25 @@ func TestMNBuildMaintenanceJSON(t *testing.T) {
 	t.Run("should build maintenance mode json", func(t *testing.T) {
 		mmReq := maintenanceModeRequest{
 			Activate: false,
-			Title:    "test",
-			Text:     "testmessage",
+			Message: Message{
+				Title: "test",
+				Text:  "testmessage",
+			},
 		}
 		status, _ := BuildMaintenanceJSON(mmReq)
-		require.Equal(t, status.String(), "{\"activate\":false,\"title\":\"test\",\"text\":\"testmessage\"}")
+		require.Equal(t, status.String(), "{\"title\":\"test\",\"text\":\"testmessage\"}")
 	})
 
 	t.Run("should build maintenance mode json with empty request", func(t *testing.T) {
 		mmReq := maintenanceModeRequest{
 			Activate: false,
-			Title:    "",
-			Text:     "",
+			Message: Message{
+				Title: "",
+				Text:  "",
+			},
 		}
 		status, _ := BuildMaintenanceJSON(mmReq)
-		require.Equal(t, status.String(), "{\"activate\":false,\"title\":\"\",\"text\":\"\"}")
+		require.Equal(t, status.String(), "{\"title\":\"\",\"text\":\"\"}")
 	})
 }
 
@@ -88,8 +92,10 @@ func TestMNDeactivateMaintenanceMode(t *testing.T) {
 		globalConfigRepo := repository.NewGlobalConfigRepository(configMaps)
 		mmReq := maintenanceModeRequest{
 			Activate: false,
-			Title:    "test",
-			Text:     "testmessage",
+			Message: Message{
+				Title: "test",
+				Text:  "testmessage",
+			},
 		}
 		configMaps.EXPECT().List(mock.Anything, mock.Anything).Return(&corev1.ConfigMapList{
 			Items: []corev1.ConfigMap{
@@ -114,8 +120,10 @@ func TestMNDeactivateMaintenanceMode(t *testing.T) {
 		globalConfigRepo := repository.NewGlobalConfigRepository(configMaps)
 		mmReq := maintenanceModeRequest{
 			Activate: false,
-			Title:    "test",
-			Text:     "testmessage",
+			Message: Message{
+				Title: "test",
+				Text:  "testmessage",
+			},
 		}
 		configMaps.EXPECT().List(mock.Anything, mock.Anything).Return(&corev1.ConfigMapList{
 			Items: []corev1.ConfigMap{
@@ -136,8 +144,10 @@ func TestMNDeactivateMaintenanceMode(t *testing.T) {
 		globalConfigRepo := repository.NewGlobalConfigRepository(configMaps)
 		mmReq := maintenanceModeRequest{
 			Activate: false,
-			Title:    "test",
-			Text:     "testmessage",
+			Message: Message{
+				Title: "test",
+				Text:  "testmessage",
+			},
 		}
 		configMaps.EXPECT().List(mock.Anything, mock.Anything).Return(&corev1.ConfigMapList{
 			Items: []corev1.ConfigMap{

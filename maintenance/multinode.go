@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/cloudogu/k8s-registry-lib/config"
-	"github.com/cloudogu/k8s-registry-lib/repository"
 	"log/slog"
 )
 
@@ -13,11 +12,17 @@ const (
 	maintenanceModeKey = "maintenance"
 )
 
-type MultinodeMaintenanceModeProvider struct {
-	globalConfigRepo *repository.GlobalConfigRepository
+type globalConfigRepo interface {
+	Get(ctx context.Context) (config.GlobalConfig, error)
+	Update(ctx context.Context, globalConfig config.GlobalConfig) (config.GlobalConfig, error)
+	Delete(ctx context.Context) error
 }
 
-func NewMultinodeMaintenanceModeProvider(repo *repository.GlobalConfigRepository) *MultinodeMaintenanceModeProvider {
+type MultinodeMaintenanceModeProvider struct {
+	globalConfigRepo globalConfigRepo
+}
+
+func NewMultinodeMaintenanceModeProvider(repo globalConfigRepo) *MultinodeMaintenanceModeProvider {
 	return &MultinodeMaintenanceModeProvider{globalConfigRepo: repo}
 }
 
@@ -81,7 +86,7 @@ BuildMaintenanceJSON
 results in this json format: {"title": "some title", "text": "some text"}
 */
 func BuildMaintenanceJSON(mReq maintenanceModeRequest) (config.Value, error) {
-	jsonConfig, err := json.Marshal(mReq)
+	jsonConfig, err := json.Marshal(mReq.Message)
 	if err != nil {
 		return "", fmt.Errorf("unable to create maintenance mode config json: %s", err)
 	}
