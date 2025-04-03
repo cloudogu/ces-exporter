@@ -36,7 +36,8 @@ type kubernetesClient interface {
 
 type exporterContext struct {
 	ecosystemClient v1AlphaClientInterface
-	doguClient      ecoSystemV2.EcoSystemV2Interface
+	doguClient      export.DoguClientInterface
+	serviceClient   export.ServiceClientInterface
 	client          kubernetesClient
 	config          core.Configuration
 	bclient         *core.BackupScheduleRuntimeClient
@@ -65,14 +66,19 @@ func newExporterContext(config core.Configuration) (*exporterContext, error) {
 		return nil, fmt.Errorf("failed to create k8s client: %w", err)
 	}
 
-	doguClient, err := ecoSystemV2.NewForConfig(clusterConfig)
+	dc, err := ecoSystemV2.NewForConfig(clusterConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dogu client: %w", err)
 	}
 
+	doguClient := export.NewDoguClient(config.Namespace, dc)
+
+	serviceClient := export.NewServiceClient(config.Namespace, client)
+
 	return &exporterContext{
 		ecosystemClient,
 		doguClient,
+		serviceClient,
 		client,
 		config,
 		bclient,
@@ -156,7 +162,7 @@ func (ec exporterContext) createServer() http.Handler {
 	)
 	systemInfoController := systeminfo.NewController(systemInfoProvider)
 
-	exportModeProvider := export.NewMultinodeExportModeProvider(ec.client, ec.config.Namespace, configMaps, ec.doguClient)
+	exportModeProvider := export.NewMultinodeExportModeProvider(ec.config.Namespace, configMaps, ec.doguClient, ec.serviceClient)
 	exportModeController := export.NewMultinodeExportModeController(exportModeProvider)
 
 	configurationProvider := configuration.NewMultinodeConfigurationProvider(ec.config.Namespace, sensitiveRepo, doguRepo, globalConfigRepo, doguVersionReg, ec.bclient)

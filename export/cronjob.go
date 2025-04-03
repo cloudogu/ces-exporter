@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"github.com/adhocore/gronx"
 	"github.com/adhocore/gronx/pkg/tasker"
-	ecoSystemV2 "github.com/cloudogu/k8s-dogu-operator/v3/api/ecoSystem"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"log/slog"
 	"os"
 )
@@ -18,11 +16,11 @@ type CronJobFunction func() (int, error)
 
 type CronJob struct {
 	namespace  string
-	doguClient ecoSystemV2.EcoSystemV2Interface
+	doguClient DoguClientInterface
 	expr       string
 }
 
-func NewCronJob(expr string, doguClient ecoSystemV2.EcoSystemV2Interface, namespace string) *CronJob {
+func NewCronJob(expr string, doguClient DoguClientInterface, namespace string) *CronJob {
 	return &CronJob{
 		namespace:  namespace,
 		doguClient: doguClient,
@@ -56,14 +54,15 @@ func (cj *CronJob) Run() error {
 /* this handles the actual exporter */
 func (cj *CronJob) callCronJob() (int, error) {
 	slog.Info("start export mode cronjob due to timetable ")
-	dogus, _ := cj.doguClient.Dogus(cj.namespace).List(context.Background(), metav1.ListOptions{})
+	ctx := context.Background()
+	dogus, _ := cj.doguClient.List(ctx)
 	for _, d := range dogus.Items {
 		if !d.Spec.ExportMode {
 			slog.Info(fmt.Sprintf("Activate export mode for dogu '%s'", d.Name))
 			d.Spec.ExportMode = true
-			_, err := cj.doguClient.Dogus(cj.namespace).Update(context.Background(), &d, metav1.UpdateOptions{})
+			_, err := cj.doguClient.Update(ctx, &d)
 			if err != nil {
-				slog.Error("Error while activating export mode", err)
+				slog.Error("Error while activating export mode", "err", err)
 			}
 		}
 	}
