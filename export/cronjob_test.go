@@ -2,6 +2,7 @@ package export
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	v2 "github.com/cloudogu/k8s-dogu-operator/v3/api/v2"
 	"github.com/stretchr/testify/mock"
@@ -34,7 +35,7 @@ func TestCallCronJob(t *testing.T) {
 		}, nil)
 		cronjob := NewCronJob(expr, doguClient, "ecosystem")
 
-		cronjob.callCronJob()
+		_, _ = cronjob.callCronJob(context.Background())
 		require.Contains(t, buf.String(), "start export mode cronjob due to timetable")
 	})
 	t.Run("call cronjob with dogus in export mode", func(t *testing.T) {
@@ -61,7 +62,7 @@ func TestCallCronJob(t *testing.T) {
 		}, nil)
 		cronjob := NewCronJob(expr, doguClient, "ecosystem")
 
-		_, _ = cronjob.callCronJob()
+		_, _ = cronjob.callCronJob(context.Background())
 
 		require.Contains(t, buf.String(), "start export mode cronjob due to timetable")
 		require.NotContains(t, buf.String(), "Activate export mode for dogu")
@@ -93,7 +94,7 @@ func TestCallCronJob(t *testing.T) {
 
 		cronjob := NewCronJob(expr, doguClient, "ecosystem")
 
-		_, _ = cronjob.callCronJob()
+		_, _ = cronjob.callCronJob(context.Background())
 		require.Contains(t, buf.String(), "start export mode cronjob due to timetable")
 		require.Contains(t, buf.String(), "Activate export mode for dogu 'test_A'")
 		require.NotContains(t, buf.String(), "Activate export mode for dogu 'test_B'")
@@ -125,7 +126,7 @@ func TestCallCronJob(t *testing.T) {
 
 		cronjob := NewCronJob(expr, doguClient, "ecosystem")
 
-		_, _ = cronjob.callCronJob()
+		_, _ = cronjob.callCronJob(context.Background())
 		require.Contains(t, buf.String(), "start export mode cronjob due to timetable")
 		require.Contains(t, buf.String(), "Activate export mode for dogu 'test_A'")
 		require.NotContains(t, buf.String(), "Activate export mode for dogu 'test_B'")
@@ -163,7 +164,9 @@ func TestRunCronJob(t *testing.T) {
 
 		_ = os.Setenv(CronJobVerboseEnv, "true")
 
-		go cronjob.Run()
+		go func() {
+			_ = cronjob.Run()
+		}()
 
 		time.Sleep(65 * time.Second) // slightly more than 1 minute
 
