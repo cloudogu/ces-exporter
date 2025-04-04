@@ -6,7 +6,7 @@ import (
 
 const apiKeyHeaderName = "X-CES-EXPORTER-API-KEY"
 
-func NewAuthMiddleware(config Configuration) func(next http.HandlerFunc) http.HandlerFunc {
+func NewAuthMiddleware(config *Configuration) func(next http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			apiKey := r.Header.Get(apiKeyHeaderName)

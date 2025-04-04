@@ -8,10 +8,13 @@ import (
 	"github.com/cloudogu/ces-exporter/export"
 	"github.com/cloudogu/ces-exporter/maintenance"
 	"github.com/cloudogu/ces-exporter/systeminfo"
+	libcore "github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/cesapp-lib/registry"
 	bup "github.com/cloudogu/k8s-backup-operator/pkg/api/v1"
 	componentEcoClient "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
 	libdogu "github.com/cloudogu/k8s-registry-lib/dogu"
 	"github.com/cloudogu/k8s-registry-lib/repository"
+	"go.etcd.io/etcd/client/v2"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"log"
@@ -25,6 +28,11 @@ import (
 	"time"
 )
 
+const (
+	regKeyApi = "/config/ces-exporter/authentication/api_key"
+	regKeySsh = "/config/ces-exporter/authentication/public_key"
+)
+
 type v1AlphaClientInterface interface {
 	componentEcoClient.ComponentV1Alpha1Interface
 }
@@ -36,7 +44,7 @@ type kubernetesClient interface {
 type server struct {
 	ecosystemClient v1AlphaClientInterface
 	client          kubernetesClient
-	config          core.Configuration
+	config          *core.Configuration
 	bclient         *core.BackupScheduleRuntimeClient
 }
 
@@ -66,14 +74,50 @@ func initServerForMultinode(config core.Configuration) (*server, error) {
 	return &server{
 		ecosystemClient,
 		client,
-		config,
+		&config,
 		bclient,
 	}, nil
 }
 
 func initServerForClassic(config core.Configuration) *server {
+	reg, err := registry.New(libcore.Registry{
+		Type:      "etcd",
+		Endpoints: []string{fmt.Sprintf("http://%s:4001", config.ClassicOnlyConfiguration.Fqdn)},
+		RetryPolicy: libcore.RetryPolicy{
+			Type:          "constant",
+			Interval:      5,
+			MaxRetryCount: 3,
+		},
+	})
+	if err != nil {
+		panic(err.Error())
+	}
+	apiKeyWatcher := make(chan *client.Response)
+	sshKeyWatcher := make(chan *client.Response)
+
+	go func() {
+		go func() {
+			for event := range apiKeyWatcher {
+				slog.Info("Updating api-key because registry config has changed...")
+				config.ApiKey = event.Node.Value
+			}
+		}()
+
+		reg.RootConfig().Watch(context.Background(), regKeyApi, false, apiKeyWatcher)
+	}()
+
+	go func() {
+		go func() {
+			for event := range sshKeyWatcher {
+				fmt.Println(event.Node.Value)
+			}
+		}()
+
+		reg.RootConfig().Watch(context.Background(), regKeySsh, false, sshKeyWatcher)
+	}()
+
 	return &server{
-		config: config,
+		config: &config,
 	}
 }
 
@@ -120,6 +164,7 @@ func (s *server) run(ctx context.Context) error {
 		}
 	}()
 	wg.Wait()
+
 	return nil
 }
 

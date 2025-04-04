@@ -7,22 +7,26 @@ import (
 )
 
 const (
-	modeClassic = "classic"
+	logLevelEnv  = "LOG_LEVEL"
+	basePathEnv  = "BASE_PATH"
+	apiKeyEnv    = "API_KEY"
+	namespaceEnv = "NAMESPACE"
+	fqdnEnv      = "FQDN"
+	errorFormat  = "environment variable %s is not set"
+	modeClassic  = "classic"
 )
 
-const logLevelEnv = "LOG_LEVEL"
-const basePathEnv = "BASE_PATH"
-const apiKeyEnv = "API_KEY"
-const namespaceEnv = "NAMESPACE"
-
-const errorFormat = "environment variable %s is not set"
-
 type Configuration struct {
-	LogLevel  string
-	BasePath  string
-	ApiKey    string
-	Namespace string
-	IsClassic bool
+	LogLevel                 string
+	BasePath                 string
+	ApiKey                   string
+	Namespace                string
+	IsClassic                bool
+	ClassicOnlyConfiguration ClassicOnlyConfiguration
+}
+
+type ClassicOnlyConfiguration struct {
+	Fqdn string
 }
 
 func ReadConfigFromEnv() (Configuration, error) {
@@ -44,12 +48,19 @@ func ReadConfigFromEnv() (Configuration, error) {
 
 	conf.ApiKey = os.Getenv(apiKeyEnv)
 	if conf.ApiKey == "" {
-		return conf, fmt.Errorf(errorFormat, apiKeyEnv)
+		conf.ApiKey = "1"
+		//return conf, fmt.Errorf(errorFormat, apiKeyEnv)
 	}
 
 	conf.Namespace = os.Getenv(namespaceEnv)
 	if conf.Namespace == "" && !conf.IsClassic {
 		return conf, fmt.Errorf(errorFormat, namespaceEnv)
+	}
+
+	if conf.IsClassic {
+		conf.ClassicOnlyConfiguration = ClassicOnlyConfiguration{
+			Fqdn: os.Getenv(fqdnEnv),
+		}
 	}
 
 	return conf, nil

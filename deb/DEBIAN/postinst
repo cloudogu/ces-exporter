@@ -12,12 +12,8 @@ echo "==========================================================================
 installed_version=$(dpkg-query -W -f='${Version}' ces-exporter)
 echo "Installed version: $installed_version"
 
-function etcdctl(){
-  echo "result"
-}
-
-API_KEY="$(etcdctl get config/ces-exporter/authentication/api_key)"
-PUBLIC_KEY="$(etcdctl get config/ces-exporter/authentication/public_key)"
-
 docker rm -f ces-exporter
-docker run -e PUBLIC_KEY="${PUBLIC_KEY}" -e API_KEY="${API_KEY}" --name ces-exporter --restart=always -d "ces-exporter:${installed_version}"
+docker run -v /var/lib/ces:/data -v /etc/ces/node_master:/etc/ces/node_master --net cesnet1 --name ces-exporter --restart=always -d "ces-exporter:${installed_version}"
+EXPORTER_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ces-exporter)
+etcdctl set services/mailhog/registrator:exporter:8025 "{\"name\":\"ces-exporter\",\"service\":\"${EXPORTER_IP}:8080\",\"port\":\"8080\",\"tags\":[\"webapp\"],\"healthStatus\":\"healthy\",\"attributes\":{}}"
+docker restart nginx || true
