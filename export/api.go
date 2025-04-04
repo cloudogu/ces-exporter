@@ -25,6 +25,7 @@ func (m *MultinodeExportModeController) GetExportDogu(w http.ResponseWriter, r *
 	doguExp, err := m.provider.GetExportDogu(r.Context())
 	if err != nil {
 		core.InternalServerErrorResponse(w, fmt.Errorf("failed to get export dogu: %w", err))
+		return
 	}
 
 	core.JSON(w, http.StatusOK, doguExp)
@@ -40,6 +41,7 @@ func (m *MultinodeExportModeController) SetExportDogu(w http.ResponseWriter, r *
 	doguExp, err := m.provider.SetExportDogu(doguName, r.Context())
 	if err != nil {
 		core.InternalServerErrorResponse(w, fmt.Errorf("failed to set export dogu: %w", err))
+		return
 	}
 
 	core.JSON(w, http.StatusOK, doguExp)

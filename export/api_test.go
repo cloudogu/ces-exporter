@@ -15,8 +15,7 @@ import (
 
 func TestGetExportDogu(t *testing.T) {
 	t.Run("should return get export dogu", func(t *testing.T) {
-		req, err := http.NewRequest("GET", "/export/myDogu", nil)
-		req.SetPathValue("doguName", "myDogu")
+		req, err := http.NewRequest("GET", "/export/dogu", nil)
 		require.NoError(t, err)
 
 		dogu := DoguExport{
@@ -39,8 +38,7 @@ func TestGetExportDogu(t *testing.T) {
 	})
 
 	t.Run("should throw internal server error", func(t *testing.T) {
-		req, err := http.NewRequest("GET", "/export/myDogu", nil)
-		req.SetPathValue("doguName", "myDogu")
+		req, err := http.NewRequest("GET", "/export/dogu", nil)
 		require.NoError(t, err)
 
 		ep := NewMockProvider(t)
@@ -52,58 +50,24 @@ func TestGetExportDogu(t *testing.T) {
 
 		handler.ServeHTTP(rr, req)
 
-		requireHttpError(t, 500, "testerror", rr)
-	})
-
-	t.Run("should return bad request when doguName is empty", func(t *testing.T) {
-		req, err := http.NewRequest("GET", "/export/myDogu", nil)
-		req.SetPathValue("doguName", "")
-		require.NoError(t, err)
-
-		ep := NewMockProvider(t)
-		mec := NewMultinodeExportModeController(ep)
-
-		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(mec.GetExportDogu)
-
-		handler.ServeHTTP(rr, req)
-
-		require.Equal(t, http.StatusBadRequest, rr.Code)
-		require.Equal(t, "{\"code\":400,\"message\":\"doguName must not be empty\"}\n", rr.Body.String())
+		requireHttpError(t, http.StatusInternalServerError, "failed to get export dogu: testerror", rr)
 	})
 }
 
 func TestSetExportDogu(t *testing.T) {
 	t.Run("should return set export dogu", func(t *testing.T) {
-		req, err := http.NewRequest("POST", "/export/myDogu", nil)
+		req, err := http.NewRequest("POST", "/export/dogu", nil)
 		req.SetPathValue("doguName", "otherDogu")
 		require.NoError(t, err)
 
 		dogu := DoguExport{
 			Dogu:         "otherDogu",
-			VolumePath:   "",
-			ExporterPort: 0,
+			VolumePath:   "otherDogu-data",
+			ExporterPort: 7022,
 		}
 
 		ep := NewMockProvider(t)
-		ep.EXPECT().GetExportDogu(mock.Anything).Return(&dogu, nil)
-		mec := NewMultinodeExportModeController(ep)
-
-		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(mec.SetExportDogu)
-
-		handler.ServeHTTP(rr, req)
-
-		requireHttpError(t, 500, "testerror", rr)
-	})
-
-	t.Run("should throw internal server error", func(t *testing.T) {
-		req, err := http.NewRequest("POST", "/export/myDogu", nil)
-		req.SetPathValue("doguName", "otherDogu")
-		require.NoError(t, err)
-
-		ep := NewMockProvider(t)
-		ep.EXPECT().GetExportDogu(mock.Anything).Return(nil, fmt.Errorf("testerror"))
+		ep.EXPECT().SetExportDogu(mock.Anything, mock.Anything).Return(&dogu, nil)
 		mec := NewMultinodeExportModeController(ep)
 
 		rr := httptest.NewRecorder()
@@ -112,11 +76,30 @@ func TestSetExportDogu(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		require.Equal(t, http.StatusOK, rr.Code)
-		require.Equal(t, "{\"dogu\":\"otherDogu\",\"volumePath\":\"\",\"exporterPort\":0}\n", rr.Body.String())
+		require.Equal(t, "{\"dogu\":\"otherDogu\",\"volumePath\":\"otherDogu-data\",\"exporterPort\":7022}\n", rr.Body.String())
+
+	})
+
+	t.Run("should throw internal server error", func(t *testing.T) {
+		req, err := http.NewRequest("POST", "/export/dogu", nil)
+		req.SetPathValue("doguName", "otherDogu")
+		require.NoError(t, err)
+
+		ep := NewMockProvider(t)
+		ep.EXPECT().SetExportDogu(mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
+		mec := NewMultinodeExportModeController(ep)
+
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(mec.SetExportDogu)
+
+		handler.ServeHTTP(rr, req)
+
+		require.Equal(t, http.StatusInternalServerError, rr.Code)
+		requireHttpError(t, 500, "failed to set export dogu: testerror", rr)
 	})
 
 	t.Run("should return bad request when doguName is empty", func(t *testing.T) {
-		req, err := http.NewRequest("POST", "/export/myDogu", nil)
+		req, err := http.NewRequest("POST", "/export/dogu", nil)
 		req.SetPathValue("doguName", "")
 		require.NoError(t, err)
 
