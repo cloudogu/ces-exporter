@@ -133,20 +133,46 @@ func TestSetExportDogu(t *testing.T) {
 	})
 }
 
-// func TestGetExportMode(t *testing.T) {
-// 	t.Run("should return get export mode", func(t *testing.T) {
-// 		req, err := http.NewRequest("GET", "/export/mode", nil)
-// 		require.NoError(t, err)
-//
-// 		rr := httptest.NewRecorder()
-// 		handler := http.HandlerFunc(GetExportMode)
-//
-// 		handler.ServeHTTP(rr, req)
-//
-// 		require.Equal(t, http.StatusOK, rr.Code)
-// 		require.Equal(t, "{\"isActive\":false}\n", rr.Body.String())
-// 	})
-// }
+func TestGetExportMode(t *testing.T) {
+	t.Run("should return get export mode", func(t *testing.T) {
+		req, err := http.NewRequest("GET", "/export/mode", nil)
+		require.NoError(t, err)
+
+		exportMode := ExportModeStatus{
+			IsActive: true,
+		}
+
+		ep := NewMockProvider(t)
+		ep.EXPECT().GetExportMode(mock.Anything).Return(&exportMode, nil)
+
+		mec := NewMultinodeExportModeController(ep)
+
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(mec.GetExportMode)
+
+		handler.ServeHTTP(rr, req)
+
+		require.Equal(t, http.StatusOK, rr.Code)
+		require.Equal(t, "{\"isActive\":true}\n", rr.Body.String())
+	})
+	t.Run("should return get error on export mode", func(t *testing.T) {
+		req, err := http.NewRequest("GET", "/export/mode", nil)
+		require.NoError(t, err)
+
+		ep := NewMockProvider(t)
+		ep.EXPECT().GetExportMode(mock.Anything).Return(nil, fmt.Errorf("testerror"))
+
+		mec := NewMultinodeExportModeController(ep)
+
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(mec.GetExportMode)
+
+		handler.ServeHTTP(rr, req)
+
+		require.Equal(t, http.StatusInternalServerError, rr.Code)
+		require.Equal(t, "{\"code\":500,\"message\":\"testerror\"}\n", rr.Body.String())
+	})
+}
 
 func requireHttpError(t *testing.T, code int, msg string, recorder *httptest.ResponseRecorder) {
 	t.Helper()
