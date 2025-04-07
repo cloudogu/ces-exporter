@@ -167,8 +167,9 @@ paths:
               activate:
                 value:
                   activate: true
-                  title: "Migration in progress"
-                  text: "This CES is migrating to a new instance"
+                  message:
+                    title: "Migration in progress"
+                    text: "This CES g to a new instance"
               deactivate:
                 value:
                   activate: false
