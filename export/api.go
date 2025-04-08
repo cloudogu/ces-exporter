@@ -24,7 +24,7 @@ func NewMultinodeExportModeController(provider Provider) *MultinodeExportModeCon
 func (m *MultinodeExportModeController) GetExportDogu(w http.ResponseWriter, r *http.Request) {
 	doguExp, err := m.provider.GetExportDogu(r.Context())
 	if err != nil {
-		core.InternalServerErrorResponse(w, fmt.Errorf("failed to get export dogu: %w", err))
+		core.ErrorResponse(w, http.StatusNotFound, fmt.Sprintf("failed to get export dogu: %s", err.Error()))
 		return
 	}
 

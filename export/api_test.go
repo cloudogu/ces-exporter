@@ -37,7 +37,7 @@ func TestGetExportDogu(t *testing.T) {
 		require.Equal(t, "{\"dogu\":\"myDogu\",\"volumePath\":\"\",\"exporterPort\":0}\n", rr.Body.String())
 	})
 
-	t.Run("should throw internal server error", func(t *testing.T) {
+	t.Run("should throw 404 server error", func(t *testing.T) {
 		req, err := http.NewRequest("GET", "/export/dogu", nil)
 		require.NoError(t, err)
 
@@ -50,7 +50,7 @@ func TestGetExportDogu(t *testing.T) {
 
 		handler.ServeHTTP(rr, req)
 
-		requireHttpError(t, http.StatusInternalServerError, "failed to get export dogu: testerror", rr)
+		requireHttpError(t, http.StatusNotFound, "failed to get export dogu: testerror", rr)
 	})
 }
 
