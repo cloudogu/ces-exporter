@@ -16,11 +16,17 @@ rules:
   - apiGroups:
       - ""
     resources:
-      - configmaps
       - secrets
+      - configmaps
     verbs:
       - list
       - get
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - update
   - apiGroups:
       - ""
     resources:

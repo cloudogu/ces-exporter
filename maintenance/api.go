@@ -1,33 +1,50 @@
 package maintenance
 
 import (
+	"context"
 	"fmt"
 	"github.com/cloudogu/ces-exporter/core"
 	"net/http"
 )
 
-func GetMaintenanceMode(w http.ResponseWriter, r *http.Request) {
-	status := &maintenanceModeStatus{
-		IsActive: false,
-	}
+type Provider interface {
+	SetMaintenanceMode(mReq maintenanceModeRequest, ctx context.Context) (*MaintenanceModeStatus, error)
+	GetMaintenanceMode(ctx context.Context) (*MaintenanceModeStatus, error)
+}
 
-	//TODO implement me
+type Controller struct {
+	provider Provider
+}
+
+func NewController(provider Provider) *Controller {
+	return &Controller{provider: provider}
+}
+
+// GetMaintenanceMode checks if the maintenance mode is currently active
+func (m *Controller) GetMaintenanceMode(w http.ResponseWriter, r *http.Request) {
+	status, err := m.provider.GetMaintenanceMode(r.Context())
+	if err != nil {
+		core.InternalServerErrorResponse(w, err)
+		return
+	}
 
 	core.JSON(w, http.StatusOK, status)
 }
 
-func SetMaintenanceMode(w http.ResponseWriter, r *http.Request) {
+// SetMaintenanceMode activates or deactivates the maintenance mode bases on the given activate parameter
+func (m *Controller) SetMaintenanceMode(w http.ResponseWriter, r *http.Request) {
 	mReq, err := core.Decode[maintenanceModeRequest](r)
 	if err != nil {
 		core.BadRequest(w, fmt.Sprintf("error decoding maintenance-mode request: %v", err))
 		return
 	}
 
-	status := &maintenanceModeStatus{
-		IsActive: mReq.Activate,
-	}
+	status, err := m.provider.SetMaintenanceMode(mReq, r.Context())
 
-	//TODO implement me
+	if err != nil {
+		core.InternalServerErrorResponse(w, err)
+		return
+	}
 
 	core.JSON(w, http.StatusOK, status)
 }

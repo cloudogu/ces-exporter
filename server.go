@@ -168,7 +168,7 @@ func (s *server) run(ctx context.Context) error {
 	return nil
 }
 
-func (s *server) createMultinodeControllers() (*systeminfo.Controller, *configuration.Controller) {
+func (s *server) createMultinodeControllers() (*systeminfo.Controller, *configuration.Controller, *maintenance.Controller) {
 	configMaps := s.client.CoreV1().ConfigMaps(s.config.Namespace)
 	secrets := s.client.CoreV1().Secrets(s.config.Namespace)
 	globalConfigRepo := repository.NewGlobalConfigRepository(configMaps)
@@ -194,18 +194,23 @@ func (s *server) createMultinodeControllers() (*systeminfo.Controller, *configur
 	)
 	configController := configuration.NewController(configurationProvider)
 
-	return systemInfoController, configController
+	maintenanceModeProvider := maintenance.NewMultinodeProvider(globalConfigRepo)
+	maintenanceModeController := maintenance.NewController(maintenanceModeProvider)
+
+	return systemInfoController, configController, maintenanceModeController
 }
 
 func (s *server) createEndpoints() http.Handler {
 	var systemInfoController *systeminfo.Controller
 	var configController *configuration.Controller
+	var maintenanceModeController *maintenance.Controller
 
 	if !s.config.IsClassic {
-		systemInfoController, configController = s.createMultinodeControllers()
+		systemInfoController, configController, maintenanceModeController = s.createMultinodeControllers()
 	} else {
 		systemInfoController = &systeminfo.Controller{}
 		configController = &configuration.Controller{}
+		maintenanceModeController = &maintenance.Controller{}
 		slog.Error("TODO: Implement classic ces controllers")
 	}
 
@@ -222,8 +227,18 @@ func (s *server) createEndpoints() http.Handler {
 	rootHandler.HandleFunc("POST /export/dogu/{doguName}", authMiddleware(export.SetExportDogu))
 	rootHandler.HandleFunc("GET /export/mode", authMiddleware(export.GetExportMode))
 
-	rootHandler.HandleFunc("GET /maintenance/mode", authMiddleware(maintenance.GetMaintenanceMode))
-	rootHandler.HandleFunc("POST /maintenance/mode", authMiddleware(maintenance.SetMaintenanceMode))
+	rootHandler.HandleFunc("GET /health", core.Health)
+
+	rootHandler.HandleFunc("GET /system-info", authMiddleware(systemInfoController.GetSystemInfo))
+
+	rootHandler.HandleFunc("GET /configuration", authMiddleware(configController.GetConfig))
+
+	rootHandler.HandleFunc("GET /export/dogu/{doguName}", authMiddleware(export.GetExportDogu))
+	rootHandler.HandleFunc("POST /export/dogu/{doguName}", authMiddleware(export.SetExportDogu))
+	rootHandler.HandleFunc("GET /export/mode", authMiddleware(export.GetExportMode))
+
+	rootHandler.HandleFunc("GET /maintenance/mode", authMiddleware(maintenanceModeController.GetMaintenanceMode))
+	rootHandler.HandleFunc("POST /maintenance/mode", authMiddleware(maintenanceModeController.SetMaintenanceMode))
 
 	router := http.NewServeMux()
 	router.Handle(fmt.Sprintf("%s/", s.config.BasePath), http.StripPrefix(s.config.BasePath, rootHandler))

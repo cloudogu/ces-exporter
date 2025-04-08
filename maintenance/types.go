@@ -1,11 +1,15 @@
 package maintenance
 
 type maintenanceModeRequest struct {
-	Activate bool   `json:"activate"`
-	Title    string `json:"title"`
-	Message  string `json:"message"`
+	Activate bool    `json:"activate"`
+	Message  Message `json:"message"`
 }
 
-type maintenanceModeStatus struct {
+type Message struct {
+	Title string `json:"title"`
+	Text  string `json:"text"`
+}
+
+type MaintenanceModeStatus struct {
 	IsActive bool `json:"isActive"`
 }

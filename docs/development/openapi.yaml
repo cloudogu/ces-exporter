@@ -153,20 +153,24 @@ paths:
               properties:
                 activate:
                   type: boolean
-                title:
-                  type: string
-                  description: Title for the maintenance-mode page. Only needed when activating the maintenance-mode.
                 message:
-                  type: string
-                  description: Message for the maintenance-mode page. Only needed when activating the maintenance-mode.
+                  properties:
+                    message:
+                      title:
+                        type: string
+                        description: Title for the maintenance-mode page. Only needed when activating the maintenance-mode.
+                      text:
+                        type: string
+                        description: Text for the maintenance-mode page. Only needed when activating the maintenance-mode.
               required:
                 - activate
             examples:
               activate:
                 value:
                   activate: true
-                  title: "Migration in progress"
-                  message: "This CES is migrating to a new instance"
+                  message:
+                    title: "Migration in progress"
+                    text: "This CES g to a new instance"
               deactivate:
                 value:
                   activate: false
