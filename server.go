@@ -30,8 +30,10 @@ import (
 )
 
 const (
-	regKeyApi = "/config/ces-exporter/authentication/api_key"
-	regKeySsh = "/config/ces-exporter/authentication/public_key"
+	regKeyApi      = "/config/ces-exporter/authentication/api_key"
+	regKeySsh      = "/config/ces-exporter/authentication/public_key"
+	sshKeyFileMode = fs.FileMode(0600)
+	authorizedKeys = "/root/.ssh/authorized_keys"
 )
 
 type v1AlphaClientInterface interface {
@@ -110,6 +112,13 @@ func watchApiKeyConfig(reg registry.Registry, config *core.Configuration) {
 	apiKeyWatcher := make(chan *client.Response)
 
 	go func() {
+		v, err := reg.RootConfig().Get(regKeyApi)
+		if err != nil {
+			slog.Error(err.Error())
+		}
+
+		config.ApiKey = v
+
 		go func() {
 			for event := range apiKeyWatcher {
 				slog.Info("Updating api-key because registry config has changed...")
@@ -121,20 +130,29 @@ func watchApiKeyConfig(reg registry.Registry, config *core.Configuration) {
 	}()
 }
 
+func writeAuthorizedKey(v string) {
+	slog.Info(fmt.Sprintf("The authroized ssz public key has changed to %s", v))
+	err := os.WriteFile(authorizedKeys, []byte(v), sshKeyFileMode)
+	if err != nil {
+		slog.Error(fmt.Sprintf("Could not write changed ssh key to file: %s", err.Error()))
+	} else {
+		slog.Info("Successfully wrote new ssh key to authorized_keys file...")
+	}
+}
+
 func watchSshKeyConfig(reg registry.Registry) {
 	sshKeyWatcher := make(chan *client.Response)
 
 	go func() {
+		v, err := reg.RootConfig().Get(regKeySsh)
+		if err != nil {
+			slog.Error(err.Error())
+		}
+		writeAuthorizedKey(v)
+
 		go func() {
 			for event := range sshKeyWatcher {
-				value := event.Node.Value
-				slog.Info(fmt.Sprintf("The authroized ssz public key has changed to %s", value))
-				err := os.WriteFile("/root/.ssh/authorized_keys", []byte(event.Node.Value), fs.FileMode(0600))
-				if err != nil {
-					slog.Error(fmt.Sprintf("Could not write changed ssh key to file: %s", err.Error()))
-				} else {
-					slog.Info("Successfully wrote new ssh key to authorized_keys file...")
-				}
+				writeAuthorizedKey(event.Node.Value)
 			}
 		}()
 
