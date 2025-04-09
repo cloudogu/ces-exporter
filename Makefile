@@ -48,7 +48,7 @@ $(DEBIAN_CONTENT_DIR)/control/postrm: $(DEBIAN_CONTENT_DIR)/control
 .PHONY: prepare-classic-docker
 prepare-classic-docker:
 	echo "Classic docker build for ces-exporter:${VERSION}"
-	mkdir -p ./deb/tmp
+	mkdir -p ${DEBIAN_CONTENT_DIR}/data/tmp/
 	rm -f ${DEBIAN_CONTENT_DIR}/data/tmp/exporter-image.tar
 	docker build -t ${IMAGE} --target classic .
 	docker image save -o ${DEBIAN_CONTENT_DIR}/data/tmp/exporter-image.tar ${IMAGE}
