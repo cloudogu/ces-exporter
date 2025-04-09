@@ -40,7 +40,8 @@ COPY --from=builder /workspace/target/ces-exporter .
 
 RUN apk update && apk upgrade && \
   apk --no-cache add bash openssh rsync nfs-utils && \
-  ssh-keygen -A && sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+  ssh-keygen -A && sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+  mkdir -p /root/.ssh && chmod -R 700 /root && chmod -R 600 /root/.ssh
 
 EXPOSE 8080
 

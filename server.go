@@ -15,6 +15,7 @@ import (
 	libdogu "github.com/cloudogu/k8s-registry-lib/dogu"
 	"github.com/cloudogu/k8s-registry-lib/repository"
 	"go.etcd.io/etcd/client/v2"
+	"io/fs"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"log"
@@ -66,21 +67,35 @@ func initServerForMultinode(config core.Configuration) (*server, error) {
 		return nil, fmt.Errorf("failed to create config client: %w", err)
 	}
 
-	client, err := kubernetes.NewForConfig(clusterConfig)
+	cl, err := kubernetes.NewForConfig(clusterConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create k8s client: %w", err)
 	}
 
 	return &server{
 		ecosystemClient,
-		client,
+		cl,
 		&config,
 		bclient,
 	}, nil
 }
 
 func initServerForClassic(config core.Configuration) *server {
-	reg, err := registry.New(libcore.Registry{
+	reg, err := createRegistry(config)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	watchApiKeyConfig(reg, &config)
+	watchSshKeyConfig(reg)
+
+	return &server{
+		config: &config,
+	}
+}
+
+func createRegistry(config core.Configuration) (registry.Registry, error) {
+	return registry.New(libcore.Registry{
 		Type:      "etcd",
 		Endpoints: []string{fmt.Sprintf("http://%s:4001", config.ClassicOnlyConfiguration.Fqdn)},
 		RetryPolicy: libcore.RetryPolicy{
@@ -89,11 +104,10 @@ func initServerForClassic(config core.Configuration) *server {
 			MaxRetryCount: 3,
 		},
 	})
-	if err != nil {
-		panic(err.Error())
-	}
+}
+
+func watchApiKeyConfig(reg registry.Registry, config *core.Configuration) {
 	apiKeyWatcher := make(chan *client.Response)
-	sshKeyWatcher := make(chan *client.Response)
 
 	go func() {
 		go func() {
@@ -105,20 +119,27 @@ func initServerForClassic(config core.Configuration) *server {
 
 		reg.RootConfig().Watch(context.Background(), regKeyApi, false, apiKeyWatcher)
 	}()
+}
+
+func watchSshKeyConfig(reg registry.Registry) {
+	sshKeyWatcher := make(chan *client.Response)
 
 	go func() {
 		go func() {
 			for event := range sshKeyWatcher {
-				fmt.Println(event.Node.Value)
+				value := event.Node.Value
+				slog.Info(fmt.Sprintf("The authroized ssz public key has changed to %s", value))
+				err := os.WriteFile("/root/.ssh/authorized_keys", []byte(event.Node.Value), fs.FileMode(0600))
+				if err != nil {
+					slog.Error(fmt.Sprintf("Could not write changed ssh key to file: %s", err.Error()))
+				} else {
+					slog.Info("Successfully wrote new ssh key to authorized_keys file...")
+				}
 			}
 		}()
 
 		reg.RootConfig().Watch(context.Background(), regKeySsh, false, sshKeyWatcher)
 	}()
-
-	return &server{
-		config: &config,
-	}
 }
 
 func newServer(config core.Configuration) (*server, error) {
@@ -217,16 +238,6 @@ func (s *server) createEndpoints() http.Handler {
 	authMiddleware := core.NewAuthMiddleware(s.config)
 
 	rootHandler := http.NewServeMux()
-	rootHandler.HandleFunc("GET /health", core.Health)
-
-	rootHandler.HandleFunc("GET /system-info", authMiddleware(systemInfoController.GetSystemInfo))
-
-	rootHandler.HandleFunc("GET /configuration", authMiddleware(configController.GetConfig))
-
-	rootHandler.HandleFunc("GET /export/dogu/{doguName}", authMiddleware(export.GetExportDogu))
-	rootHandler.HandleFunc("POST /export/dogu/{doguName}", authMiddleware(export.SetExportDogu))
-	rootHandler.HandleFunc("GET /export/mode", authMiddleware(export.GetExportMode))
-
 	rootHandler.HandleFunc("GET /health", core.Health)
 
 	rootHandler.HandleFunc("GET /system-info", authMiddleware(systemInfoController.GetSystemInfo))

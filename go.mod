@@ -9,6 +9,7 @@ require (
 	github.com/cloudogu/k8s-component-operator v1.7.0
 	github.com/cloudogu/k8s-registry-lib v0.5.1
 	github.com/stretchr/testify v1.10.0
+	go.etcd.io/etcd/client/v2 v2.305.17
 	k8s.io/api v0.32.3
 	k8s.io/apimachinery v0.32.3
 	k8s.io/client-go v0.32.3
@@ -128,7 +129,6 @@ require (
 	github.com/xlab/treeprint v1.2.0 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.21 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.21 // indirect
-	go.etcd.io/etcd/client/v2 v2.305.17 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.58.0 // indirect
 	go.opentelemetry.io/otel v1.33.0 // indirect
