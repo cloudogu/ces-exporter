@@ -1,6 +1,6 @@
 ARTIFACT_ID=ces-exporter
 MAKEFILES_VERSION=9.8.0
-VERSION=0.0.1
+VERSION=0.0.1-dev
 
 GOTAG=1.24.1
 MOCKERY_VERSION=v2.53.0
@@ -20,7 +20,7 @@ IMAGE_IMPORT_TARGET=image-import
 IMAGE=ces-exporter:${VERSION}
 
 include build/make/variables.mk
-PREPARE_PACKAGE=$(DEBIAN_CONTENT_DIR)/control/postinst prepare-classic-docker
+PREPARE_PACKAGE=$(DEBIAN_CONTENT_DIR)/control/postinst $(DEBIAN_CONTENT_DIR)/control/postrm prepare-classic-docker
 
 ADDITIONAL_CLEAN=clean_charts
 clean_charts:
@@ -37,9 +37,13 @@ include build/make/release.mk
 include build/make/self-update.mk
 include build/make/k8s-component.mk
 include build/make/package-debian.mk
+include build/make/deploy-debian.mk
 
 $(DEBIAN_CONTENT_DIR)/control/postinst: $(DEBIAN_CONTENT_DIR)/control
 	@install -p -m 0755 $(WORKDIR)/deb/DEBIAN/postinst $@
+
+$(DEBIAN_CONTENT_DIR)/control/postrm: $(DEBIAN_CONTENT_DIR)/control
+	@install -p -m 0755 $(WORKDIR)/deb/DEBIAN/postrm $@
 
 .PHONY: prepare-classic-docker
 prepare-classic-docker:

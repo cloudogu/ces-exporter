@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# The postrm script should not fail, as this could lead to a non-deletable package. Disable all exit options.
+set +o errexit
+set +o nounset
+set +o pipefail
+
+docker rm -f ces-exporter
+docker images "ces-exporter" --format "{{.Repository}}:{{.Tag}}" | xargs -r docker rmi -f
+
+sudo ufw delete allow 7022

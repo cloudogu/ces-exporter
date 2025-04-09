@@ -5,15 +5,13 @@ set -o pipefail
 
 docker image load -i /tmp/exporter-image.tar
 rm -f /tmp/exporter-image.tar
-echo "================================================================================================================"
-echo "===============================================================================================================!"
-echo "================================================================================================================"
 
 installed_version=$(dpkg-query -W -f='${Version}' ces-exporter)
-echo "Installed version: $installed_version"
 
 docker rm -f ces-exporter
-docker run -v /var/lib/ces:/data -v /etc/ces/node_master:/etc/ces/node_master --net cesnet1 --name ces-exporter --restart=always -d "ces-exporter:${installed_version}"
+docker run -p 7022:22 -v /var/lib/ces:/data -v /etc/ces/node_master:/etc/ces/node_master --net cesnet1 --name ces-exporter --restart=always -d "ces-exporter:${installed_version}"
 EXPORTER_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ces-exporter)
 etcdctl set services/mailhog/registrator:exporter:8025 "{\"name\":\"ces-exporter\",\"service\":\"${EXPORTER_IP}:8080\",\"port\":\"8080\",\"tags\":[\"webapp\"],\"healthStatus\":\"healthy\",\"attributes\":{}}"
 docker restart nginx || true
+
+sudo ufw allow 7022 || true
