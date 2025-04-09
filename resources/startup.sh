@@ -17,13 +17,6 @@ echo "                       'V/(/////////////////////////////V'      "
 
 echo "Preparing public-key..."
 
-#mkdir -p /root/.ssh
-#echo "${PUBLIC_KEY}" > /root/.ssh/id_rsa.pub
-#echo "${PUBLIC_KEY}" > /root/.ssh/authorized_keys
-#chown -R root:root /root/.ssh
-#chmod -R 700 /root
-#chmod -R 600 /root/.ssh/*
-
 FQDN="$(cat /etc/ces/node_master)"
 export FQDN
 
