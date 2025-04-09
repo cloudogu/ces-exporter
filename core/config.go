@@ -48,8 +48,7 @@ func ReadConfigFromEnv() (Configuration, error) {
 
 	conf.ApiKey = os.Getenv(apiKeyEnv)
 	if conf.ApiKey == "" {
-		conf.ApiKey = "1"
-		//return conf, fmt.Errorf(errorFormat, apiKeyEnv)
+		return conf, fmt.Errorf(errorFormat, apiKeyEnv)
 	}
 
 	conf.Namespace = os.Getenv(namespaceEnv)

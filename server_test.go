@@ -22,7 +22,7 @@ func Test_createServer(t *testing.T) {
 	exCtx := server{
 		ecosystemClient: ecosystemClient,
 		client:          client,
-		config:          conf,
+		config:          &conf,
 	}
 	router := exCtx.createEndpoints()
 	require.NotNil(t, router)
