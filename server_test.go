@@ -7,9 +7,11 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.etcd.io/etcd/client/v2"
+	"k8s.io/client-go/rest"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"testing"
 	"time"
 )
@@ -71,6 +73,15 @@ func TestNewServer(t *testing.T) {
 	})
 
 	t.Run("will init for multinode", func(t *testing.T) {
+		// override default controller method to retrieve a kube config
+		oldGetConfigDelegate := ctrl.GetConfig
+		defer func() {
+			ctrl.GetConfig = oldGetConfigDelegate
+		}()
+		ctrl.GetConfig = func() (*rest.Config, error) {
+			return &rest.Config{}, nil
+		}
+
 		srv, err := newServer(core.Configuration{
 			IsClassic: false,
 		})
