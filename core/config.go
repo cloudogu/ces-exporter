@@ -1,7 +1,9 @@
 package core
 
 import (
+	"context"
 	"fmt"
+	"go.etcd.io/etcd/client/v2"
 	"os"
 	"strings"
 )
@@ -16,6 +18,11 @@ const (
 	modeClassic  = "classic"
 )
 
+type watchConfigurationContext interface {
+	Watch(ctx context.Context, key string, recursive bool, eventChannel chan *client.Response)
+	Get(key string) (string, error)
+}
+
 type Configuration struct {
 	LogLevel                 string
 	BasePath                 string
@@ -25,8 +32,12 @@ type Configuration struct {
 	ClassicOnlyConfiguration ClassicOnlyConfiguration
 }
 
+type WriteFileFunc func(name string, data []byte, perm os.FileMode) error
+
 type ClassicOnlyConfiguration struct {
-	Fqdn string
+	Fqdn      string
+	Registry  watchConfigurationContext
+	WriteFile WriteFileFunc
 }
 
 func ReadConfigFromEnv() (Configuration, error) {

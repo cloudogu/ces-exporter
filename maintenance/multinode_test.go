@@ -115,6 +115,7 @@ func TestMNDeactivateMaintenanceMode(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, status.IsActive, false)
 	})
+
 	t.Run("should return error", func(t *testing.T) {
 		configMaps := newMockConfigMaps(t)
 		globalConfigRepo := repository.NewGlobalConfigRepository(configMaps)

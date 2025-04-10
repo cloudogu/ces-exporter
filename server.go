@@ -36,6 +36,11 @@ const (
 	authorizedKeys = "/root/.ssh/authorized_keys"
 )
 
+type watchConfigurationContext interface {
+	Watch(ctx context.Context, key string, recursive bool, eventChannel chan *client.Response)
+	Get(key string) (string, error)
+}
+
 type v1AlphaClientInterface interface {
 	componentEcoClient.ComponentV1Alpha1Interface
 }
@@ -83,21 +88,16 @@ func initServerForMultinode(config core.Configuration) (*server, error) {
 }
 
 func initServerForClassic(config core.Configuration) *server {
-	reg, err := createRegistry(config)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	watchApiKeyConfig(reg, &config)
-	watchSshKeyConfig(reg)
+	watchApiKeyConfig(config.ClassicOnlyConfiguration.Registry, &config)
+	watchSshKeyConfig(config.ClassicOnlyConfiguration.Registry, config.ClassicOnlyConfiguration.WriteFile)
 
 	return &server{
 		config: &config,
 	}
 }
 
-func createRegistry(config core.Configuration) (registry.Registry, error) {
-	return registry.New(libcore.Registry{
+func createRegistry(config core.Configuration) watchConfigurationContext {
+	reg, err := registry.New(libcore.Registry{
 		Type:      "etcd",
 		Endpoints: []string{fmt.Sprintf("http://%s:4001", config.ClassicOnlyConfiguration.Fqdn)},
 		RetryPolicy: libcore.RetryPolicy{
@@ -106,13 +106,19 @@ func createRegistry(config core.Configuration) (registry.Registry, error) {
 			MaxRetryCount: 3,
 		},
 	})
+	if err != nil {
+		// This error can only occur if type is not equal etcd - as this is hardcoded to etcd, the error will not occur
+		panic(err.Error())
+	}
+
+	return reg.RootConfig()
 }
 
-func watchApiKeyConfig(reg registry.Registry, config *core.Configuration) {
+func watchApiKeyConfig(reg watchConfigurationContext, config *core.Configuration) {
 	apiKeyWatcher := make(chan *client.Response)
 
 	go func() {
-		v, err := reg.RootConfig().Get(regKeyApi)
+		v, err := reg.Get(regKeyApi)
 		if err != nil {
 			slog.Error(err.Error())
 		}
@@ -126,13 +132,13 @@ func watchApiKeyConfig(reg registry.Registry, config *core.Configuration) {
 			}
 		}()
 
-		reg.RootConfig().Watch(context.Background(), regKeyApi, false, apiKeyWatcher)
+		reg.Watch(context.Background(), regKeyApi, false, apiKeyWatcher)
 	}()
 }
 
-func writeAuthorizedKey(v string) {
+func writeAuthorizedKey(v string, write core.WriteFileFunc) {
 	slog.Info(fmt.Sprintf("The authroized ssz public key has changed to %s", v))
-	err := os.WriteFile(authorizedKeys, []byte(v), sshKeyFileMode)
+	err := write(authorizedKeys, []byte(v), sshKeyFileMode)
 	if err != nil {
 		slog.Error(fmt.Sprintf("Could not write changed ssh key to file: %s", err.Error()))
 	} else {
@@ -140,28 +146,30 @@ func writeAuthorizedKey(v string) {
 	}
 }
 
-func watchSshKeyConfig(reg registry.Registry) {
+func watchSshKeyConfig(reg watchConfigurationContext, write core.WriteFileFunc) {
 	sshKeyWatcher := make(chan *client.Response)
 
 	go func() {
-		v, err := reg.RootConfig().Get(regKeySsh)
+		v, err := reg.Get(regKeySsh)
 		if err != nil {
 			slog.Error(err.Error())
 		}
-		writeAuthorizedKey(v)
+		writeAuthorizedKey(v, write)
 
 		go func() {
 			for event := range sshKeyWatcher {
-				writeAuthorizedKey(event.Node.Value)
+				writeAuthorizedKey(event.Node.Value, write)
 			}
 		}()
 
-		reg.RootConfig().Watch(context.Background(), regKeySsh, false, sshKeyWatcher)
+		reg.Watch(context.Background(), regKeySsh, false, sshKeyWatcher)
 	}()
 }
 
 func newServer(config core.Configuration) (*server, error) {
 	if config.IsClassic {
+		config.ClassicOnlyConfiguration.Registry = createRegistry(config)
+		config.ClassicOnlyConfiguration.WriteFile = os.WriteFile
 		return initServerForClassic(config), nil
 	} else {
 		return initServerForMultinode(config)
