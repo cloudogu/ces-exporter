@@ -8,9 +8,9 @@ import (
 )
 
 type Provider interface {
-	GetExportDogu(ctx context.Context) (*DoguExport, error)
-	SetExportDogu(doguName string, ctx context.Context) (*DoguExport, error)
-	GetExportMode(ctx context.Context) (*ExportModeStatus, error)
+	GetExportDogu(ctx context.Context) (*doguExport, error)
+	SetExportDogu(doguName string, ctx context.Context) (*doguExport, error)
+	GetExportMode(ctx context.Context) (*exportModeStatus, error)
 }
 
 type MultinodeExportModeController struct {

@@ -22,23 +22,23 @@ func (_m *MockProvider) EXPECT() *MockProvider_Expecter {
 }
 
 // GetExportDogu provides a mock function with given fields: ctx
-func (_m *MockProvider) GetExportDogu(ctx context.Context) (*DoguExport, error) {
+func (_m *MockProvider) GetExportDogu(ctx context.Context) (*doguExport, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetExportDogu")
 	}
 
-	var r0 *DoguExport
+	var r0 *doguExport
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (*DoguExport, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (*doguExport, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) *DoguExport); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) *doguExport); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*DoguExport)
+			r0 = ret.Get(0).(*doguExport)
 		}
 	}
 
@@ -69,34 +69,34 @@ func (_c *MockProvider_GetExportDogu_Call) Run(run func(ctx context.Context)) *M
 	return _c
 }
 
-func (_c *MockProvider_GetExportDogu_Call) Return(_a0 *DoguExport, _a1 error) *MockProvider_GetExportDogu_Call {
+func (_c *MockProvider_GetExportDogu_Call) Return(_a0 *doguExport, _a1 error) *MockProvider_GetExportDogu_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockProvider_GetExportDogu_Call) RunAndReturn(run func(context.Context) (*DoguExport, error)) *MockProvider_GetExportDogu_Call {
+func (_c *MockProvider_GetExportDogu_Call) RunAndReturn(run func(context.Context) (*doguExport, error)) *MockProvider_GetExportDogu_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetExportMode provides a mock function with given fields: ctx
-func (_m *MockProvider) GetExportMode(ctx context.Context) (*ExportModeStatus, error) {
+func (_m *MockProvider) GetExportMode(ctx context.Context) (*exportModeStatus, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetExportMode")
 	}
 
-	var r0 *ExportModeStatus
+	var r0 *exportModeStatus
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (*ExportModeStatus, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (*exportModeStatus, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) *ExportModeStatus); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) *exportModeStatus); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*ExportModeStatus)
+			r0 = ret.Get(0).(*exportModeStatus)
 		}
 	}
 
@@ -127,34 +127,34 @@ func (_c *MockProvider_GetExportMode_Call) Run(run func(ctx context.Context)) *M
 	return _c
 }
 
-func (_c *MockProvider_GetExportMode_Call) Return(_a0 *ExportModeStatus, _a1 error) *MockProvider_GetExportMode_Call {
+func (_c *MockProvider_GetExportMode_Call) Return(_a0 *exportModeStatus, _a1 error) *MockProvider_GetExportMode_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockProvider_GetExportMode_Call) RunAndReturn(run func(context.Context) (*ExportModeStatus, error)) *MockProvider_GetExportMode_Call {
+func (_c *MockProvider_GetExportMode_Call) RunAndReturn(run func(context.Context) (*exportModeStatus, error)) *MockProvider_GetExportMode_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SetExportDogu provides a mock function with given fields: doguName, ctx
-func (_m *MockProvider) SetExportDogu(doguName string, ctx context.Context) (*DoguExport, error) {
+func (_m *MockProvider) SetExportDogu(doguName string, ctx context.Context) (*doguExport, error) {
 	ret := _m.Called(doguName, ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetExportDogu")
 	}
 
-	var r0 *DoguExport
+	var r0 *doguExport
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, context.Context) (*DoguExport, error)); ok {
+	if rf, ok := ret.Get(0).(func(string, context.Context) (*doguExport, error)); ok {
 		return rf(doguName, ctx)
 	}
-	if rf, ok := ret.Get(0).(func(string, context.Context) *DoguExport); ok {
+	if rf, ok := ret.Get(0).(func(string, context.Context) *doguExport); ok {
 		r0 = rf(doguName, ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*DoguExport)
+			r0 = ret.Get(0).(*doguExport)
 		}
 	}
 
@@ -186,12 +186,12 @@ func (_c *MockProvider_SetExportDogu_Call) Run(run func(doguName string, ctx con
 	return _c
 }
 
-func (_c *MockProvider_SetExportDogu_Call) Return(_a0 *DoguExport, _a1 error) *MockProvider_SetExportDogu_Call {
+func (_c *MockProvider_SetExportDogu_Call) Return(_a0 *doguExport, _a1 error) *MockProvider_SetExportDogu_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockProvider_SetExportDogu_Call) RunAndReturn(run func(string, context.Context) (*DoguExport, error)) *MockProvider_SetExportDogu_Call {
+func (_c *MockProvider_SetExportDogu_Call) RunAndReturn(run func(string, context.Context) (*doguExport, error)) *MockProvider_SetExportDogu_Call {
 	_c.Call.Return(run)
 	return _c
 }

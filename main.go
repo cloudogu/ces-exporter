@@ -152,7 +152,7 @@ func (ec exporterContext) createServer() http.Handler {
 	doguVersionReg := libdogu.NewDoguVersionRegistry(configMaps)
 
 	// start cron job for setting export mode. See env variable "EXPORT_CRON" for timetable
-	go ec.startCronJob()
+	go ec.startCronJob(ec.config)
 
 	systemInfoProvider := systeminfo.NewMultinodeSystemInfoProvider(
 		configMaps,
@@ -161,8 +161,9 @@ func (ec exporterContext) createServer() http.Handler {
 		ec.ecosystemClient.Components(ec.config.Namespace),
 	)
 	systemInfoController := systeminfo.NewController(systemInfoProvider)
-	services := ec.serviceClient.Coreclient.CoreV1().Services(ec.config.Namespace)
-	dogus := ec.doguClient.Doguclient
+	services := ec.serviceClient.CoreV1().Services(ec.config.Namespace)
+	dogus := ec.doguClient
+
 	exportModeProvider := export.NewMultinodeExportModeProvider(ec.config.Namespace, configMaps, dogus, services)
 	exportModeController := export.NewMultinodeExportModeController(exportModeProvider)
 
@@ -211,14 +212,12 @@ func configureLogger(conf core.Configuration) {
 /*
 this starts an asynchronous task - it can not return anything but will log error if the job fails
 */
-func (ec exporterContext) startCronJob() {
-	config, err := core.ReadConfigFromEnv()
-	if err != nil || config.CronExp == "" {
+func (ec exporterContext) startCronJob(config core.Configuration) {
+	if config.CronExp == "" {
 		return
 	}
-
-	cj := export.NewCronJob(config.CronExp, ec.doguClient.Doguclient, ec.config.Namespace)
-	err = cj.Run()
+	cj := export.NewCronJob(config.CronExp, ec.doguClient, ec.config.Namespace)
+	err := cj.Run()
 
 	if err != nil {
 		slog.Error("Failed to start cronjob:", "err", err)

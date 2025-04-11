@@ -19,11 +19,11 @@ type configMaps interface {
 type MultinodeExportModeProvider struct {
 	namespace     string
 	configMaps    configMaps
-	doguclient    DoguClientInterface
-	serviceclient ServiceClientInterface
+	doguclient    doguClient
+	serviceclient serviceClient
 }
 
-func NewMultinodeExportModeProvider(namespace string, configMaps configMaps, ecosystemDoguClient DoguClientInterface, serviceClient ServiceClientInterface) *MultinodeExportModeProvider {
+func NewMultinodeExportModeProvider(namespace string, configMaps configMaps, ecosystemDoguClient doguClient, serviceClient serviceClient) *MultinodeExportModeProvider {
 	return &MultinodeExportModeProvider{
 		namespace:     namespace,
 		configMaps:    configMaps,
@@ -35,7 +35,7 @@ func NewMultinodeExportModeProvider(namespace string, configMaps configMaps, eco
 /*
 GetExportDogu gets the dogu.name currently set in the ces-exporter-dogu-exporter service
 */
-func (m MultinodeExportModeProvider) GetExportDogu(ctx context.Context) (*DoguExport, error) {
+func (m MultinodeExportModeProvider) GetExportDogu(ctx context.Context) (*doguExport, error) {
 	service, _ := m.serviceclient.Get(ctx, cesDoguExporter, metav1.GetOptions{})
 	doguName := service.Spec.Selector[doguv2.DoguLabelName]
 	port := service.Spec.Ports[0]
@@ -45,7 +45,7 @@ func (m MultinodeExportModeProvider) GetExportDogu(ctx context.Context) (*DoguEx
 		return nil, fmt.Errorf("could not get dogu resource for current export dogu: %s", err)
 	}
 
-	doguExport := DoguExport{
+	doguExport := doguExport{
 		Dogu:         doguName,
 		VolumePath:   "/data/" + dogu.GetDataVolumeName(),
 		ExporterPort: int(port.Port),
@@ -56,7 +56,7 @@ func (m MultinodeExportModeProvider) GetExportDogu(ctx context.Context) (*DoguEx
 /*
 SetExportDogu sets the given dogu as dogu.name in the ces-exporter-dogu-exporter service
 */
-func (m MultinodeExportModeProvider) SetExportDogu(doguName string, ctx context.Context) (*DoguExport, error) {
+func (m MultinodeExportModeProvider) SetExportDogu(doguName string, ctx context.Context) (*doguExport, error) {
 	service, _ := m.serviceclient.Get(ctx, cesDoguExporter, metav1.GetOptions{})
 	service.Spec.Selector[doguv2.DoguLabelName] = doguName
 	port := service.Spec.Ports[0]
@@ -71,7 +71,7 @@ func (m MultinodeExportModeProvider) SetExportDogu(doguName string, ctx context.
 		return nil, err
 	}
 
-	doguExport := DoguExport{
+	doguExport := doguExport{
 		Dogu:         doguName,
 		VolumePath:   dogu.GetDataVolumeName(),
 		ExporterPort: int(port.Port),
@@ -79,7 +79,7 @@ func (m MultinodeExportModeProvider) SetExportDogu(doguName string, ctx context.
 	return &doguExport, nil
 }
 
-func (m MultinodeExportModeProvider) GetExportMode(ctx context.Context) (*ExportModeStatus, error) {
+func (m MultinodeExportModeProvider) GetExportMode(ctx context.Context) (*exportModeStatus, error) {
 
 	dogus, err := m.doguclient.List(ctx, metav1.ListOptions{})
 
@@ -90,11 +90,11 @@ func (m MultinodeExportModeProvider) GetExportMode(ctx context.Context) (*Export
 	for _, d := range dogus.Items {
 		if !d.Spec.ExportMode {
 			// if just one dogu is not in export mode, the global export-mode-status is false
-			return &ExportModeStatus{IsActive: false}, nil
+			return &exportModeStatus{IsActive: false}, nil
 		}
 	}
 
 	// since we did not step out until now - the global export-mode-status is true
-	return &ExportModeStatus{IsActive: true}, nil
+	return &exportModeStatus{IsActive: true}, nil
 
 }

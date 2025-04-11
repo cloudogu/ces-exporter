@@ -18,7 +18,7 @@ func TestGetExportDogu(t *testing.T) {
 		req, err := http.NewRequest("GET", "/export/dogu", nil)
 		require.NoError(t, err)
 
-		dogu := DoguExport{
+		dogu := doguExport{
 			Dogu:         "myDogu",
 			VolumePath:   "",
 			ExporterPort: 0,
@@ -60,7 +60,7 @@ func TestSetExportDogu(t *testing.T) {
 		req.SetPathValue("doguName", "otherDogu")
 		require.NoError(t, err)
 
-		dogu := DoguExport{
+		dogu := doguExport{
 			Dogu:         "otherDogu",
 			VolumePath:   "otherDogu-data",
 			ExporterPort: 7022,
@@ -121,7 +121,7 @@ func TestGetExportMode(t *testing.T) {
 		req, err := http.NewRequest("GET", "/export/mode", nil)
 		require.NoError(t, err)
 
-		exportMode := ExportModeStatus{
+		exportMode := exportModeStatus{
 			IsActive: true,
 		}
 

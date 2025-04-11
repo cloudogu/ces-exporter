@@ -9,14 +9,14 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-type DoguClientInterface interface {
+type doguClient interface {
 	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v2.Dogu, error)
 	List(ctx context.Context, opts metav1.ListOptions) (*v2.DoguList, error)
 	Update(ctx context.Context, dogu *v2.Dogu, opts metav1.UpdateOptions) (*v2.Dogu, error)
 }
 
 type EcosystemDoguClient struct {
-	Doguclient ecoSystemV2.DoguInterface
+	ecoSystemV2.DoguInterface
 }
 
 func NewEcosystemDoguClient(namespace string, client ecoSystemV2.EcoSystemV2Interface) *EcosystemDoguClient {
@@ -25,15 +25,15 @@ func NewEcosystemDoguClient(namespace string, client ecoSystemV2.EcoSystemV2Inte
 	return &EcosystemDoguClient{dc}
 }
 
-type ServiceClientInterface interface {
+type serviceClient interface {
 	Get(ctx context.Context, name string, opts metav1.GetOptions) (*corev1.Service, error)
 	Update(ctx context.Context, service *corev1.Service, opts metav1.UpdateOptions) (*corev1.Service, error)
 }
 
 type EcosystemServiceClient struct {
-	Coreclient *kubernetes.Clientset
+	*kubernetes.Clientset
 }
 
 func NewServiceClient(client *kubernetes.Clientset) *EcosystemServiceClient {
-	return &EcosystemServiceClient{Coreclient: client}
+	return &EcosystemServiceClient{client}
 }

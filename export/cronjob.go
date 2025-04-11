@@ -14,12 +14,12 @@ type CronJobFunction func() (int, error)
 
 type CronJob struct {
 	namespace  string
-	doguClient DoguClientInterface
+	doguClient doguClient
 	expr       string
 	taskr      *tasker.Tasker
 }
 
-func NewCronJob(expr string, ecosystemClient DoguClientInterface, namespace string) *CronJob {
+func NewCronJob(expr string, ecosystemClient doguClient, namespace string) *CronJob {
 	return &CronJob{
 		namespace:  namespace,
 		doguClient: ecosystemClient,
