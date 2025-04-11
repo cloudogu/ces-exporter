@@ -40,6 +40,22 @@ rules:
     verbs:
       - list
   - apiGroups:
+      - ""
+    resources:
+      - services
+    verbs:
+      - list
+      - get
+      - update
+  - apiGroups:
+      - k8s.cloudogu.com
+    resources:
+      - dogus
+    verbs:
+      - get
+      - list
+      - update
+  - apiGroups:
       - "k8s.cloudogu.com"
       - "k8s.cloudogu.com/v1"
     resources:
