@@ -17,7 +17,7 @@ import (
 func TestInvalidCron(t *testing.T) {
 	t.Run("cron expression is invalid", func(t *testing.T) {
 		expr := "invalid"
-		cronjob := NewCronJob(expr, nil, "ecosystem")
+		cronjob := NewCronJob(expr, nil, "ecosystem", true)
 
 		err := cronjob.Run()
 		require.Contains(t, err.Error(), "configured exporter cron expression 'invalid' is invalid")
@@ -30,11 +30,11 @@ func TestCallCronJob(t *testing.T) {
 		logger := slog.New(slog.NewTextHandler(&buf, nil))
 		slog.SetDefault(logger)
 		expr := "* * * * *"
-		doguClient := NewMockDoguClientInterface(t)
+		doguClient := newMockDoguClient(t)
 		doguClient.EXPECT().List(mock.Anything, mock.Anything).Return(&v2.DoguList{
 			Items: []v2.Dogu{},
 		}, nil)
-		cronjob := NewCronJob(expr, doguClient, "ecosystem")
+		cronjob := NewCronJob(expr, doguClient, "ecosystem", true)
 
 		_, _ = cronjob.callCronJob(context.Background())
 		require.Contains(t, buf.String(), "start export mode cronjob due to timetable")
@@ -44,7 +44,7 @@ func TestCallCronJob(t *testing.T) {
 		logger := slog.New(slog.NewTextHandler(&buf, nil))
 		slog.SetDefault(logger)
 		expr := "* * * * *"
-		doguClient := NewMockDoguClientInterface(t)
+		doguClient := newMockDoguClient(t)
 		doguClient.EXPECT().List(mock.Anything, mock.Anything).Return(&v2.DoguList{
 			Items: []v2.Dogu{
 				{
@@ -61,7 +61,7 @@ func TestCallCronJob(t *testing.T) {
 				},
 			},
 		}, nil)
-		cronjob := NewCronJob(expr, doguClient, "ecosystem")
+		cronjob := NewCronJob(expr, doguClient, "ecosystem", true)
 
 		_, _ = cronjob.callCronJob(context.Background())
 
@@ -73,7 +73,7 @@ func TestCallCronJob(t *testing.T) {
 		logger := slog.New(slog.NewTextHandler(&buf, nil))
 		slog.SetDefault(logger)
 		expr := "* * * * *"
-		doguClient := NewMockDoguClientInterface(t)
+		doguClient := newMockDoguClient(t)
 		doguClient.EXPECT().List(mock.Anything, mock.Anything).Return(&v2.DoguList{
 			Items: []v2.Dogu{
 				{
@@ -93,7 +93,7 @@ func TestCallCronJob(t *testing.T) {
 		// no error
 		doguClient.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
-		cronjob := NewCronJob(expr, doguClient, "ecosystem")
+		cronjob := NewCronJob(expr, doguClient, "ecosystem", true)
 
 		_, _ = cronjob.callCronJob(context.Background())
 		require.Contains(t, buf.String(), "start export mode cronjob due to timetable")
@@ -105,7 +105,7 @@ func TestCallCronJob(t *testing.T) {
 		logger := slog.New(slog.NewTextHandler(&buf, nil))
 		slog.SetDefault(logger)
 		expr := "* * * * *"
-		doguClient := NewMockDoguClientInterface(t)
+		doguClient := newMockDoguClient(t)
 		doguClient.EXPECT().List(mock.Anything, mock.Anything).Return(&v2.DoguList{
 			Items: []v2.Dogu{
 				{
@@ -125,7 +125,7 @@ func TestCallCronJob(t *testing.T) {
 		// no error
 		doguClient.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
 
-		cronjob := NewCronJob(expr, doguClient, "ecosystem")
+		cronjob := NewCronJob(expr, doguClient, "ecosystem", true)
 
 		_, _ = cronjob.callCronJob(context.Background())
 		require.Contains(t, buf.String(), "start export mode cronjob due to timetable")
@@ -141,7 +141,7 @@ func TestRunCronJob(t *testing.T) {
 		logger := slog.New(slog.NewTextHandler(&buf, nil))
 		slog.SetDefault(logger)
 		expr := "* * * * *"
-		doguClient := NewMockDoguClientInterface(t)
+		doguClient := newMockDoguClient(t)
 		doguClient.EXPECT().List(mock.Anything, mock.Anything).Return(&v2.DoguList{
 			Items: []v2.Dogu{
 				{
@@ -161,7 +161,7 @@ func TestRunCronJob(t *testing.T) {
 
 		doguClient.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
-		cronjob := NewCronJob(expr, doguClient, "ecosystem")
+		cronjob := NewCronJob(expr, doguClient, "ecosystem", true)
 
 		// set os env so ReadConfigFromEnv runs without errors
 		_ = os.Setenv(core.CronJobVerboseEnv, "true")
@@ -183,10 +183,10 @@ func TestRunCronJob(t *testing.T) {
 		logger := slog.New(slog.NewTextHandler(&buf, nil))
 		slog.SetDefault(logger)
 		expr := "* * * * *"
-		doguClient := NewMockDoguClientInterface(t)
+		doguClient := newMockDoguClient(t)
 		doguClient.EXPECT().List(mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
 
-		cronjob := NewCronJob(expr, doguClient, "ecosystem")
+		cronjob := NewCronJob(expr, doguClient, "ecosystem", false)
 
 		// set os env so ReadConfigFromEnv runs without errors
 		_ = os.Setenv(core.CronJobVerboseEnv, "true")

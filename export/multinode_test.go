@@ -14,8 +14,8 @@ import (
 func TestMNGetExportDogu(t *testing.T) {
 	t.Run("should return get export dogu", func(t *testing.T) {
 		configMaps := newMockConfigMaps(t)
-		doguClient := NewMockDoguClientInterface(t)
-		serviceClient := NewMockServiceClientInterface(t)
+		doguClient := newMockDoguClient(t)
+		serviceClient := newMockServiceClient(t)
 		provider := NewMultinodeExportModeProvider("ecosystem", configMaps, doguClient, serviceClient)
 
 		serviceClient.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(&corev1.Service{
@@ -27,22 +27,16 @@ func TestMNGetExportDogu(t *testing.T) {
 			},
 		}, nil)
 
-		doguClient.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(&v2.Dogu{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "test_A",
-			},
-		}, nil)
-
 		dogu, _ := provider.GetExportDogu(context.Background())
 
 		require.Equal(t, 8080, dogu.ExporterPort)
 		require.Equal(t, "test_A", dogu.Dogu)
-		require.Equal(t, "/data/test_A-data", dogu.VolumePath)
+		require.Equal(t, "/data", dogu.VolumePath)
 	})
 	t.Run("should return get error", func(t *testing.T) {
 		configMaps := newMockConfigMaps(t)
-		doguClient := NewMockDoguClientInterface(t)
-		serviceClient := NewMockServiceClientInterface(t)
+		doguClient := newMockDoguClient(t)
+		serviceClient := newMockServiceClient(t)
 		provider := NewMultinodeExportModeProvider("ecosystem", configMaps, doguClient, serviceClient)
 
 		serviceClient.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(&corev1.Service{
@@ -64,8 +58,8 @@ func TestMNGetExportDogu(t *testing.T) {
 func TestMNSetExportDogu(t *testing.T) {
 	t.Run("should set export dogu", func(t *testing.T) {
 		configMaps := newMockConfigMaps(t)
-		doguClient := NewMockDoguClientInterface(t)
-		serviceClient := NewMockServiceClientInterface(t)
+		doguClient := newMockDoguClient(t)
+		serviceClient := newMockServiceClient(t)
 		provider := NewMultinodeExportModeProvider("ecosystem", configMaps, doguClient, serviceClient)
 
 		serviceClient.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(&corev1.Service{
@@ -93,8 +87,8 @@ func TestMNSetExportDogu(t *testing.T) {
 	})
 	t.Run("should return get error on getting dogu for name", func(t *testing.T) {
 		configMaps := newMockConfigMaps(t)
-		doguClient := NewMockDoguClientInterface(t)
-		serviceClient := NewMockServiceClientInterface(t)
+		doguClient := newMockDoguClient(t)
+		serviceClient := newMockServiceClient(t)
 		provider := NewMultinodeExportModeProvider("ecosystem", configMaps, doguClient, serviceClient)
 
 		serviceClient.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(&corev1.Service{
@@ -114,8 +108,8 @@ func TestMNSetExportDogu(t *testing.T) {
 	})
 	t.Run("should set export dogu", func(t *testing.T) {
 		configMaps := newMockConfigMaps(t)
-		doguClient := NewMockDoguClientInterface(t)
-		serviceClient := NewMockServiceClientInterface(t)
+		doguClient := newMockDoguClient(t)
+		serviceClient := newMockServiceClient(t)
 		provider := NewMultinodeExportModeProvider("ecosystem", configMaps, doguClient, serviceClient)
 
 		serviceClient.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(&corev1.Service{
@@ -145,7 +139,7 @@ func TestMNGetExportMode(t *testing.T) {
 	t.Run("should return get export mode as false", func(t *testing.T) {
 		configMaps := newMockConfigMaps(t)
 
-		doguClient := NewMockDoguClientInterface(t)
+		doguClient := newMockDoguClient(t)
 		doguClient.EXPECT().List(mock.Anything, mock.Anything).Return(&v2.DoguList{
 			Items: []v2.Dogu{
 				{
@@ -163,8 +157,7 @@ func TestMNGetExportMode(t *testing.T) {
 			},
 		}, nil)
 
-		serviceClient := NewMockServiceClientInterface(t)
-
+		serviceClient := newMockServiceClient(t)
 		provider := NewMultinodeExportModeProvider("ecosystem", configMaps, doguClient, serviceClient)
 
 		mode, _ := provider.GetExportMode(context.Background())
@@ -174,7 +167,7 @@ func TestMNGetExportMode(t *testing.T) {
 	t.Run("should return get export mode as true", func(t *testing.T) {
 		configMaps := newMockConfigMaps(t)
 
-		doguClient := NewMockDoguClientInterface(t)
+		doguClient := newMockDoguClient(t)
 		doguClient.EXPECT().List(mock.Anything, mock.Anything).Return(&v2.DoguList{
 			Items: []v2.Dogu{
 				{
@@ -192,7 +185,7 @@ func TestMNGetExportMode(t *testing.T) {
 			},
 		}, nil)
 
-		serviceClient := NewMockServiceClientInterface(t)
+		serviceClient := newMockServiceClient(t)
 
 		provider := NewMultinodeExportModeProvider("ecosystem", configMaps, doguClient, serviceClient)
 
@@ -203,11 +196,10 @@ func TestMNGetExportMode(t *testing.T) {
 	t.Run("should return error on export mode", func(t *testing.T) {
 		configMaps := newMockConfigMaps(t)
 
-		doguClient := NewMockDoguClientInterface(t)
+		doguClient := newMockDoguClient(t)
 		doguClient.EXPECT().List(mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
 
-		serviceClient := NewMockServiceClientInterface(t)
-
+		serviceClient := newMockServiceClient(t)
 		provider := NewMultinodeExportModeProvider("ecosystem", configMaps, doguClient, serviceClient)
 
 		_, err := provider.GetExportMode(context.Background())

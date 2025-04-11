@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/adhocore/gronx"
 	"github.com/adhocore/gronx/pkg/tasker"
-	"github.com/cloudogu/ces-exporter/core"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"log/slog"
 )
@@ -13,17 +12,19 @@ import (
 type CronJobFunction func() (int, error)
 
 type CronJob struct {
-	namespace  string
-	doguClient doguClient
-	expr       string
-	taskr      *tasker.Tasker
+	namespace   string
+	doguClient  doguClient
+	expr        string
+	taskr       *tasker.Tasker
+	verboseCron bool
 }
 
-func NewCronJob(expr string, ecosystemClient doguClient, namespace string) *CronJob {
+func NewCronJob(expr string, ecosystemClient doguClient, namespace string, verboseCron bool) *CronJob {
 	return &CronJob{
-		namespace:  namespace,
-		doguClient: ecosystemClient,
-		expr:       expr,
+		namespace:   namespace,
+		doguClient:  ecosystemClient,
+		expr:        expr,
+		verboseCron: verboseCron,
 	}
 }
 
@@ -31,12 +32,8 @@ func (cj *CronJob) Run() error {
 	if !gronx.IsValid(cj.expr) {
 		return fmt.Errorf("configured exporter cron expression '%s' is invalid", cj.expr)
 	}
-	config, err := core.ReadConfigFromEnv()
-	if err != nil {
-		return fmt.Errorf("could not get config: %w", err)
-	}
 	cj.taskr = tasker.New(tasker.Option{
-		Verbose: config.VerboseCron,
+		Verbose: cj.verboseCron,
 	})
 
 	cj.taskr.Task(cj.expr, func(ctx context.Context) (int, error) {

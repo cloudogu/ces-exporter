@@ -6,7 +6,7 @@ import (
 	v2 "github.com/cloudogu/k8s-dogu-operator/v3/api/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
 type doguClient interface {
@@ -31,9 +31,9 @@ type serviceClient interface {
 }
 
 type EcosystemServiceClient struct {
-	*kubernetes.Clientset
+	v1.ServiceInterface
 }
 
-func NewServiceClient(client *kubernetes.Clientset) *EcosystemServiceClient {
+func NewServiceClient(client v1.ServiceInterface) *EcosystemServiceClient {
 	return &EcosystemServiceClient{client}
 }

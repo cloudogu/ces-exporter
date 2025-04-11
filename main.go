@@ -73,7 +73,7 @@ func newExporterContext(config core.Configuration) (*exporterContext, error) {
 
 	doguClient := export.NewEcosystemDoguClient(config.Namespace, dc)
 
-	serviceClient := export.NewServiceClient(client)
+	serviceClient := export.NewServiceClient(client.CoreV1().Services(config.Namespace))
 
 	return &exporterContext{
 		ecosystemClient,
@@ -152,7 +152,7 @@ func (ec exporterContext) createServer() http.Handler {
 	doguVersionReg := libdogu.NewDoguVersionRegistry(configMaps)
 
 	// start cron job for setting export mode. See env variable "EXPORT_CRON" for timetable
-	go ec.startCronJob(ec.config)
+	go ec.startCronJob()
 
 	systemInfoProvider := systeminfo.NewMultinodeSystemInfoProvider(
 		configMaps,
@@ -161,10 +161,8 @@ func (ec exporterContext) createServer() http.Handler {
 		ec.ecosystemClient.Components(ec.config.Namespace),
 	)
 	systemInfoController := systeminfo.NewController(systemInfoProvider)
-	services := ec.serviceClient.CoreV1().Services(ec.config.Namespace)
-	dogus := ec.doguClient
 
-	exportModeProvider := export.NewMultinodeExportModeProvider(ec.config.Namespace, configMaps, dogus, services)
+	exportModeProvider := export.NewMultinodeExportModeProvider(ec.config.Namespace, configMaps, ec.doguClient, ec.serviceClient)
 	exportModeController := export.NewMultinodeExportModeController(exportModeProvider)
 
 	configurationProvider := configuration.NewMultinodeConfigurationProvider(ec.config.Namespace, sensitiveRepo, doguRepo, globalConfigRepo, doguVersionReg, ec.bclient)
@@ -212,11 +210,11 @@ func configureLogger(conf core.Configuration) {
 /*
 this starts an asynchronous task - it can not return anything but will log error if the job fails
 */
-func (ec exporterContext) startCronJob(config core.Configuration) {
-	if config.CronExp == "" {
+func (ec exporterContext) startCronJob() {
+	if ec.config.CronExp == "" {
 		return
 	}
-	cj := export.NewCronJob(config.CronExp, ec.doguClient, ec.config.Namespace)
+	cj := export.NewCronJob(ec.config.CronExp, ec.doguClient, ec.config.Namespace, ec.config.VerboseCron)
 	err := cj.Run()
 
 	if err != nil {
