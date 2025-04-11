@@ -20,15 +20,22 @@ func Test_createServer(t *testing.T) {
 	t.Run("for multinode", func(t *testing.T) {
 		conf := core.Configuration{BasePath: "/ces-exporter"}
 		client := newMockKubernetesClient(t)
-		ecosystemClient := newMockV1AlphaClientInterface(t)
 		cv1 := newMockCorev1Interface(t)
 		client.EXPECT().CoreV1().Return(cv1)
 		cv1.EXPECT().ConfigMaps(mock.Anything).Return(nil)
 		cv1.EXPECT().PersistentVolumeClaims(mock.Anything).Return(nil)
 		cv1.EXPECT().Secrets("").Return(nil)
-		ecosystemClient.EXPECT().Components(mock.Anything).Return(nil)
+		cv1.EXPECT().Services("").Return(nil)
+
+		componentClient := newMockEcosystemComponentClient(t)
+		componentClient.EXPECT().Components(mock.Anything).Return(nil)
+
+		doguClient := newMockEcosystemDogusClient(t)
+		doguClient.EXPECT().Dogus(mock.Anything).Return(nil)
+
 		exCtx := server{
-			ecosystemClient: ecosystemClient,
+			componentClient: componentClient,
+			doguClient:      doguClient,
 			client:          client,
 			config:          &conf,
 		}

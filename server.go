@@ -12,6 +12,7 @@ import (
 	"github.com/cloudogu/cesapp-lib/registry"
 	bup "github.com/cloudogu/k8s-backup-operator/pkg/api/v1"
 	componentEcoClient "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
+	ecoSystemV2 "github.com/cloudogu/k8s-dogu-operator/v3/api/ecoSystem"
 	libdogu "github.com/cloudogu/k8s-registry-lib/dogu"
 	"github.com/cloudogu/k8s-registry-lib/repository"
 	"go.etcd.io/etcd/client/v2"
@@ -41,8 +42,12 @@ type watchConfigurationContext interface {
 	Get(key string) (string, error)
 }
 
-type v1AlphaClientInterface interface {
+type ecosystemComponentClient interface {
 	componentEcoClient.ComponentV1Alpha1Interface
+}
+
+type ecosystemDogusClient interface {
+	ecoSystemV2.EcoSystemV2Interface
 }
 
 type kubernetesClient interface {
@@ -50,10 +55,24 @@ type kubernetesClient interface {
 }
 
 type server struct {
-	ecosystemClient v1AlphaClientInterface
+	componentClient ecosystemComponentClient
+	doguClient      ecosystemDogusClient
 	client          kubernetesClient
 	config          *core.Configuration
 	bclient         *core.BackupScheduleRuntimeClient
+}
+
+// startCronJob starts an asynchronous task - it can not return anything but will log error if the job fails
+func (s *server) startCronJob(dogus ecoSystemV2.DoguInterface) {
+	if s.config.CronExp == "" {
+		return
+	}
+	cj := export.NewCronJob(s.config.CronExp, dogus, s.config.Namespace, s.config.VerboseCron)
+	err := cj.Run()
+
+	if err != nil {
+		slog.Error("Failed to start cronjob:", "err", err)
+	}
 }
 
 func initServerForMultinode(config core.Configuration) (*server, error) {
@@ -69,9 +88,14 @@ func initServerForMultinode(config core.Configuration) (*server, error) {
 
 	bclient := core.NewBackupScheduleRuntimeClient(rtclient, config.Namespace)
 
-	ecosystemClient, err := componentEcoClient.NewForConfig(clusterConfig)
+	componentClient, err := componentEcoClient.NewForConfig(clusterConfig)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create config client: %w", err)
+		return nil, fmt.Errorf("failed to create component client: %w", err)
+	}
+
+	doguClient, err := ecoSystemV2.NewForConfig(clusterConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create dogu client: %w", err)
 	}
 
 	cl, err := kubernetes.NewForConfig(clusterConfig)
@@ -80,7 +104,8 @@ func initServerForMultinode(config core.Configuration) (*server, error) {
 	}
 
 	return &server{
-		ecosystemClient,
+		componentClient,
+		doguClient,
 		cl,
 		&config,
 		bclient,
@@ -215,21 +240,29 @@ func (s *server) run(ctx context.Context) error {
 	return nil
 }
 
-func (s *server) createMultinodeControllers() (*systeminfo.Controller, *configuration.Controller, *maintenance.Controller) {
+func (s *server) createMultinodeControllers() (*systeminfo.Controller, *configuration.Controller, *maintenance.Controller, *export.Controller) {
 	configMaps := s.client.CoreV1().ConfigMaps(s.config.Namespace)
 	secrets := s.client.CoreV1().Secrets(s.config.Namespace)
 	globalConfigRepo := repository.NewGlobalConfigRepository(configMaps)
 	sensitiveRepo := repository.NewSensitiveDoguConfigRepository(secrets)
 	doguRepo := repository.NewDoguConfigRepository(configMaps)
 	doguVersionReg := libdogu.NewDoguVersionRegistry(configMaps)
+	services := s.client.CoreV1().Services(s.config.Namespace)
+	dogus := s.doguClient.Dogus(s.config.Namespace)
 
 	systemInfoProvider := systeminfo.NewMultinodeSystemInfoProvider(
 		configMaps,
 		s.client.CoreV1().PersistentVolumeClaims(s.config.Namespace),
 		s.config.Namespace,
-		s.ecosystemClient.Components(s.config.Namespace),
+		s.componentClient.Components(s.config.Namespace),
 	)
 	systemInfoController := systeminfo.NewController(systemInfoProvider)
+
+	exportModeProvider := export.NewMultinodeExportModeProvider(s.config.Namespace, configMaps, dogus, services)
+	exportModeController := export.NewController(exportModeProvider)
+
+	// start cron job for setting export mode. See env variable "EXPORT_CRON" for timetable
+	go s.startCronJob(dogus)
 
 	configurationProvider := configuration.NewMultinodeConfigurationProvider(
 		s.config.Namespace,
@@ -244,16 +277,17 @@ func (s *server) createMultinodeControllers() (*systeminfo.Controller, *configur
 	maintenanceModeProvider := maintenance.NewMultinodeProvider(globalConfigRepo)
 	maintenanceModeController := maintenance.NewController(maintenanceModeProvider)
 
-	return systemInfoController, configController, maintenanceModeController
+	return systemInfoController, configController, maintenanceModeController, exportModeController
 }
 
 func (s *server) createEndpoints() http.Handler {
 	var systemInfoController *systeminfo.Controller
 	var configController *configuration.Controller
 	var maintenanceModeController *maintenance.Controller
+	var exportModeController *export.Controller
 
 	if !s.config.IsClassic {
-		systemInfoController, configController, maintenanceModeController = s.createMultinodeControllers()
+		systemInfoController, configController, maintenanceModeController, exportModeController = s.createMultinodeControllers()
 	} else {
 		systemInfoController = &systeminfo.Controller{}
 		configController = &configuration.Controller{}
@@ -270,9 +304,9 @@ func (s *server) createEndpoints() http.Handler {
 
 	rootHandler.HandleFunc("GET /configuration", authMiddleware(configController.GetConfig))
 
-	rootHandler.HandleFunc("GET /export/dogu/{doguName}", authMiddleware(export.GetExportDogu))
-	rootHandler.HandleFunc("POST /export/dogu/{doguName}", authMiddleware(export.SetExportDogu))
-	rootHandler.HandleFunc("GET /export/mode", authMiddleware(export.GetExportMode))
+	rootHandler.HandleFunc("GET /export/dogu/{doguName}", authMiddleware(exportModeController.GetExportDogu))
+	rootHandler.HandleFunc("POST /export/dogu/{doguName}", authMiddleware(exportModeController.SetExportDogu))
+	rootHandler.HandleFunc("GET /export/mode", authMiddleware(exportModeController.GetExportMode))
 
 	rootHandler.HandleFunc("GET /maintenance/mode", authMiddleware(maintenanceModeController.GetMaintenanceMode))
 	rootHandler.HandleFunc("POST /maintenance/mode", authMiddleware(maintenanceModeController.SetMaintenanceMode))

@@ -16,6 +16,10 @@ const (
 	fqdnEnv      = "FQDN"
 	errorFormat  = "environment variable %s is not set"
 	modeClassic  = "classic"
+	CronJobVerboseEnv = "EXPORT_CRON_VERBOSE"
+	CronJobEnv = "EXPORT_CRON"
+	NamespaceEnv = "NAMESPACE"
+	ApiKeyEnv = "API_KEY"
 )
 
 type watchConfigurationContext interface {
@@ -24,10 +28,12 @@ type watchConfigurationContext interface {
 }
 
 type Configuration struct {
-	LogLevel                 string
-	BasePath                 string
-	ApiKey                   string
-	Namespace                string
+	LogLevel    string
+	BasePath    string
+	ApiKey      string
+	Namespace   string
+	CronExp     string
+	VerboseCron bool
 	IsClassic                bool
 	ClassicOnlyConfiguration ClassicOnlyConfiguration
 }
@@ -57,15 +63,19 @@ func ReadConfigFromEnv() (Configuration, error) {
 	}
 	conf.BasePath = strings.TrimSuffix(conf.BasePath, "/")
 
-	conf.ApiKey = os.Getenv(apiKeyEnv)
+	conf.ApiKey = os.Getenv(ApiKeyEnv)
 	if conf.ApiKey == "" {
-		return conf, fmt.Errorf(errorFormat, apiKeyEnv)
+		return conf, fmt.Errorf(errorFormat, ApiKeyEnv)
 	}
 
-	conf.Namespace = os.Getenv(namespaceEnv)
+	conf.Namespace = os.Getenv(NamespaceEnv)
 	if conf.Namespace == "" && !conf.IsClassic {
-		return conf, fmt.Errorf(errorFormat, namespaceEnv)
+		return conf, fmt.Errorf(errorFormat, NamespaceEnv)
 	}
+
+	conf.CronExp = os.Getenv(CronJobEnv)
+
+	conf.VerboseCron = os.Getenv(CronJobVerboseEnv) == "true"
 
 	if conf.IsClassic {
 		conf.ClassicOnlyConfiguration = ClassicOnlyConfiguration{
