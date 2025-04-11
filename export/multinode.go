@@ -3,7 +3,9 @@ package export
 import (
 	"context"
 	"fmt"
+
 	doguv2 "github.com/cloudogu/k8s-dogu-operator/v3/api/v2"
+	apiCorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
@@ -15,6 +17,17 @@ const (
 
 type configMaps interface {
 	corev1.ConfigMapInterface
+}
+
+type doguClient interface {
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*doguv2.Dogu, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*doguv2.DoguList, error)
+	Update(ctx context.Context, dogu *doguv2.Dogu, opts metav1.UpdateOptions) (*doguv2.Dogu, error)
+}
+
+type serviceClient interface {
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*apiCorev1.Service, error)
+	Update(ctx context.Context, service *apiCorev1.Service, opts metav1.UpdateOptions) (*apiCorev1.Service, error)
 }
 
 type MultinodeExportModeProvider struct {

@@ -1,9 +1,9 @@
 ### GET Export dogu
-GET {{host}}/ces-exporter/export/dogu/cas
+GET {{host}}/ces-exporter/export/dogu
 X-CES-EXPORTER-API-KEY: {{apiKey}}
 
 ### POST Export dogu
-POST {{host}}/ces-exporter/export/dogu/sonar
+POST {{host}}/ces-exporter/export/dogu/cas
 X-CES-EXPORTER-API-KEY: {{apiKey}}
 
 ### GET Export-Mode

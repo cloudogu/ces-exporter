@@ -26,8 +26,12 @@ import (
 	"time"
 )
 
-type v1AlphaClientInterface interface {
+type ecosystemComponentClient interface {
 	componentEcoClient.ComponentV1Alpha1Interface
+}
+
+type ecosystemDogusClient interface {
+	ecoSystemV2.EcoSystemV2Interface
 }
 
 type kubernetesClient interface {
@@ -35,12 +39,11 @@ type kubernetesClient interface {
 }
 
 type exporterContext struct {
-	ecosystemClient v1AlphaClientInterface
-	doguClient      *export.EcosystemDoguClient
-	serviceClient   *export.EcosystemServiceClient
-	client          kubernetesClient
-	config          core.Configuration
-	bclient         *core.BackupScheduleRuntimeClient
+	ecosystemComponentClient ecosystemComponentClient
+	ecosystemDoguClient      ecosystemDogusClient
+	client                   kubernetesClient
+	config                   core.Configuration
+	bclient                  *core.BackupScheduleRuntimeClient
 }
 
 func newExporterContext(config core.Configuration) (*exporterContext, error) {
@@ -56,7 +59,7 @@ func newExporterContext(config core.Configuration) (*exporterContext, error) {
 
 	bclient := core.NewBackupScheduleRuntimeClient(rtclient, config.Namespace)
 
-	ecosystemClient, err := componentEcoClient.NewForConfig(clusterConfig)
+	componentClient, err := componentEcoClient.NewForConfig(clusterConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create config client: %w", err)
 	}
@@ -66,19 +69,14 @@ func newExporterContext(config core.Configuration) (*exporterContext, error) {
 		return nil, fmt.Errorf("failed to create k8s client: %w", err)
 	}
 
-	dc, err := ecoSystemV2.NewForConfig(clusterConfig)
+	doguClient, err := ecoSystemV2.NewForConfig(clusterConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dogu client: %w", err)
 	}
 
-	doguClient := export.NewEcosystemDoguClient(config.Namespace, dc)
-
-	serviceClient := export.NewServiceClient(client.CoreV1().Services(config.Namespace))
-
 	return &exporterContext{
-		ecosystemClient,
+		componentClient,
 		doguClient,
-		serviceClient,
 		client,
 		config,
 		bclient,
@@ -146,23 +144,29 @@ func run(ctx context.Context) error {
 func (ec exporterContext) createServer() http.Handler {
 	configMaps := ec.client.CoreV1().ConfigMaps(ec.config.Namespace)
 	secrets := ec.client.CoreV1().Secrets(ec.config.Namespace)
+	services := ec.client.CoreV1().Services(ec.config.Namespace)
+	pvcs := ec.client.CoreV1().PersistentVolumeClaims(ec.config.Namespace)
+
+	components := ec.ecosystemComponentClient.Components(ec.config.Namespace)
+	dogus := ec.ecosystemDoguClient.Dogus(ec.config.Namespace)
+
 	globalConfigRepo := repository.NewGlobalConfigRepository(configMaps)
 	sensitiveRepo := repository.NewSensitiveDoguConfigRepository(secrets)
 	doguRepo := repository.NewDoguConfigRepository(configMaps)
 	doguVersionReg := libdogu.NewDoguVersionRegistry(configMaps)
 
 	// start cron job for setting export mode. See env variable "EXPORT_CRON" for timetable
-	go ec.startCronJob()
+	go ec.startCronJob(dogus)
 
 	systemInfoProvider := systeminfo.NewMultinodeSystemInfoProvider(
 		configMaps,
-		ec.client.CoreV1().PersistentVolumeClaims(ec.config.Namespace),
+		pvcs,
 		ec.config.Namespace,
-		ec.ecosystemClient.Components(ec.config.Namespace),
+		components,
 	)
 	systemInfoController := systeminfo.NewController(systemInfoProvider)
 
-	exportModeProvider := export.NewMultinodeExportModeProvider(ec.config.Namespace, configMaps, ec.doguClient, ec.serviceClient)
+	exportModeProvider := export.NewMultinodeExportModeProvider(ec.config.Namespace, configMaps, dogus, services)
 	exportModeController := export.NewMultinodeExportModeController(exportModeProvider)
 
 	configurationProvider := configuration.NewMultinodeConfigurationProvider(ec.config.Namespace, sensitiveRepo, doguRepo, globalConfigRepo, doguVersionReg, ec.bclient)
@@ -210,11 +214,11 @@ func configureLogger(conf core.Configuration) {
 /*
 this starts an asynchronous task - it can not return anything but will log error if the job fails
 */
-func (ec exporterContext) startCronJob() {
+func (ec exporterContext) startCronJob(dogus ecoSystemV2.DoguInterface) {
 	if ec.config.CronExp == "" {
 		return
 	}
-	cj := export.NewCronJob(ec.config.CronExp, ec.doguClient, ec.config.Namespace, ec.config.VerboseCron)
+	cj := export.NewCronJob(ec.config.CronExp, dogus, ec.config.Namespace, ec.config.VerboseCron)
 	err := cj.Run()
 
 	if err != nil {
