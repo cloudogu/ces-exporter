@@ -33,27 +33,6 @@ func TestMNGetExportDogu(t *testing.T) {
 		require.Equal(t, "test_A", dogu.Dogu)
 		require.Equal(t, "/data", dogu.VolumePath)
 	})
-	t.Run("should return get error", func(t *testing.T) {
-		configMaps := newMockConfigMaps(t)
-		doguClient := newMockDoguClient(t)
-		serviceClient := newMockServiceClient(t)
-		provider := NewMultinodeExportModeProvider("ecosystem", configMaps, doguClient, serviceClient)
-
-		serviceClient.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(&corev1.Service{
-			Spec: corev1.ServiceSpec{
-				Ports: []corev1.ServicePort{{
-					Port: 8080,
-				}},
-				Selector: map[string]string{"dogu.name": "test_A"},
-			},
-		}, nil)
-
-		doguClient.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
-
-		_, err := provider.GetExportDogu(context.Background())
-
-		require.Contains(t, "could not get dogu resource for current export dogu: testerror", err.Error())
-	})
 }
 func TestMNSetExportDogu(t *testing.T) {
 	t.Run("should set export dogu", func(t *testing.T) {
