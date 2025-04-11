@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 )
 
@@ -52,38 +51,11 @@ func TestMNSetExportDogu(t *testing.T) {
 
 		serviceClient.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
-		doguClient.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(&v2.Dogu{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "test_A",
-			},
-		}, nil)
-
 		dogu, _ := provider.SetExportDogu("test_A", context.Background())
 
 		require.Equal(t, 8080, dogu.ExporterPort)
 		require.Equal(t, "test_A", dogu.Dogu)
-		require.Equal(t, "test_A-data", dogu.VolumePath)
-	})
-	t.Run("should return get error on getting dogu for name", func(t *testing.T) {
-		configMaps := newMockConfigMaps(t)
-		doguClient := newMockDoguClient(t)
-		serviceClient := newMockServiceClient(t)
-		provider := NewMultinodeExportModeProvider("ecosystem", configMaps, doguClient, serviceClient)
-
-		serviceClient.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(&corev1.Service{
-			Spec: corev1.ServiceSpec{
-				Ports: []corev1.ServicePort{{
-					Port: 8080,
-				}},
-				Selector: map[string]string{"dogu.name": "test_A"},
-			},
-		}, nil)
-
-		doguClient.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
-
-		_, err := provider.SetExportDogu("test_A", context.Background())
-
-		require.Contains(t, "could not get dogu resource for current export dogu: testerror", err.Error())
+		require.Equal(t, "/data", dogu.VolumePath)
 	})
 	t.Run("should set export dogu", func(t *testing.T) {
 		configMaps := newMockConfigMaps(t)
@@ -101,12 +73,6 @@ func TestMNSetExportDogu(t *testing.T) {
 		}, nil)
 
 		serviceClient.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
-
-		doguClient.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(&v2.Dogu{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "test_A",
-			},
-		}, nil)
 
 		_, err := provider.SetExportDogu("test_A", context.Background())
 
