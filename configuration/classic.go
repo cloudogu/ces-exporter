@@ -6,9 +6,9 @@ import (
 	"log/slog"
 )
 
-var _ Provider = (*MultinodeConfigurationProvider)(nil)
+var _ Provider = (*ClassicConfigurationProvider)(nil)
 
-type MultinodeConfigurationProvider struct {
+type ClassicConfigurationProvider struct {
 	namespace           string
 	sensitiveRepo       doguConfigRepository
 	doguConfigRepo      doguConfigRepository
@@ -17,15 +17,15 @@ type MultinodeConfigurationProvider struct {
 	client              backupScheduleRuntimeClient
 }
 
-func NewMultinodeConfigurationProvider(
+func NewClassicConfigurationProvider(
 	namespace string,
 	sensitiveRepo doguConfigRepository,
 	doguConfigRepo doguConfigRepository,
 	globalConfigRepo globalConfigRepository,
 	doguVersionRegistry doguVersionRegistry,
 	client backupScheduleRuntimeClient,
-) *MultinodeConfigurationProvider {
-	return &MultinodeConfigurationProvider{
+) *ClassicConfigurationProvider {
+	return &ClassicConfigurationProvider{
 		namespace:           namespace,
 		sensitiveRepo:       sensitiveRepo,
 		doguConfigRepo:      doguConfigRepo,
@@ -35,7 +35,7 @@ func NewMultinodeConfigurationProvider(
 	}
 }
 
-func (c MultinodeConfigurationProvider) getGlobalConfigs(ctx context.Context) ([]keyValue, error) {
+func (c ClassicConfigurationProvider) getGlobalConfigs(ctx context.Context) ([]keyValue, error) {
 	repo, err := c.globalConfigRepo.Get(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get global config: %w", err)
@@ -52,7 +52,7 @@ func (c MultinodeConfigurationProvider) getGlobalConfigs(ctx context.Context) ([
 	return globalConfigs, nil
 }
 
-func (c MultinodeConfigurationProvider) getDoguConfigs(ctx context.Context) ([]doguConfig, error) {
+func (c ClassicConfigurationProvider) getDoguConfigs(ctx context.Context) ([]doguConfig, error) {
 	slog.Debug("get dogu configs...")
 	dogus, err := c.doguVersionRegistry.GetCurrentOfAll(ctx)
 	if err != nil {
@@ -101,7 +101,7 @@ func (c MultinodeConfigurationProvider) getDoguConfigs(ctx context.Context) ([]d
 	return doguConfigs, nil
 }
 
-func (c MultinodeConfigurationProvider) getBackupSchedules(ctx context.Context) ([]backupSchedule, error) {
+func (c ClassicConfigurationProvider) getBackupSchedules(ctx context.Context) ([]backupSchedule, error) {
 	var schedulesResult []backupSchedule
 
 	schedules, err := c.client.ListBackupSchedules(ctx)
