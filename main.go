@@ -36,8 +36,8 @@ type kubernetesClient interface {
 
 type exporterContext struct {
 	ecosystemClient v1AlphaClientInterface
-	doguClient      export.DoguClientInterface
-	serviceClient   export.ServiceClientInterface
+	doguClient      *export.EcosystemDoguClient
+	serviceClient   *export.EcosystemServiceClient
 	client          kubernetesClient
 	config          core.Configuration
 	bclient         *core.BackupScheduleRuntimeClient
@@ -71,9 +71,9 @@ func newExporterContext(config core.Configuration) (*exporterContext, error) {
 		return nil, fmt.Errorf("failed to create dogu client: %w", err)
 	}
 
-	doguClient := export.NewDoguClient(config.Namespace, dc)
+	doguClient := export.NewEcosystemDoguClient(config.Namespace, dc)
 
-	serviceClient := export.NewServiceClient(config.Namespace, client)
+	serviceClient := export.NewServiceClient(client)
 
 	return &exporterContext{
 		ecosystemClient,
@@ -161,8 +161,9 @@ func (ec exporterContext) createServer() http.Handler {
 		ec.ecosystemClient.Components(ec.config.Namespace),
 	)
 	systemInfoController := systeminfo.NewController(systemInfoProvider)
-
-	exportModeProvider := export.NewMultinodeExportModeProvider(ec.config.Namespace, configMaps, ec.doguClient, ec.serviceClient)
+	services := ec.serviceClient.Coreclient.CoreV1().Services(ec.config.Namespace)
+	dogus := ec.doguClient.Doguclient
+	exportModeProvider := export.NewMultinodeExportModeProvider(ec.config.Namespace, configMaps, dogus, services)
 	exportModeController := export.NewMultinodeExportModeController(exportModeProvider)
 
 	configurationProvider := configuration.NewMultinodeConfigurationProvider(ec.config.Namespace, sensitiveRepo, doguRepo, globalConfigRepo, doguVersionReg, ec.bclient)
@@ -211,14 +212,13 @@ func configureLogger(conf core.Configuration) {
 this starts an asynchronous task - it can not return anything but will log error if the job fails
 */
 func (ec exporterContext) startCronJob() {
-	cronExpr := os.Getenv(export.CronJobEnv)
-	if cronExpr == "" {
-		// step out if no expression is configured
+	config, err := core.ReadConfigFromEnv()
+	if err != nil || config.CronExp == "" {
 		return
 	}
 
-	cj := export.NewCronJob(cronExpr, ec.doguClient, ec.config.Namespace)
-	err := cj.Run()
+	cj := export.NewCronJob(config.CronExp, ec.doguClient.Doguclient, ec.config.Namespace)
+	err = cj.Run()
 
 	if err != nil {
 		slog.Error("Failed to start cronjob:", "err", err)

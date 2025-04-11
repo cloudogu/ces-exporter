@@ -10,50 +10,30 @@ import (
 )
 
 type DoguClientInterface interface {
-	Get(ctx context.Context, name string) (*v2.Dogu, error)
-	List(ctx context.Context) (*v2.DoguList, error)
-	Update(ctx context.Context, dogu *v2.Dogu) (*v2.Dogu, error)
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v2.Dogu, error)
+	List(ctx context.Context, opts metav1.ListOptions) (*v2.DoguList, error)
+	Update(ctx context.Context, dogu *v2.Dogu, opts metav1.UpdateOptions) (*v2.Dogu, error)
 }
 
-type DoguClient struct {
-	namespace  string
-	doguclient ecoSystemV2.EcoSystemV2Interface
+type EcosystemDoguClient struct {
+	Doguclient ecoSystemV2.DoguInterface
 }
 
-func NewDoguClient(namespace string, client ecoSystemV2.EcoSystemV2Interface) *DoguClient {
-	return &DoguClient{namespace: namespace, doguclient: client}
-}
+func NewEcosystemDoguClient(namespace string, client ecoSystemV2.EcoSystemV2Interface) *EcosystemDoguClient {
+	dc := client.Dogus(namespace)
 
-func (dc DoguClient) Get(ctx context.Context, name string) (*v2.Dogu, error) {
-	return dc.doguclient.Dogus(dc.namespace).Get(ctx, name, metav1.GetOptions{})
-}
-
-func (dc DoguClient) List(ctx context.Context) (*v2.DoguList, error) {
-	return dc.doguclient.Dogus(dc.namespace).List(ctx, metav1.ListOptions{})
-}
-
-func (dc DoguClient) Update(ctx context.Context, dogu *v2.Dogu) (*v2.Dogu, error) {
-	return dc.doguclient.Dogus(dc.namespace).Update(ctx, dogu, metav1.UpdateOptions{})
+	return &EcosystemDoguClient{dc}
 }
 
 type ServiceClientInterface interface {
-	Get(ctx context.Context, name string) (*corev1.Service, error)
-	Update(ctx context.Context, service *corev1.Service) (*corev1.Service, error)
+	Get(ctx context.Context, name string, opts metav1.GetOptions) (*corev1.Service, error)
+	Update(ctx context.Context, service *corev1.Service, opts metav1.UpdateOptions) (*corev1.Service, error)
 }
 
-type ServiceClient struct {
-	namespace  string
-	coreclient *kubernetes.Clientset
+type EcosystemServiceClient struct {
+	Coreclient *kubernetes.Clientset
 }
 
-func NewServiceClient(namespace string, client *kubernetes.Clientset) *ServiceClient {
-	return &ServiceClient{namespace: namespace, coreclient: client}
-}
-
-func (dc ServiceClient) Get(ctx context.Context, name string) (*corev1.Service, error) {
-	return dc.coreclient.CoreV1().Services(dc.namespace).Get(ctx, name, metav1.GetOptions{})
-}
-
-func (dc ServiceClient) Update(ctx context.Context, service *corev1.Service) (*corev1.Service, error) {
-	return dc.coreclient.CoreV1().Services(dc.namespace).Update(ctx, service, metav1.UpdateOptions{})
+func NewServiceClient(client *kubernetes.Clientset) *EcosystemServiceClient {
+	return &EcosystemServiceClient{Coreclient: client}
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/cloudogu/ces-exporter/core"
 	v2 "github.com/cloudogu/k8s-dogu-operator/v3/api/v2"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -30,7 +31,7 @@ func TestCallCronJob(t *testing.T) {
 		slog.SetDefault(logger)
 		expr := "* * * * *"
 		doguClient := NewMockDoguClientInterface(t)
-		doguClient.EXPECT().List(mock.Anything).Return(&v2.DoguList{
+		doguClient.EXPECT().List(mock.Anything, mock.Anything).Return(&v2.DoguList{
 			Items: []v2.Dogu{},
 		}, nil)
 		cronjob := NewCronJob(expr, doguClient, "ecosystem")
@@ -44,7 +45,7 @@ func TestCallCronJob(t *testing.T) {
 		slog.SetDefault(logger)
 		expr := "* * * * *"
 		doguClient := NewMockDoguClientInterface(t)
-		doguClient.EXPECT().List(mock.Anything).Return(&v2.DoguList{
+		doguClient.EXPECT().List(mock.Anything, mock.Anything).Return(&v2.DoguList{
 			Items: []v2.Dogu{
 				{
 					Spec: v2.DoguSpec{
@@ -73,7 +74,7 @@ func TestCallCronJob(t *testing.T) {
 		slog.SetDefault(logger)
 		expr := "* * * * *"
 		doguClient := NewMockDoguClientInterface(t)
-		doguClient.EXPECT().List(mock.Anything).Return(&v2.DoguList{
+		doguClient.EXPECT().List(mock.Anything, mock.Anything).Return(&v2.DoguList{
 			Items: []v2.Dogu{
 				{
 					Spec: v2.DoguSpec{
@@ -90,7 +91,7 @@ func TestCallCronJob(t *testing.T) {
 			},
 		}, nil)
 		// no error
-		doguClient.EXPECT().Update(mock.Anything, mock.Anything).Return(nil, nil)
+		doguClient.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
 		cronjob := NewCronJob(expr, doguClient, "ecosystem")
 
@@ -105,7 +106,7 @@ func TestCallCronJob(t *testing.T) {
 		slog.SetDefault(logger)
 		expr := "* * * * *"
 		doguClient := NewMockDoguClientInterface(t)
-		doguClient.EXPECT().List(mock.Anything).Return(&v2.DoguList{
+		doguClient.EXPECT().List(mock.Anything, mock.Anything).Return(&v2.DoguList{
 			Items: []v2.Dogu{
 				{
 					Spec: v2.DoguSpec{
@@ -122,7 +123,7 @@ func TestCallCronJob(t *testing.T) {
 			},
 		}, nil)
 		// no error
-		doguClient.EXPECT().Update(mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
+		doguClient.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
 
 		cronjob := NewCronJob(expr, doguClient, "ecosystem")
 
@@ -141,7 +142,7 @@ func TestRunCronJob(t *testing.T) {
 		slog.SetDefault(logger)
 		expr := "* * * * *"
 		doguClient := NewMockDoguClientInterface(t)
-		doguClient.EXPECT().List(mock.Anything).Return(&v2.DoguList{
+		doguClient.EXPECT().List(mock.Anything, mock.Anything).Return(&v2.DoguList{
 			Items: []v2.Dogu{
 				{
 					Spec: v2.DoguSpec{
@@ -158,11 +159,14 @@ func TestRunCronJob(t *testing.T) {
 			},
 		}, nil)
 
-		doguClient.EXPECT().Update(mock.Anything, mock.Anything).Return(nil, nil)
+		doguClient.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
 		cronjob := NewCronJob(expr, doguClient, "ecosystem")
 
-		_ = os.Setenv(CronJobVerboseEnv, "true")
+		// set os env so ReadConfigFromEnv runs without errors
+		_ = os.Setenv(core.CronJobVerboseEnv, "true")
+		_ = os.Setenv(core.NamespaceEnv, "anything")
+		_ = os.Setenv(core.ApiKeyEnv, "key")
 
 		go func() {
 			_ = cronjob.Run()
@@ -180,11 +184,14 @@ func TestRunCronJob(t *testing.T) {
 		slog.SetDefault(logger)
 		expr := "* * * * *"
 		doguClient := NewMockDoguClientInterface(t)
-		doguClient.EXPECT().List(mock.Anything).Return(nil, fmt.Errorf("testerror"))
+		doguClient.EXPECT().List(mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
 
 		cronjob := NewCronJob(expr, doguClient, "ecosystem")
 
-		_ = os.Setenv(CronJobVerboseEnv, "true")
+		// set os env so ReadConfigFromEnv runs without errors
+		_ = os.Setenv(core.CronJobVerboseEnv, "true")
+		_ = os.Setenv(core.NamespaceEnv, "anything")
+		_ = os.Setenv(core.ApiKeyEnv, "key")
 
 		go func() {
 			_ = cronjob.Run()

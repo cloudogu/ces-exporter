@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"github.com/adhocore/gronx"
 	"github.com/adhocore/gronx/pkg/tasker"
+	"github.com/cloudogu/ces-exporter/core"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"log/slog"
-	"os"
 )
-
-const CronJobEnv = "EXPORT_CRON"
-const CronJobVerboseEnv = "EXPORT_CRON_VERBOSE"
 
 type CronJobFunction func() (int, error)
 
@@ -21,10 +19,10 @@ type CronJob struct {
 	taskr      *tasker.Tasker
 }
 
-func NewCronJob(expr string, doguClient DoguClientInterface, namespace string) *CronJob {
+func NewCronJob(expr string, ecosystemClient DoguClientInterface, namespace string) *CronJob {
 	return &CronJob{
 		namespace:  namespace,
-		doguClient: doguClient,
+		doguClient: ecosystemClient,
 		expr:       expr,
 	}
 }
@@ -33,9 +31,12 @@ func (cj *CronJob) Run() error {
 	if !gronx.IsValid(cj.expr) {
 		return fmt.Errorf("configured exporter cron expression '%s' is invalid", cj.expr)
 	}
-	verbose := os.Getenv(CronJobVerboseEnv) == "true"
+	config, err := core.ReadConfigFromEnv()
+	if err != nil {
+		return fmt.Errorf("could not get config: %w", err)
+	}
 	cj.taskr = tasker.New(tasker.Option{
-		Verbose: verbose,
+		Verbose: config.VerboseCron,
 	})
 
 	cj.taskr.Task(cj.expr, func(ctx context.Context) (int, error) {
@@ -56,7 +57,7 @@ func (cj *CronJob) Stop() {
 /* this handles the actual exporter */
 func (cj *CronJob) callCronJob(ctx context.Context) (int, error) {
 	slog.Info("start export mode cronjob due to timetable ")
-	dogus, err := cj.doguClient.List(ctx)
+	dogus, err := cj.doguClient.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		slog.Error("Error while getting dogu list", "err", err)
 		return 0, nil
@@ -65,7 +66,7 @@ func (cj *CronJob) callCronJob(ctx context.Context) (int, error) {
 		if !d.Spec.ExportMode {
 			slog.Info(fmt.Sprintf("Activate export mode for dogu '%s'", d.Spec.Name))
 			d.Spec.ExportMode = true
-			_, err := cj.doguClient.Update(ctx, &d)
+			_, err := cj.doguClient.Update(ctx, &d, metav1.UpdateOptions{})
 			if err != nil {
 				slog.Error("Error while activating export mode", "err", err)
 			}
@@ -73,5 +74,6 @@ func (cj *CronJob) callCronJob(ctx context.Context) (int, error) {
 	}
 
 	// the cron job do not fail. All errors will be logged
+	slog.Info("export mode cron job finished")
 	return 0, nil
 }
