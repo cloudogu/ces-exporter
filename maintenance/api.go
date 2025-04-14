@@ -2,8 +2,10 @@ package maintenance
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/cloudogu/ces-exporter/core"
+	"github.com/cloudogu/k8s-registry-lib/config"
 	"net/http"
 )
 
@@ -47,4 +49,14 @@ func (m *Controller) SetMaintenanceMode(w http.ResponseWriter, r *http.Request) 
 	}
 
 	core.JSON(w, http.StatusOK, status)
+}
+
+// BuildMaintenanceJSON results in this json format: {"title": "some title", "text": "some text"}
+func BuildMaintenanceJSON(mReq maintenanceModeRequest) (config.Value, error) {
+	jsonConfig, err := json.Marshal(mReq.Message)
+	if err != nil {
+		return "", fmt.Errorf("unable to create maintenance mode config json: %s", err)
+	}
+
+	return config.Value(jsonConfig), nil
 }

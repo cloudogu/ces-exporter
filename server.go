@@ -23,6 +23,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	ctrl "sigs.k8s.io/controller-runtime"
 	rclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -292,7 +293,7 @@ func (s *server) createEndpoints() http.Handler {
 	} else {
 		systemInfoController = &systeminfo.Controller{}
 		configController = &configuration.Controller{}
-		maintenanceModeProvider := maintenance.NewClassicProvider()
+		maintenanceModeProvider := maintenance.NewClassicProvider(&maintenance.EtcdConfigRepo{Exec: exec.Command})
 		maintenanceModeController = maintenance.NewController(maintenanceModeProvider)
 		slog.Error("TODO: Implement classic ces controllers")
 	}
