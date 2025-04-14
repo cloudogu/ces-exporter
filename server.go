@@ -293,6 +293,7 @@ func (s *server) createEndpoints() http.Handler {
 		systemInfoController = &systeminfo.Controller{}
 		configController = &configuration.Controller{}
 		maintenanceModeController = &maintenance.Controller{}
+		exportModeController = &export.Controller{}
 		slog.Error("TODO: Implement classic ces controllers")
 	}
 
