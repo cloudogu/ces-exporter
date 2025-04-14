@@ -146,9 +146,9 @@ func watchApiKeyConfig(reg watchConfigurationContext, config *core.Configuration
 		v, err := reg.Get(regKeyApi)
 		if err != nil {
 			slog.Error(err.Error())
+		} else {
+			config.ApiKey = v
 		}
-
-		config.ApiKey = v
 
 		go func() {
 			for event := range apiKeyWatcher {
@@ -178,8 +178,9 @@ func watchSshKeyConfig(reg watchConfigurationContext, write core.WriteFileFunc) 
 		v, err := reg.Get(regKeySsh)
 		if err != nil {
 			slog.Error(err.Error())
+		} else {
+			writeAuthorizedKey(v, write)
 		}
-		writeAuthorizedKey(v, write)
 
 		go func() {
 			for event := range sshKeyWatcher {
