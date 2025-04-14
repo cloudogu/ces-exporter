@@ -9,17 +9,18 @@ import (
 )
 
 const (
-	logLevelEnv  = "LOG_LEVEL"
-	basePathEnv  = "BASE_PATH"
-	apiKeyEnv    = "API_KEY"
-	namespaceEnv = "NAMESPACE"
-	fqdnEnv      = "FQDN"
-	errorFormat  = "environment variable %s is not set"
-	modeClassic  = "classic"
+	logLevelEnv       = "LOG_LEVEL"
+	basePathEnv       = "BASE_PATH"
+	NamespaceEnv      = "NAMESPACE"
+	ApiKeyEnv         = "API_KEY"
+	fqdnEnv           = "FQDN"
 	CronJobVerboseEnv = "EXPORT_CRON_VERBOSE"
-	CronJobEnv = "EXPORT_CRON"
-	NamespaceEnv = "NAMESPACE"
-	ApiKeyEnv = "API_KEY"
+	CronJobEnv        = "EXPORT_CRON"
+)
+
+const (
+	errorFormat = "environment variable %s is not set"
+	modeClassic = "classic"
 )
 
 type watchConfigurationContext interface {
@@ -28,12 +29,12 @@ type watchConfigurationContext interface {
 }
 
 type Configuration struct {
-	LogLevel    string
-	BasePath    string
-	ApiKey      string
-	Namespace   string
-	CronExp     string
-	VerboseCron bool
+	LogLevel                 string
+	BasePath                 string
+	ApiKey                   string
+	Namespace                string
+	CronExp                  string
+	VerboseCron              bool
 	IsClassic                bool
 	ClassicOnlyConfiguration ClassicOnlyConfiguration
 }
@@ -64,7 +65,7 @@ func ReadConfigFromEnv() (Configuration, error) {
 	conf.BasePath = strings.TrimSuffix(conf.BasePath, "/")
 
 	conf.ApiKey = os.Getenv(ApiKeyEnv)
-	if conf.ApiKey == "" {
+	if conf.ApiKey == "" && !conf.IsClassic {
 		return conf, fmt.Errorf(errorFormat, ApiKeyEnv)
 	}
 
