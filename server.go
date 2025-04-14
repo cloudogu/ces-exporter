@@ -306,7 +306,7 @@ func (s *server) createEndpoints() http.Handler {
 
 	rootHandler.HandleFunc("GET /configuration", authMiddleware(configController.GetConfig))
 
-	rootHandler.HandleFunc("GET /export/dogu/{doguName}", authMiddleware(exportModeController.GetExportDogu))
+	rootHandler.HandleFunc("GET /export/dogu", authMiddleware(exportModeController.GetExportDogu))
 	rootHandler.HandleFunc("POST /export/dogu/{doguName}", authMiddleware(exportModeController.SetExportDogu))
 	rootHandler.HandleFunc("GET /export/mode", authMiddleware(exportModeController.GetExportMode))
 
