@@ -1,5 +1,5 @@
 ### GET Export dogu
-GET {{host}}/ces-exporter/export/dogu
+GET {{host}}/ces-exporter/export/dogu/cas
 X-CES-EXPORTER-API-KEY: {{apiKey}}
 
 ### POST Export dogu
