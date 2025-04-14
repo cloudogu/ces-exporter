@@ -11,7 +11,8 @@ installed_version=$(dpkg-query -W -f='${Version}' ces-exporter)
 docker rm -f ces-exporter
 docker run -p 7022:22 -v /var/lib/ces:/data -v /etc/ces/node_master:/etc/ces/node_master --net cesnet1 --name ces-exporter --restart=always -d "ces-exporter:${installed_version}"
 EXPORTER_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ces-exporter)
-etcdctl set services/mailhog/registrator:exporter:8025 "{\"name\":\"ces-exporter\",\"service\":\"${EXPORTER_IP}:8080\",\"port\":\"8080\",\"tags\":[\"webapp\"],\"healthStatus\":\"healthy\",\"attributes\":{}}"
+# Create service in etcd registry to make the nginx route the api endpoints
+etcdctl set services/exporter/registrator:exporter:8025 "{\"name\":\"ces-exporter\",\"service\":\"${EXPORTER_IP}:8080\",\"port\":\"8080\",\"tags\":[\"webapp\"],\"healthStatus\":\"healthy\",\"attributes\":{}}"
 docker restart nginx || true
 
-sudo ufw allow 7022 || true
+sudo ufw allow 7022 || echo "Failed to allow ssh port for exporter service. If you do not use ufw as firewall make sure access to port 7022 is allowed."
