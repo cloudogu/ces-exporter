@@ -19,9 +19,9 @@ import (
 func Test_createServer(t *testing.T) {
 	t.Run("for multinode", func(t *testing.T) {
 		conf := core.Configuration{BasePath: "/ces-exporter"}
-		client := newMockKubernetesClient(t)
+		cl := newMockKubernetesClient(t)
 		cv1 := newMockCorev1Interface(t)
-		client.EXPECT().CoreV1().Return(cv1)
+		cl.EXPECT().CoreV1().Return(cv1)
 		cv1.EXPECT().ConfigMaps(mock.Anything).Return(nil)
 		cv1.EXPECT().PersistentVolumeClaims(mock.Anything).Return(nil)
 		cv1.EXPECT().Secrets("").Return(nil)
@@ -33,13 +33,17 @@ func Test_createServer(t *testing.T) {
 		doguClient := newMockEcosystemDogusClient(t)
 		doguClient.EXPECT().Dogus(mock.Anything).Return(nil)
 
+		provider, err := newMultinodeControllerProvider(conf)
+		require.NoError(t, err)
+
+		provider.componentClient = componentClient
+		provider.doguClient = doguClient
+		provider.client = cl
 		exCtx := server{
-			componentClient: componentClient,
-			doguClient:      doguClient,
-			client:          client,
-			config:          &conf,
+			config:             &conf,
+			controllerProvider: provider,
 		}
-		router := exCtx.createEndpoints()
+		router := exCtx.createEndpoints(context.Background())
 		require.NotNil(t, router)
 
 		rr := httptest.NewRecorder()
@@ -52,11 +56,16 @@ func Test_createServer(t *testing.T) {
 	})
 
 	t.Run("for classic", func(t *testing.T) {
+		err := os.Setenv(fqdnEnv, "fqdn")
+		require.NoError(t, err)
 		conf := core.Configuration{BasePath: "/ces-exporter", IsClassic: true}
+		provider, err := newClassicControllerProvider(&conf)
+		require.NoError(t, err)
 		exCtx := server{
-			config: &conf,
+			config:             &conf,
+			controllerProvider: provider,
 		}
-		router := exCtx.createEndpoints()
+		router := exCtx.createEndpoints(context.Background())
 		require.NotNil(t, router)
 
 		rr := httptest.NewRecorder()
@@ -66,17 +75,26 @@ func Test_createServer(t *testing.T) {
 		router.ServeHTTP(rr, req)
 		require.Equal(t, http.StatusOK, rr.Code)
 		require.Equal(t, "healthy", rr.Body.String())
+
+		err = os.Unsetenv(fqdnEnv)
+		require.NoError(t, err)
 	})
 
 }
 
 func TestNewServer(t *testing.T) {
 	t.Run("will init for classic", func(t *testing.T) {
+		err := os.Setenv(fqdnEnv, "fqdn")
+		require.NoError(t, err)
+
 		srv, err := newServer(core.Configuration{
 			IsClassic: true,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, srv)
+
+		err = os.Unsetenv(fqdnEnv)
+		require.NoError(t, err)
 	})
 
 	t.Run("will init for multinode", func(t *testing.T) {
@@ -97,8 +115,10 @@ func TestNewServer(t *testing.T) {
 	})
 }
 
-func TestInitServerForClassic(t *testing.T) {
+func TestUpdateApiKeysAndSshKey(t *testing.T) {
 	t.Run("will update apiKey", func(t *testing.T) {
+		err := os.Setenv(fqdnEnv, "fqdn")
+		require.NoError(t, err)
 		confCtx := newMockWatchConfigurationContext(t)
 		confCtx.EXPECT().Get(regKeyApi).Return("oldval", nil).Once()
 		confCtx.EXPECT().Get(regKeySsh).Return("oldssh", nil).Once()
@@ -136,24 +156,31 @@ func TestInitServerForClassic(t *testing.T) {
 					eventChannel <- response
 				},
 			).Once()
-		counter := 0
-		srv := initServerForClassic(core.Configuration{
-			IsClassic: true,
+		conf := core.Configuration{
 			ApiKey:    "original",
-			ClassicOnlyConfiguration: core.ClassicOnlyConfiguration{
-				Registry: confCtx,
-				WriteFile: func(name string, data []byte, perm os.FileMode) error {
-					assert.Equal(t, "/root/.ssh/authorized_keys", name)
-					if counter == 0 {
-						assert.Equal(t, "oldssh", string(data))
-						counter++
-					} else {
-						assert.Equal(t, "newssh", string(data))
-					}
-					return nil
-				},
-			},
-		})
+			IsClassic: true,
+		}
+		srv, err := newServer(conf)
+		require.NoError(t, err)
+		provider, err := newClassicControllerProvider(srv.config)
+		require.NoError(t, err)
+
+		provider.reg = confCtx
+		counter := 0
+		provider.write = func(name string, data []byte, perm os.FileMode) error {
+			assert.Equal(t, "/root/.ssh/authorized_keys", name)
+			if counter == 0 {
+				assert.Equal(t, "oldssh", string(data))
+				counter++
+			} else {
+				assert.Equal(t, "newssh", string(data))
+			}
+			return nil
+		}
+
+		srv.controllerProvider = provider
+
+		_, _, _, _ = provider.createControllers(context.Background())
 
 		assert.Equal(t, "original", srv.config.ApiKey)
 		time.Sleep(100 * time.Millisecond)

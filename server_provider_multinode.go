@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/cloudogu/ces-exporter/configuration"
 	"github.com/cloudogu/ces-exporter/core"
@@ -63,7 +64,7 @@ func newMultinodeControllerProvider(config core.Configuration) (*multinodeContro
 	}, nil
 }
 
-func (m *multinodeControllerProvider) createControllers() (*systeminfo.Controller, *configuration.Controller, *maintenance.Controller, *export.Controller) {
+func (m *multinodeControllerProvider) createControllers(_ context.Context) (*systeminfo.Controller, *configuration.Controller, *maintenance.Controller, *export.Controller) {
 	configMaps := m.client.CoreV1().ConfigMaps(m.config.Namespace)
 	secrets := m.client.CoreV1().Secrets(m.config.Namespace)
 	globalConfigRepo := repository.NewGlobalConfigRepository(configMaps)

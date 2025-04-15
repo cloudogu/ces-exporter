@@ -27,20 +27,34 @@ type watchConfigurationContext interface {
 type writeFileFunc func(name string, data []byte, perm os.FileMode) error
 
 type classicControllerProvider struct {
+	config *core.Configuration
+	write  writeFileFunc
+	reg    watchConfigurationContext
 }
 
-func (c *classicControllerProvider) createControllers() (*systeminfo.Controller, *configuration.Controller, *maintenance.Controller, *export.Controller) {
+func (c *classicControllerProvider) createControllers(ctx context.Context) (*systeminfo.Controller, *configuration.Controller, *maintenance.Controller, *export.Controller) {
+	watchApiKeyConfig(ctx, c.reg, c.config)
+	watchSshKeyConfig(ctx, c.reg, c.write)
+
 	return &systeminfo.Controller{},
 		&configuration.Controller{},
 		&maintenance.Controller{},
 		&export.Controller{}
 }
 
-func newClassicControllerProvider(ctx context.Context, config core.Configuration, reg watchConfigurationContext, writeFileFunc writeFileFunc) *classicControllerProvider {
-	watchApiKeyConfig(ctx, reg, &config)
-	watchSshKeyConfig(ctx, reg, writeFileFunc)
+func newClassicControllerProvider(conf *core.Configuration) (*classicControllerProvider, error) {
+	fqdn := os.Getenv(fqdnEnv)
+	if fqdn == "" {
+		return nil, fmt.Errorf("FQDN environment variable is unset")
+	}
 
-	return &classicControllerProvider{}
+	reg := createRegistry(fqdn)
+
+	return &classicControllerProvider{
+		config: conf,
+		write:  os.WriteFile,
+		reg:    reg,
+	}, nil
 }
 
 func createRegistry(fqdn string) watchConfigurationContext {
