@@ -11,7 +11,7 @@ docker images "ces-exporter" --format "{{.Repository}}:{{.Tag}}" | xargs -r dock
 etcdctl rm services/exporter/registrator:exporter:8025
 
 if dpkg-query -W ufw &> /dev/null; then
-  sudo ufw delete allow 7022
+  ufw delete allow 7022
 else
   echo "The ufw package is not installed. Make sure to manually remove access to port 7022"
 fi
