@@ -5,7 +5,6 @@ import (
 	"fmt"
 	client2 "go.etcd.io/etcd/client/v2"
 	"log/slog"
-	"os/exec"
 	"strings"
 )
 
@@ -23,9 +22,13 @@ type ClassicMaintenanceModeProvider struct {
 	etcdConfigRepo etcdConfigRepo
 }
 
+type KeysApi interface {
+	client2.KeysAPI
+}
+
 type EtcdConfigRepo struct {
 	etcdConfigRepo
-	Exec func(name string, arg ...string) *exec.Cmd
+	Etcdclient KeysApi
 }
 
 func NewClassicProvider(repo etcdConfigRepo) *ClassicMaintenanceModeProvider {
@@ -80,23 +83,17 @@ func (m ClassicMaintenanceModeProvider) GetMaintenanceMode(ctx context.Context) 
 }
 
 func (e *EtcdConfigRepo) Get(key string) (string, error) {
-	client, err := GetEtcdClient()
-	if err != nil {
-		return "", err
-	}
-	resp, err := client.Get(context.Background(), key, &client2.GetOptions{})
-	if err != nil {
+	resp, err := e.Etcdclient.Get(context.Background(), key, &client2.GetOptions{})
+	if err != nil && strings.Contains(err.Error(), "Key not found") {
+		return "", nil
+	} else if err != nil {
 		return "", err
 	}
 	return resp.Node.Value, nil
 }
 
 func (e *EtcdConfigRepo) Update(key string, value string) (string, error) {
-	client, err := GetEtcdClient()
-	if err != nil {
-		return "", err
-	}
-	resp, err := client.Set(context.Background(), key, value, &client2.SetOptions{})
+	resp, err := e.Etcdclient.Set(context.Background(), key, value, &client2.SetOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -104,14 +101,7 @@ func (e *EtcdConfigRepo) Update(key string, value string) (string, error) {
 }
 
 func (e *EtcdConfigRepo) Delete(key string) error {
-	client, err := GetEtcdClient()
-	if err != nil {
-		return err
-	}
-	_, err = client.Delete(context.Background(), key, &client2.DeleteOptions{})
-	if err != nil {
-		return err
-	}
+	_, err := e.Etcdclient.Delete(context.Background(), key, &client2.DeleteOptions{})
 	if err != nil {
 		return err
 	}

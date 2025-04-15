@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"os/exec"
+	"go.etcd.io/etcd/client/v2"
 	"testing"
 )
 
@@ -115,22 +115,57 @@ func TestCActivateMaintenanceMode(t *testing.T) {
 }
 
 func TestEtcdCommandWrapper(t *testing.T) {
-	fakeCmd := func(command string, args ...string) *exec.Cmd {
-		return exec.Command("echo", args...)
-	}
 	t.Run("test getter ok", func(t *testing.T) {
-		repo := &EtcdConfigRepo{Exec: fakeCmd}
+		mockApi := NewMockKeysApi(t)
+		mockApi.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(&client.Response{
+			Node: &client.Node{Value: "this is my value"},
+		}, nil)
+		repo := &EtcdConfigRepo{Etcdclient: mockApi}
 		get, _ := repo.Get(maintenanceModeEtcdKey)
-		require.Contains(t, get, "get /config/_global/maintenance")
+		require.Contains(t, get, "this is my value")
+	})
+	t.Run("test getter key not found", func(t *testing.T) {
+		mockApi := NewMockKeysApi(t)
+		mockApi.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("Key not found"))
+		repo := &EtcdConfigRepo{Etcdclient: mockApi}
+		get, _ := repo.Get(maintenanceModeEtcdKey)
+		require.Equal(t, get, "")
+	})
+	t.Run("test getter error", func(t *testing.T) {
+		mockApi := NewMockKeysApi(t)
+		mockApi.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
+		repo := &EtcdConfigRepo{Etcdclient: mockApi}
+		get, _ := repo.Get(maintenanceModeEtcdKey)
+		require.Equal(t, get, "")
 	})
 	t.Run("test setter ok", func(t *testing.T) {
-		repo := &EtcdConfigRepo{Exec: fakeCmd}
+		mockApi := NewMockKeysApi(t)
+		mockApi.EXPECT().Set(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&client.Response{
+			Node: &client.Node{Value: "{\"title\": \"newTitle\"}"},
+		}, nil)
+		repo := &EtcdConfigRepo{Etcdclient: mockApi}
 		update, _ := repo.Update(maintenanceModeEtcdKey, "{\"title\": \"newTitle\"}")
-		require.Contains(t, update, "set /config/_global/maintenance {\"title\": \"newTitle\"}")
+		require.Contains(t, update, "{\"title\": \"newTitle\"}")
+	})
+	t.Run("test setter error", func(t *testing.T) {
+		mockApi := NewMockKeysApi(t)
+		mockApi.EXPECT().Set(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
+		repo := &EtcdConfigRepo{Etcdclient: mockApi}
+		update, _ := repo.Update(maintenanceModeEtcdKey, "{\"title\": \"newTitle\"}")
+		require.Equal(t, update, "")
 	})
 	t.Run("test delete ok", func(t *testing.T) {
-		repo := &EtcdConfigRepo{Exec: fakeCmd}
+		mockApi := NewMockKeysApi(t)
+		mockApi.EXPECT().Delete(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
+		repo := &EtcdConfigRepo{Etcdclient: mockApi}
 		err := repo.Delete(maintenanceModeEtcdKey)
 		require.NoError(t, err)
+	})
+	t.Run("test delete error", func(t *testing.T) {
+		mockApi := NewMockKeysApi(t)
+		mockApi.EXPECT().Delete(mock.Anything, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
+		repo := &EtcdConfigRepo{Etcdclient: mockApi}
+		err := repo.Delete(maintenanceModeEtcdKey)
+		require.Error(t, err)
 	})
 }

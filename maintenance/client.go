@@ -15,11 +15,6 @@ const (
 	_NodeMasterPath = "/etc/ces/node_master"
 )
 
-type keyValue struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-}
-
 var (
 	// singleton instance for etcd client
 	etcdClient client.KeysAPI
