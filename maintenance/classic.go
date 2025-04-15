@@ -3,6 +3,7 @@ package maintenance
 import (
 	"context"
 	"fmt"
+	client2 "go.etcd.io/etcd/client/v2"
 	"log/slog"
 	"os/exec"
 	"strings"
@@ -79,18 +80,40 @@ func (m ClassicMaintenanceModeProvider) GetMaintenanceMode(ctx context.Context) 
 }
 
 func (e *EtcdConfigRepo) Get(key string) (string, error) {
-	out, err := e.Exec("etcdctl", "get", key).Output()
-	output := strings.TrimSpace(string(out))
-	return output, err
+	client, err := GetEtcdClient()
+	if err != nil {
+		return "", err
+	}
+	resp, err := client.Get(context.Background(), key, &client2.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+	return resp.Node.Value, nil
 }
 
 func (e *EtcdConfigRepo) Update(key string, value string) (string, error) {
-	out, err := e.Exec("etcdctl", "set", key, value).Output()
-	output := strings.TrimSpace(string(out))
-	return output, err
+	client, err := GetEtcdClient()
+	if err != nil {
+		return "", err
+	}
+	resp, err := client.Set(context.Background(), key, value, &client2.SetOptions{})
+	if err != nil {
+		return "", err
+	}
+	return resp.Node.Value, nil
 }
 
 func (e *EtcdConfigRepo) Delete(key string) error {
-	_, err := e.Exec("etcdctl", "rm", key).Output()
-	return err
+	client, err := GetEtcdClient()
+	if err != nil {
+		return err
+	}
+	_, err = client.Delete(context.Background(), key, &client2.DeleteOptions{})
+	if err != nil {
+		return err
+	}
+	if err != nil {
+		return err
+	}
+	return nil
 }
