@@ -64,7 +64,7 @@ func (cj *CronJob) Stop() {
 	}
 }
 
-/* this handles the actual exporter */
+// callCronJob handles the actual exporter
 func (cj *CronJob) callCronJob(ctx context.Context) (int, error) {
 	slog.Info("start export mode cronjob due to timetable ")
 	dogus, err := cj.doguClient.List(ctx, metav1.ListOptions{})
@@ -83,7 +83,7 @@ func (cj *CronJob) callCronJob(ctx context.Context) (int, error) {
 		}
 	}
 
-	// the cron job do not fail. All errors will be logged
+	// the cron job does not fail. All errors will be logged
 	slog.Info("export mode cron job finished")
 	return 0, nil
 }

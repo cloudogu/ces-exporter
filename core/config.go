@@ -20,14 +20,23 @@ const (
 	modeClassic = "classic"
 )
 
+// Configuration holds all possible configurations of the exporter app
 type Configuration struct {
-	LogLevel    string
-	BasePath    string
-	ApiKey      string
-	Namespace   string
-	CronExp     string
+	// LogLevel controls the granularity and amount of issued log output. Valid values are (always in
+	// uppercase) `ERROR`, `WARN`, `INFO`, `DEBUG`. Defaults to `ERROR` if left empty.
+	LogLevel string
+	// BasePath is the first part of path on which the api can be reached
+	BasePath string
+	// ApiKey is the api key which is required to access the api
+	ApiKey string
+	// Namespace is the namespace in the cluster where the application runs in
+	Namespace string
+	// CronExp is the cron expression for the interval to enable the export mode
+	CronExp string
+	// VerboseCron defines whether the export mode cronjob should log verbose
 	VerboseCron bool
-	IsClassic   bool
+	// IsClassic defines if the application should start with classic ces configuration or multinode ces configuration
+	IsClassic bool
 }
 
 func ReadConfigFromEnv() (Configuration, error) {

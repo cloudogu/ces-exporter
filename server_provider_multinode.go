@@ -113,6 +113,6 @@ func (m *multinodeControllerProvider) startCronJob(dogus ecoSystemV2.DoguInterfa
 	err := cj.Run()
 
 	if err != nil {
-		slog.Error("Failed to start cronjob:", "err", err)
+		slog.Error(fmt.Sprintf("failed to start cronjob: %s", err.Error()))
 	}
 }
