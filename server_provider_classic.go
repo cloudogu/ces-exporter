@@ -1,0 +1,115 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"github.com/cloudogu/ces-exporter/configuration"
+	"github.com/cloudogu/ces-exporter/core"
+	"github.com/cloudogu/ces-exporter/export"
+	"github.com/cloudogu/ces-exporter/maintenance"
+	"github.com/cloudogu/ces-exporter/systeminfo"
+	libcore "github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/cesapp-lib/registry"
+	"go.etcd.io/etcd/client/v2"
+	"log/slog"
+	"os"
+)
+
+const (
+	fqdnEnv = "FQDN"
+)
+
+type watchConfigurationContext interface {
+	Watch(ctx context.Context, key string, recursive bool, eventChannel chan *client.Response)
+	Get(key string) (string, error)
+}
+
+type writeFileFunc func(name string, data []byte, perm os.FileMode) error
+
+type classicControllerProvider struct {
+}
+
+func (c *classicControllerProvider) createControllers() (*systeminfo.Controller, *configuration.Controller, *maintenance.Controller, *export.Controller) {
+	return &systeminfo.Controller{},
+		&configuration.Controller{},
+		&maintenance.Controller{},
+		&export.Controller{}
+}
+
+func newClassicControllerProvider(ctx context.Context, config core.Configuration, reg watchConfigurationContext, writeFileFunc writeFileFunc) *classicControllerProvider {
+	watchApiKeyConfig(ctx, reg, &config)
+	watchSshKeyConfig(ctx, reg, writeFileFunc)
+
+	return &classicControllerProvider{}
+}
+
+func createRegistry(fqdn string) watchConfigurationContext {
+	reg, err := registry.New(libcore.Registry{
+		Type:      "etcd",
+		Endpoints: []string{fmt.Sprintf("http://%s:4001", fqdn)},
+		RetryPolicy: libcore.RetryPolicy{
+			Type:          "constant",
+			Interval:      5,
+			MaxRetryCount: 3,
+		},
+	})
+	if err != nil {
+		// This error can only occur if type is not equal etcd - as this is hardcoded to etcd, the error will not occur
+		panic(err.Error())
+	}
+
+	return reg.RootConfig()
+}
+
+func watchApiKeyConfig(ctx context.Context, reg watchConfigurationContext, config *core.Configuration) {
+	apiKeyWatcher := make(chan *client.Response)
+
+	go func() {
+		v, err := reg.Get(regKeyApi)
+		if err != nil {
+			slog.Error(err.Error())
+		} else {
+			config.ApiKey = v
+		}
+
+		go func() {
+			for event := range apiKeyWatcher {
+				slog.Info("Updating api-key because registry config has changed...")
+				config.ApiKey = event.Node.Value
+			}
+		}()
+
+		reg.Watch(ctx, regKeyApi, false, apiKeyWatcher)
+	}()
+}
+
+func writeAuthorizedKey(v string, write writeFileFunc) {
+	slog.Info(fmt.Sprintf("The authroized ssz public key has changed to %s", v))
+	err := write(authorizedKeys, []byte(v), sshKeyFileMode)
+	if err != nil {
+		slog.Error(fmt.Sprintf("Could not write changed ssh key to file: %s", err.Error()))
+	} else {
+		slog.Info("Successfully wrote new ssh key to authorized_keys file...")
+	}
+}
+
+func watchSshKeyConfig(ctx context.Context, reg watchConfigurationContext, write writeFileFunc) {
+	sshKeyWatcher := make(chan *client.Response)
+
+	go func() {
+		v, err := reg.Get(regKeySsh)
+		if err != nil {
+			slog.Error(err.Error())
+		} else {
+			writeAuthorizedKey(v, write)
+		}
+
+		go func() {
+			for event := range sshKeyWatcher {
+				writeAuthorizedKey(event.Node.Value, write)
+			}
+		}()
+
+		reg.Watch(ctx, regKeySsh, false, sshKeyWatcher)
+	}()
+}

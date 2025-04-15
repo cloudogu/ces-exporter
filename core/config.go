@@ -1,9 +1,7 @@
 package core
 
 import (
-	"context"
 	"fmt"
-	"go.etcd.io/etcd/client/v2"
 	"os"
 	"strings"
 )
@@ -13,7 +11,6 @@ const (
 	basePathEnv       = "BASE_PATH"
 	NamespaceEnv      = "NAMESPACE"
 	ApiKeyEnv         = "API_KEY"
-	fqdnEnv           = "FQDN"
 	CronJobVerboseEnv = "EXPORT_CRON_VERBOSE"
 	CronJobEnv        = "EXPORT_CRON"
 )
@@ -23,28 +20,14 @@ const (
 	modeClassic = "classic"
 )
 
-type watchConfigurationContext interface {
-	Watch(ctx context.Context, key string, recursive bool, eventChannel chan *client.Response)
-	Get(key string) (string, error)
-}
-
 type Configuration struct {
-	LogLevel                 string
-	BasePath                 string
-	ApiKey                   string
-	Namespace                string
-	CronExp                  string
-	VerboseCron              bool
-	IsClassic                bool
-	ClassicOnlyConfiguration ClassicOnlyConfiguration
-}
-
-type WriteFileFunc func(name string, data []byte, perm os.FileMode) error
-
-type ClassicOnlyConfiguration struct {
-	Fqdn      string
-	Registry  watchConfigurationContext
-	WriteFile WriteFileFunc
+	LogLevel    string
+	BasePath    string
+	ApiKey      string
+	Namespace   string
+	CronExp     string
+	VerboseCron bool
+	IsClassic   bool
 }
 
 func ReadConfigFromEnv() (Configuration, error) {
@@ -77,12 +60,6 @@ func ReadConfigFromEnv() (Configuration, error) {
 	conf.CronExp = os.Getenv(CronJobEnv)
 
 	conf.VerboseCron = os.Getenv(CronJobVerboseEnv) == "true"
-
-	if conf.IsClassic {
-		conf.ClassicOnlyConfiguration = ClassicOnlyConfiguration{
-			Fqdn: os.Getenv(fqdnEnv),
-		}
-	}
 
 	return conf, nil
 }
