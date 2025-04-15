@@ -10,5 +10,8 @@ docker images "ces-exporter" --format "{{.Repository}}:{{.Tag}}" | xargs -r dock
 # Remove service of exporter
 etcdctl rm services/exporter/registrator:exporter:8025
 
-
-sudo ufw delete allow 7022 || echo "Failed to remove ufw rule to allow access to port 7022. If you do not use ufw, yo can ignore this error. Otherwise make sure to manually remove the firewall rule."
+if dpkg-query -W ufw &> /dev/null; then
+  sudo ufw delete allow 7022
+else
+  echo "The ufw package is not installed. Make sure to manually remove access to port 7022"
+fi

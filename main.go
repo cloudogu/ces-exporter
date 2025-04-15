@@ -22,7 +22,7 @@ func main() {
 
 	configureLogger(config)
 
-	srv, err := newServer(config)
+	srv, err := newServer(ctx, config)
 	if err != nil {
 		exitWithError(err)
 	}

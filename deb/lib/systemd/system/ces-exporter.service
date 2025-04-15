@@ -1,0 +1,12 @@
+[Unit]
+Description=CES-Exporter
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+ExecStart=/usr/sbin/ces-exporter
+ExecStop=/usr/sbin/ces-exporter-stop
+
+[Install]
+WantedBy=multi-user.target

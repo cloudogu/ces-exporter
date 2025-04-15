@@ -1,31 +1,24 @@
 package core
 
 import (
-	"context"
 	"fmt"
-	"go.etcd.io/etcd/client/v2"
 	"os"
 	"strings"
 )
 
 const (
-	logLevelEnv  = "LOG_LEVEL"
-	basePathEnv  = "BASE_PATH"
-	apiKeyEnv    = "API_KEY"
-	namespaceEnv = "NAMESPACE"
-	fqdnEnv      = "FQDN"
-	errorFormat  = "environment variable %s is not set"
-	modeClassic  = "classic"
+	logLevelEnv       = "LOG_LEVEL"
+	basePathEnv       = "BASE_PATH"
+	NamespaceEnv      = "NAMESPACE"
+	ApiKeyEnv         = "API_KEY"
 	CronJobVerboseEnv = "EXPORT_CRON_VERBOSE"
-	CronJobEnv = "EXPORT_CRON"
-	NamespaceEnv = "NAMESPACE"
-	ApiKeyEnv = "API_KEY"
+	CronJobEnv        = "EXPORT_CRON"
 )
 
-type watchConfigurationContext interface {
-	Watch(ctx context.Context, key string, recursive bool, eventChannel chan *client.Response)
-	Get(key string) (string, error)
-}
+const (
+	errorFormat = "environment variable %s is not set"
+	modeClassic = "classic"
+)
 
 type Configuration struct {
 	LogLevel    string
@@ -34,16 +27,7 @@ type Configuration struct {
 	Namespace   string
 	CronExp     string
 	VerboseCron bool
-	IsClassic                bool
-	ClassicOnlyConfiguration ClassicOnlyConfiguration
-}
-
-type WriteFileFunc func(name string, data []byte, perm os.FileMode) error
-
-type ClassicOnlyConfiguration struct {
-	Fqdn      string
-	Registry  watchConfigurationContext
-	WriteFile WriteFileFunc
+	IsClassic   bool
 }
 
 func ReadConfigFromEnv() (Configuration, error) {
@@ -64,7 +48,7 @@ func ReadConfigFromEnv() (Configuration, error) {
 	conf.BasePath = strings.TrimSuffix(conf.BasePath, "/")
 
 	conf.ApiKey = os.Getenv(ApiKeyEnv)
-	if conf.ApiKey == "" {
+	if conf.ApiKey == "" && !conf.IsClassic {
 		return conf, fmt.Errorf(errorFormat, ApiKeyEnv)
 	}
 
@@ -76,12 +60,6 @@ func ReadConfigFromEnv() (Configuration, error) {
 	conf.CronExp = os.Getenv(CronJobEnv)
 
 	conf.VerboseCron = os.Getenv(CronJobVerboseEnv) == "true"
-
-	if conf.IsClassic {
-		conf.ClassicOnlyConfiguration = ClassicOnlyConfiguration{
-			Fqdn: os.Getenv(fqdnEnv),
-		}
-	}
 
 	return conf, nil
 }

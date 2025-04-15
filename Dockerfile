@@ -12,9 +12,7 @@ COPY go.sum go.sum
 RUN go mod download
 
 # Copy the go source
-COPY main.go main.go
-COPY logger.go logger.go
-COPY server.go server.go
+COPY *.go .
 COPY core core
 COPY configuration configuration
 COPY export export
