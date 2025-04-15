@@ -2,20 +2,30 @@ package main
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"testing"
+
 	"github.com/cloudogu/ces-exporter/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/rest"
-	"net/http"
-	"net/http/httptest"
-	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"testing"
 )
 
 func Test_createServer(t *testing.T) {
 	t.Run("for multinode", func(t *testing.T) {
+		// override default controller method to retrieve a kube config
+		oldGetConfigDelegate := ctrl.GetConfig
+		defer func() {
+			ctrl.GetConfig = oldGetConfigDelegate
+		}()
+		ctrl.GetConfig = func() (*rest.Config, error) {
+			return &rest.Config{}, nil
+		}
+
 		conf := core.Configuration{BasePath: "/ces-exporter"}
 		cl := newMockKubernetesClient(t)
 		cv1 := newMockCorev1Interface(t)

@@ -3,14 +3,14 @@ package export
 import (
 	"context"
 	"fmt"
+	"log/slog"
+
 	"github.com/adhocore/gronx"
 	"github.com/adhocore/gronx/pkg/tasker"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"log/slog"
 )
 
-type CronJobFunction func() (int, error)
-
+// CronJob is a multinode specific export implementation which puts dogu pods into export mode.
 type CronJob struct {
 	namespace   string
 	doguClient  doguClient
