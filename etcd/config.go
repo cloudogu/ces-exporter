@@ -1,0 +1,186 @@
+package etcd
+
+import (
+	"fmt"
+	"github.com/cloudogu/ces-exporter/core"
+	"github.com/cloudogu/ces-exporter/decrypt"
+	"log/slog"
+	"path"
+	"strings"
+)
+
+const (
+	_GlobalConfigPath = "/config/_global"
+	_DoguConfigPath   = "/config"
+)
+
+var (
+	createDecryptFunc = decrypt.CreateDecrypter
+)
+
+type decrypter interface {
+	Decrypt(input string) (string, error)
+}
+
+func filterKeys(filterSet map[string]bool, exclude bool) filterOption {
+	return func(kvs []core.KeyValue) []core.KeyValue {
+		filtered := make([]core.KeyValue, 0, len(kvs))
+
+		for _, kv := range kvs {
+			if exists := filterSet[strings.TrimPrefix(kv.Key, "/")]; exists == exclude {
+				continue
+			}
+
+			filtered = append(filtered, kv)
+		}
+
+		return filtered
+	}
+}
+
+func ignoreSubKeys(subKeys []string) filterOption {
+	return func(kvs []core.KeyValue) []core.KeyValue {
+		filtered := make([]core.KeyValue, 0, len(kvs))
+		for _, kv := range kvs {
+			skip := false
+
+			for _, subKey := range subKeys {
+				if strings.Contains(kv.Key, subKey) {
+					skip = true
+					break
+				}
+			}
+
+			if skip {
+				continue
+			}
+
+			filtered = append(filtered, kv)
+		}
+
+		return filtered
+	}
+}
+
+func filterEncryptedKeys(d decrypter, exclude bool) filterOption {
+	return func(kvs []core.KeyValue) []core.KeyValue {
+		filtered := make([]core.KeyValue, 0, len(kvs))
+
+		for _, kv := range kvs {
+			dValue, err := d.Decrypt(kv.Value)
+
+			if (err == nil && exclude) || (err != nil && !exclude) {
+				slog.Debug("excluded key", "key", kv.Key)
+				continue
+			}
+
+			if !exclude {
+				kv = core.KeyValue{
+					Key:   kv.Key,
+					Value: dValue,
+				}
+			}
+
+			filtered = append(filtered, kv)
+		}
+
+		return filtered
+	}
+}
+
+func GetGlobalConfig(ignoreKeys []string) (core.GlobalConfig, error) {
+	return getKeyValues(
+		_GlobalConfigPath,
+		ignoreSubKeys(ignoreKeys),
+	)
+}
+
+func GetConfig(dogu string, ignoreKeys []string) (core.DoguConfig, error) {
+	normalConfig, err := GetNormalConfig(dogu, ignoreKeys)
+	if err != nil {
+		return core.DoguConfig{}, fmt.Errorf("error getting normal dogu config: %w", err)
+	}
+
+	localConfig, err := GetLocalConfig(dogu, ignoreKeys)
+	if err != nil {
+		return core.DoguConfig{}, fmt.Errorf("error getting local dogu config: %w", err)
+	}
+
+	sensitiveConfig, err := GetSensitiveConfig(dogu, ignoreKeys)
+	if err != nil {
+		return core.DoguConfig{}, fmt.Errorf("error getting sensitive dogu config: %w", err)
+	}
+
+	return core.DoguConfig{
+		Name:            dogu,
+		NormalConfig:    normalConfig,
+		LocalConfig:     localConfig,
+		SensitiveConfig: sensitiveConfig,
+	}, nil
+}
+
+func GetNormalConfig(dogu string, ignoreKeys []string) ([]core.KeyValue, error) {
+	doguConfigKeys, err := getDoguConfigKeySet(dogu, ExcludeGlobalConfig())
+	if err != nil {
+		return nil, fmt.Errorf("could not get dogu config keys: %w", err)
+	}
+
+	d, err := createDecryptFunc(dogu, GetGlobalConfig)
+	if err != nil {
+		return nil, fmt.Errorf("could not create decrypter: %w", err)
+	}
+
+	normalConfig, err := getKeyValues(
+		path.Join(_DoguConfigPath, dogu),
+		filterKeys(doguConfigKeys, false), // only include keys from dogu.json
+		ignoreSubKeys(ignoreKeys),         // ignore keys provided by user
+		filterEncryptedKeys(d, true),      // exclude encrypted keys
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not get dogu config: %w", err)
+	}
+
+	return normalConfig, nil
+}
+
+func GetLocalConfig(dogu string, ignoreKeys []string) ([]core.KeyValue, error) {
+	doguConfigKeys, err := getDoguConfigKeySet(dogu)
+	if err != nil {
+		return nil, fmt.Errorf("could not get dogu config keys: %w", err)
+	}
+
+	d, err := createDecryptFunc(dogu, GetGlobalConfig)
+	if err != nil {
+		return nil, fmt.Errorf("could not create decrypter: %w", err)
+	}
+
+	lcoalConfig, err := getKeyValues(
+		path.Join(_DoguConfigPath, dogu),
+		filterKeys(doguConfigKeys, true), // exclude keys from dogu.json
+		ignoreSubKeys(ignoreKeys),        // ignore keys provided by user
+		filterEncryptedKeys(d, true),     // exclude encrypted keys
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not get dogu config: %w", err)
+	}
+
+	return lcoalConfig, nil
+}
+
+func GetSensitiveConfig(dogu string, ignoreKeys []string) ([]core.KeyValue, error) {
+	d, err := createDecryptFunc(dogu, GetGlobalConfig)
+	if err != nil {
+		return nil, fmt.Errorf("could not create decrypter: %w", err)
+	}
+
+	sensitiveConfig, err := getKeyValues(
+		path.Join(_DoguConfigPath, dogu),
+		ignoreSubKeys(ignoreKeys),     // ignore keys provided by user
+		filterEncryptedKeys(d, false), // only include encrypted keys
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not get sensitive dogu config: %w", err)
+	}
+
+	return sensitiveConfig, nil
+}
