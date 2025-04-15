@@ -13,6 +13,7 @@ import (
 	"go.etcd.io/etcd/client/v2"
 	"log/slog"
 	"os"
+	"os/exec"
 )
 
 const (
@@ -30,9 +31,12 @@ type classicControllerProvider struct {
 }
 
 func (c *classicControllerProvider) createControllers() (*systeminfo.Controller, *configuration.Controller, *maintenance.Controller, *export.Controller) {
+	maintenanceModeProvider := maintenance.NewClassicProvider(&maintenance.EtcdConfigRepo{Exec: exec.Command})
+	maintenanceModeController := maintenance.NewController(maintenanceModeProvider)
+
 	return &systeminfo.Controller{},
 		&configuration.Controller{},
-		&maintenance.Controller{},
+		maintenanceModeController,
 		&export.Controller{}
 }
 

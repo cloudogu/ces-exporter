@@ -70,7 +70,7 @@ func (m ClassicMaintenanceModeProvider) GetMaintenanceMode(ctx context.Context) 
 		return nil, fmt.Errorf("failed to get etcd value: %w", err)
 	}
 
-	output := strings.TrimSpace(fmt.Sprintf("%s", out))
+	output := strings.TrimSpace(out)
 	if output != "" {
 		status.IsActive = true
 	}
@@ -80,13 +80,13 @@ func (m ClassicMaintenanceModeProvider) GetMaintenanceMode(ctx context.Context) 
 
 func (e *EtcdConfigRepo) Get(key string) (string, error) {
 	out, err := e.Exec("etcdctl", "get", key).Output()
-	output := strings.TrimSpace(fmt.Sprintf("%s", out))
+	output := strings.TrimSpace(string(out))
 	return output, err
 }
 
 func (e *EtcdConfigRepo) Update(key string, value string) (string, error) {
 	out, err := e.Exec("etcdctl", "set", key, value).Output()
-	output := strings.TrimSpace(fmt.Sprintf("%s", out))
+	output := strings.TrimSpace(string(out))
 	return output, err
 }
 
