@@ -3,6 +3,10 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+if [ -z ${Version+x} ]; then
+  echo "Error: Expected environment variable 'Version' for ces-exporter to be set but it was unset."
+  exit 1
+fi
 installed_version=$(dpkg-query -W -f='${Version}' ces-exporter)
 docker rm -f ces-exporter
 
