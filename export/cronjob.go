@@ -29,10 +29,10 @@ type taskRunner interface {
 
 type newTaskerFunc func(opt tasker.Option) taskRunner
 
-func NewCronJob(expr string, ecosystemClient doguClient, namespace string, verboseCron bool) *CronJob {
+func NewCronJob(expr string, doguClient doguClient, namespace string, verboseCron bool) *CronJob {
 	return &CronJob{
 		namespace:   namespace,
-		doguClient:  ecosystemClient,
+		doguClient:  doguClient,
 		expr:        expr,
 		verboseCron: verboseCron,
 		newTasker: func(opt tasker.Option) taskRunner {
