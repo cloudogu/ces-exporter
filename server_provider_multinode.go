@@ -35,7 +35,7 @@ func newMultinodeControllerProvider(config core.Configuration) (*multinodeContro
 
 	rtclient, err := rclient.New(clusterConfig, rclient.Options{})
 	if err != nil {
-		log.Fatalf("Error creating client: %v", err)
+		return nil, fmt.Errorf("error creating client for the multinode controller: %w", err)
 	}
 
 	bclient := core.NewBackupScheduleRuntimeClient(rtclient, config.Namespace)

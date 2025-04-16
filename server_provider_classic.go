@@ -81,7 +81,7 @@ func watchApiKeyConfig(ctx context.Context, reg watchConfigurationContext, confi
 	go func() {
 		v, err := reg.Get(regKeyApi)
 		if err != nil {
-			slog.Error(err.Error())
+			slog.Error(fmt.Sprintf("Failed to read API key %s from etcd: %s", regKeyApi, err.Error()))
 		} else {
 			config.ApiKey = v
 		}
@@ -98,7 +98,7 @@ func watchApiKeyConfig(ctx context.Context, reg watchConfigurationContext, confi
 }
 
 func writeAuthorizedKey(v string, write writeFileFunc) {
-	slog.Info(fmt.Sprintf("The authroized ssh public key has changed to %s", v))
+	slog.Info(fmt.Sprintf("The authorized ssh public key has changed to %s", v))
 	err := write(authorizedKeys, []byte(v), sshKeyFileMode)
 	if err != nil {
 		slog.Error(fmt.Sprintf("Could not write changed ssh key to file: %s", err.Error()))
@@ -113,7 +113,7 @@ func watchSshKeyConfig(ctx context.Context, reg watchConfigurationContext, write
 	go func() {
 		v, err := reg.Get(regKeySsh)
 		if err != nil {
-			slog.Error(err.Error())
+			slog.Error(fmt.Sprintf("Failed to read public key %s from etcd: %s", regKeySsh, err.Error()))
 		} else {
 			writeAuthorizedKey(v, write)
 		}
