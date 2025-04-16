@@ -18,6 +18,9 @@ COPY configuration configuration
 COPY export export
 COPY maintenance maintenance
 COPY systeminfo systeminfo
+COPY etcd etcd
+COPY decrypt decrypt
+
 
 # Build
 RUN go mod vendor
