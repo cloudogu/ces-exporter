@@ -7,6 +7,10 @@ import (
 	"net/http"
 )
 
+const (
+	dataVolumePath = "/data"
+)
+
 type Provider interface {
 	GetExportDogu(ctx context.Context) (*doguExport, error)
 	SetExportDogu(doguName string, ctx context.Context) (*doguExport, error)

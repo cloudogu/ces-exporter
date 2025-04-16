@@ -36,7 +36,7 @@ func (c *classicControllerProvider) createControllers(ctx context.Context) (*sys
 	watchApiKeyConfig(ctx, c.reg, c.config)
 	watchSshKeyConfig(ctx, c.reg, c.write)
 
-	exportModeProvider := export.NewClassicExportModeProvider()
+	exportModeProvider := export.NewClassicExportModeProvider(*c.config)
 	exportModeController := export.NewController(exportModeProvider)
 
 	return &systeminfo.Controller{},

@@ -3,7 +3,8 @@ package export
 import (
 	"context"
 	"fmt"
-	"github.com/cloudogu/ces-exporter/configuration"
+	"github.com/cloudogu/ces-exporter/core"
+	"github.com/cloudogu/ces-exporter/etcd"
 	dtypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"log/slog"
@@ -14,10 +15,11 @@ const ()
 
 type ClassicExportModeProvider struct {
 	currentExportDogu string
+	config            core.Configuration
 }
 
-func NewClassicExportModeProvider() *ClassicExportModeProvider {
-	return &ClassicExportModeProvider{}
+func NewClassicExportModeProvider(conf core.Configuration) *ClassicExportModeProvider {
+	return &ClassicExportModeProvider{config: conf}
 }
 
 // GetExportDogu gets the dogu.name currently set in the ces-exporter-dogu-exporter service
@@ -30,7 +32,7 @@ func (c *ClassicExportModeProvider) GetExportDogu(ctx context.Context) (*doguExp
 	doguExport := doguExport{
 		Dogu:         dogu,
 		VolumePath:   dataVolumePath,
-		ExporterPort: 7000,
+		ExporterPort: c.config.ClassicExportPort,
 	}
 	return &doguExport, nil
 }
@@ -46,14 +48,14 @@ func (c *ClassicExportModeProvider) SetExportDogu(doguName string, ctx context.C
 	doguExport := doguExport{
 		Dogu:         dogu,
 		VolumePath:   dataVolumePath,
-		ExporterPort: 7000,
+		ExporterPort: c.config.ClassicExportPort,
 	}
 	return &doguExport, nil
 }
 
 func (c *ClassicExportModeProvider) GetExportMode(ctx context.Context) (*exportModeStatus, error) {
 	// Get all dogus
-	dogus, err := configuration.GetAllDogus()
+	dogus, err := etcd.GetAllDogus()
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +101,7 @@ func (c *ClassicExportModeProvider) GetExportMode(ctx context.Context) (*exportM
 }
 
 func checkDogu(dogu string) (string, error) {
-	dogus, err := configuration.GetAllDogus()
+	dogus, err := etcd.GetAllDogus()
 	if err != nil {
 		return "", fmt.Errorf("failed to get dogu list: %w", err)
 	}
