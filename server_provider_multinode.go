@@ -13,7 +13,6 @@ import (
 	libdogu "github.com/cloudogu/k8s-registry-lib/dogu"
 	"github.com/cloudogu/k8s-registry-lib/repository"
 	"k8s.io/client-go/kubernetes"
-	"log"
 	"log/slog"
 	ctrl "sigs.k8s.io/controller-runtime"
 	rclient "sigs.k8s.io/controller-runtime/pkg/client"
