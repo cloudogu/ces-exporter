@@ -2,6 +2,7 @@ package configuration
 
 import (
 	"fmt"
+	"github.com/cloudogu/ces-exporter/core"
 	"github.com/cloudogu/cesapp-lib/keys"
 	"log/slog"
 	"strings"
@@ -18,7 +19,7 @@ var (
 	keyProviderOnce sync.Once
 )
 
-type getGlobalConfigFunc func(ignoreKeys []string) (globalConfig, error)
+type getGlobalConfigFunc func(ignoreKeys []string) (core.GlobalConfig, error)
 
 func getPrivateKeyPath(dogu string) string {
 	return fmt.Sprintf("/var/lib/ces/%s/volumes/_private/private.pem", dogu)
