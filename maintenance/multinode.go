@@ -22,14 +22,11 @@ type MultinodeMaintenanceModeProvider struct {
 	globalConfigRepo globalConfigRepo
 }
 
-func NewMultinodeMaintenanceModeProvider(repo globalConfigRepo) *MultinodeMaintenanceModeProvider {
+func NewMultinodeProvider(repo globalConfigRepo) *MultinodeMaintenanceModeProvider {
 	return &MultinodeMaintenanceModeProvider{globalConfigRepo: repo}
 }
 
-/*
-SetMaintenanceMode
-activates or deactivates the maintenance mode by adding/removing the key maintenance to the global-config
-*/
+// SetMaintenanceMode activates or deactivates the maintenance mode by adding/removing the key maintenance to the global-config
 func (m MultinodeMaintenanceModeProvider) SetMaintenanceMode(mReq maintenanceModeRequest, ctx context.Context) (*MaintenanceModeStatus, error) {
 	globalConfig, err := m.globalConfigRepo.Get(ctx)
 	if err != nil {
@@ -62,10 +59,7 @@ func (m MultinodeMaintenanceModeProvider) SetMaintenanceMode(mReq maintenanceMod
 	return status, nil
 }
 
-/*
-GetMaintenanceMode
-Get maintenance mode by checking if key maintenance exists in global-config
-*/
+// GetMaintenanceMode Get maintenance mode by checking if key maintenance exists in global-config
 func (m MultinodeMaintenanceModeProvider) GetMaintenanceMode(ctx context.Context) (*MaintenanceModeStatus, error) {
 	globalConfig, err := m.globalConfigRepo.Get(ctx)
 	if err != nil {
@@ -81,10 +75,7 @@ func (m MultinodeMaintenanceModeProvider) GetMaintenanceMode(ctx context.Context
 	return status, nil
 }
 
-/*
-BuildMaintenanceJSON
-results in this json format: {"title": "some title", "text": "some text"}
-*/
+// BuildMaintenanceJSON results in this json format: {"title": "some title", "text": "some text"}
 func BuildMaintenanceJSON(mReq maintenanceModeRequest) (config.Value, error) {
 	jsonConfig, err := json.Marshal(mReq.Message)
 	if err != nil {

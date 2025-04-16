@@ -24,7 +24,7 @@ func TestGetMaintenanceMode(t *testing.T) {
 
 		maintenanceModeProvider := NewMockProvider(t)
 		maintenanceModeProvider.EXPECT().GetMaintenanceMode(mock.Anything).Return(&mms, nil)
-		mmc := NewMultinodeMaintenanceModeController(maintenanceModeProvider)
+		mmc := NewController(maintenanceModeProvider)
 
 		rr := httptest.NewRecorder()
 		handler := http.HandlerFunc(mmc.GetMaintenanceMode)
@@ -41,7 +41,7 @@ func TestGetMaintenanceMode(t *testing.T) {
 
 		maintenanceModeProvider := NewMockProvider(t)
 		maintenanceModeProvider.EXPECT().GetMaintenanceMode(mock.Anything).Return(nil, fmt.Errorf("testerror"))
-		mmc := NewMultinodeMaintenanceModeController(maintenanceModeProvider)
+		mmc := NewController(maintenanceModeProvider)
 
 		rr := httptest.NewRecorder()
 		handler := http.HandlerFunc(mmc.GetMaintenanceMode)
@@ -70,7 +70,7 @@ func TestSetMaintenanceMode(t *testing.T) {
 		mms := MaintenanceModeStatus{IsActive: true}
 		maintenanceModeProvider := NewMockProvider(t)
 		maintenanceModeProvider.EXPECT().SetMaintenanceMode(*mmReq, context.Background()).Return(&mms, nil)
-		mmc := NewMultinodeMaintenanceModeController(maintenanceModeProvider)
+		mmc := NewController(maintenanceModeProvider)
 
 		rr := httptest.NewRecorder()
 		handler := http.HandlerFunc(mmc.SetMaintenanceMode)
@@ -97,7 +97,7 @@ func TestSetMaintenanceMode(t *testing.T) {
 
 		maintenanceModeProvider := NewMockProvider(t)
 		maintenanceModeProvider.EXPECT().SetMaintenanceMode(*mmReq, context.Background()).Return(nil, fmt.Errorf("testerror"))
-		mmc := NewMultinodeMaintenanceModeController(maintenanceModeProvider)
+		mmc := NewController(maintenanceModeProvider)
 
 		rr := httptest.NewRecorder()
 		handler := http.HandlerFunc(mmc.SetMaintenanceMode)
@@ -124,7 +124,7 @@ func TestSetMaintenanceMode(t *testing.T) {
 		mms := MaintenanceModeStatus{IsActive: false}
 		maintenanceModeProvider := NewMockProvider(t)
 		maintenanceModeProvider.EXPECT().SetMaintenanceMode(*mmReq, mock.Anything).Return(&mms, nil)
-		mmc := NewMultinodeMaintenanceModeController(maintenanceModeProvider)
+		mmc := NewController(maintenanceModeProvider)
 
 		rr := httptest.NewRecorder()
 		handler := http.HandlerFunc(mmc.SetMaintenanceMode)
@@ -140,7 +140,7 @@ func TestSetMaintenanceMode(t *testing.T) {
 		require.NoError(t, err)
 
 		maintenanceModeProvider := NewMockProvider(t)
-		mmc := NewMultinodeMaintenanceModeController(maintenanceModeProvider)
+		mmc := NewController(maintenanceModeProvider)
 
 		rr := httptest.NewRecorder()
 		handler := http.HandlerFunc(mmc.SetMaintenanceMode)

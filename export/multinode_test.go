@@ -48,6 +48,7 @@ func TestMNSetExportDogu(t *testing.T) {
 				Selector: map[string]string{"dogu.name": "test_A"},
 			},
 		}, nil)
+		doguClient.EXPECT().Get(mock.Anything, "test_A", mock.Anything).Return(nil, nil)
 
 		serviceClient.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
@@ -57,7 +58,7 @@ func TestMNSetExportDogu(t *testing.T) {
 		require.Equal(t, "test_A", dogu.Dogu)
 		require.Equal(t, "/data", dogu.VolumePath)
 	})
-	t.Run("should set export dogu", func(t *testing.T) {
+	t.Run("fail on error with service update", func(t *testing.T) {
 		configMaps := newMockConfigMaps(t)
 		doguClient := newMockDoguClient(t)
 		serviceClient := newMockServiceClient(t)
@@ -71,12 +72,33 @@ func TestMNSetExportDogu(t *testing.T) {
 				Selector: map[string]string{"dogu.name": "test_A"},
 			},
 		}, nil)
+		doguClient.EXPECT().Get(mock.Anything, "test_A", mock.Anything).Return(nil, nil)
 
 		serviceClient.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
 
 		_, err := provider.SetExportDogu("test_A", context.Background())
 
-		require.Contains(t, "could not get dogu resource for current export dogu: testerror", err.Error())
+		require.Contains(t, err.Error(), "failed to update exporter service: testerror")
+	})
+	t.Run("fail on export non existent dogu", func(t *testing.T) {
+		configMaps := newMockConfigMaps(t)
+		doguClient := newMockDoguClient(t)
+		serviceClient := newMockServiceClient(t)
+		provider := NewMultinodeExportModeProvider("ecosystem", configMaps, doguClient, serviceClient)
+
+		serviceClient.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(&corev1.Service{
+			Spec: corev1.ServiceSpec{
+				Ports: []corev1.ServicePort{{
+					Port: 8080,
+				}},
+				Selector: map[string]string{"dogu.name": "test_A"},
+			},
+		}, nil)
+		doguClient.EXPECT().Get(mock.Anything, "test_A", mock.Anything).Return(nil, fmt.Errorf("testerror"))
+
+		_, err := provider.SetExportDogu("test_A", context.Background())
+
+		require.Contains(t, err.Error(), "could not get dogu resource for current export dogu: testerror")
 	})
 }
 
