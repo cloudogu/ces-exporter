@@ -10,18 +10,24 @@ import (
 )
 
 const (
+	// globalConfigPath is the path where the global configuration is stored.
 	globalConfigPath = "/config/_global"
-	doguConfigPath   = "/config"
+	// doguConfigPath is the base path for all Dogu-specific configurations.
+	doguConfigPath = "/config"
 )
 
 var (
+	// createDecryptFunc references the decrypter constructor used throughout this module.
 	createDecryptFunc = decrypt.CreateDecrypter
 )
 
+// decrypter defines an interface for decrypting encrypted strings.
 type decrypter interface {
 	Decrypt(input string) (string, error)
 }
 
+// filterKeys creates a filterOption that includes or excludes key-value pairs
+// based on a predefined key set and a list of exceptions.
 func filterKeys(filterSet map[string]bool, exclude bool, exceptions []string) filterOption {
 	return func(kvs []core.KeyValue) []core.KeyValue {
 		filtered := make([]core.KeyValue, 0, len(kvs))
@@ -49,6 +55,8 @@ func filterKeys(filterSet map[string]bool, exclude bool, exceptions []string) fi
 	}
 }
 
+// ignoreSubKeys returns a filterOption that removes key-value pairs
+// whose keys contain any of the specified subKey strings.
 func ignoreSubKeys(subKeys []string) filterOption {
 	return func(kvs []core.KeyValue) []core.KeyValue {
 		filtered := make([]core.KeyValue, 0, len(kvs))
@@ -73,6 +81,9 @@ func ignoreSubKeys(subKeys []string) filterOption {
 	}
 }
 
+// filterEncryptedKeys returns a filterOption that includes or excludes encrypted values,
+// based on the `exclude` flag. When exclude is true, encrypted values are removed;
+// otherwise, they are decrypted and included.
 func filterEncryptedKeys(d decrypter, exclude bool) filterOption {
 	return func(kvs []core.KeyValue) []core.KeyValue {
 		filtered := make([]core.KeyValue, 0, len(kvs))
@@ -99,6 +110,8 @@ func filterEncryptedKeys(d decrypter, exclude bool) filterOption {
 	}
 }
 
+// decryptEncryptedKeys returns a filterOption that decrypts all decryptable key-values.
+// If decryption fails, the original value is preserved.
 func decryptEncryptedKeys(d decrypter) filterOption {
 	return func(kvs []core.KeyValue) []core.KeyValue {
 		filtered := make([]core.KeyValue, 0, len(kvs))
@@ -119,6 +132,7 @@ func decryptEncryptedKeys(d decrypter) filterOption {
 	}
 }
 
+// GetGlobalConfig returns the global configuration, optionally excluding specified keys.
 func GetGlobalConfig(ignoreKeys []string) (core.GlobalConfig, error) {
 	return getKeyValues(
 		globalConfigPath,
@@ -126,6 +140,8 @@ func GetGlobalConfig(ignoreKeys []string) (core.GlobalConfig, error) {
 	)
 }
 
+// GetConfig returns the combined normal, local, and sensitive Dogu configuration
+// for the specified Dogu name, excluding specified keys.
 func GetConfig(dogu string, ignoreKeys []string) (core.DoguConfig, error) {
 	normalConfig, err := GetNormalConfig(dogu, ignoreKeys)
 	if err != nil {
@@ -150,6 +166,8 @@ func GetConfig(dogu string, ignoreKeys []string) (core.DoguConfig, error) {
 	}, nil
 }
 
+// GetNormalConfig returns non-sensitive Dogu configuration keys that are not encrypted.
+// It includes only those keys defined in the Dogu's JSON definition.
 func GetNormalConfig(dogu string, ignoreKeys []string) ([]core.KeyValue, error) {
 	doguConfigKeys, err := getDoguConfigKeySet(dogu, ExcludeGlobalConfig())
 	if err != nil {
@@ -174,6 +192,8 @@ func GetNormalConfig(dogu string, ignoreKeys []string) ([]core.KeyValue, error) 
 	return normalConfig, nil
 }
 
+// GetLocalConfig returns Dogu configuration keys that are NOT defined in the Dogu's JSON
+// and are decrypted if possible. Service account keys are ignored.
 func GetLocalConfig(dogu string, ignoreKeys []string) ([]core.KeyValue, error) {
 	doguConfigKeys, err := getDoguConfigKeySet(dogu)
 	if err != nil {
@@ -201,6 +221,8 @@ func GetLocalConfig(dogu string, ignoreKeys []string) ([]core.KeyValue, error) {
 	return lcoalConfig, nil
 }
 
+// GetSensitiveConfig returns only encrypted Dogu configuration keys
+// that are listed in the Dogu's JSON definition.
 func GetSensitiveConfig(dogu string, ignoreKeys []string) ([]core.KeyValue, error) {
 	doguConfigKeys, err := getDoguConfigKeySet(dogu, ExcludeGlobalConfig())
 	if err != nil {
