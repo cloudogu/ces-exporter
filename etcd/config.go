@@ -22,13 +22,24 @@ type decrypter interface {
 	Decrypt(input string) (string, error)
 }
 
-func filterKeys(filterSet map[string]bool, exclude bool) filterOption {
+func filterKeys(filterSet map[string]bool, exclude bool, exceptions []string) filterOption {
 	return func(kvs []core.KeyValue) []core.KeyValue {
 		filtered := make([]core.KeyValue, 0, len(kvs))
 
 		for _, kv := range kvs {
-			if exists := filterSet[strings.TrimPrefix(kv.Key, "/")]; exists == exclude {
-				continue
+			key := strings.TrimPrefix(kv.Key, "/")
+			if exists := filterSet[key]; exists == exclude {
+				keep := false
+				for _, exception := range exceptions {
+					if strings.Contains(key, exception) {
+						keep = true
+						break
+					}
+				}
+
+				if !keep {
+					continue
+				}
 			}
 
 			filtered = append(filtered, kv)
@@ -88,6 +99,26 @@ func filterEncryptedKeys(d decrypter, exclude bool) filterOption {
 	}
 }
 
+func decryptEncryptedKeys(d decrypter) filterOption {
+	return func(kvs []core.KeyValue) []core.KeyValue {
+		filtered := make([]core.KeyValue, 0, len(kvs))
+
+		for _, kv := range kvs {
+			dValue, err := d.Decrypt(kv.Value)
+			if err == nil {
+				filtered = append(filtered, core.KeyValue{
+					Key:   kv.Key,
+					Value: dValue,
+				})
+			} else {
+				filtered = append(filtered, kv)
+			}
+		}
+
+		return filtered
+	}
+}
+
 func GetGlobalConfig(ignoreKeys []string) (core.GlobalConfig, error) {
 	return getKeyValues(
 		_GlobalConfigPath,
@@ -132,9 +163,9 @@ func GetNormalConfig(dogu string, ignoreKeys []string) ([]core.KeyValue, error) 
 
 	normalConfig, err := getKeyValues(
 		path.Join(_DoguConfigPath, dogu),
-		filterKeys(doguConfigKeys, false), // only include keys from dogu.json
-		ignoreSubKeys(ignoreKeys),         // ignore keys provided by user
-		filterEncryptedKeys(d, true),      // exclude encrypted keys
+		filterKeys(doguConfigKeys, false, []string{}), // only include keys from dogu.json
+		ignoreSubKeys(ignoreKeys),                     // ignore keys provided by user
+		filterEncryptedKeys(d, true),                  // exclude encrypted keys
 	)
 	if err != nil {
 		return nil, fmt.Errorf("could not get dogu config: %w", err)
@@ -154,11 +185,14 @@ func GetLocalConfig(dogu string, ignoreKeys []string) ([]core.KeyValue, error) {
 		return nil, fmt.Errorf("could not create decrypter: %w", err)
 	}
 
+	// add service-account-keys to ignore-list for localConfig
+	ignoreKeysWithServiceAccount := append(ignoreKeys, "/sa-")
+
 	lcoalConfig, err := getKeyValues(
 		path.Join(_DoguConfigPath, dogu),
-		filterKeys(doguConfigKeys, true), // exclude keys from dogu.json
-		ignoreSubKeys(ignoreKeys),        // ignore keys provided by user
-		filterEncryptedKeys(d, true),     // exclude encrypted keys
+		filterKeys(doguConfigKeys, true, []string{}), // exclude keys from dogu.json
+		decryptEncryptedKeys(d),                      // include all encrypted keys
+		ignoreSubKeys(ignoreKeysWithServiceAccount),  // ignore keys provided by user
 	)
 	if err != nil {
 		return nil, fmt.Errorf("could not get dogu config: %w", err)
@@ -168,6 +202,11 @@ func GetLocalConfig(dogu string, ignoreKeys []string) ([]core.KeyValue, error) {
 }
 
 func GetSensitiveConfig(dogu string, ignoreKeys []string) ([]core.KeyValue, error) {
+	doguConfigKeys, err := getDoguConfigKeySet(dogu, ExcludeGlobalConfig())
+	if err != nil {
+		return nil, fmt.Errorf("could not get dogu config keys: %w", err)
+	}
+
 	d, err := createDecryptFunc(dogu, GetGlobalConfig)
 	if err != nil {
 		return nil, fmt.Errorf("could not create decrypter: %w", err)
@@ -175,8 +214,9 @@ func GetSensitiveConfig(dogu string, ignoreKeys []string) ([]core.KeyValue, erro
 
 	sensitiveConfig, err := getKeyValues(
 		path.Join(_DoguConfigPath, dogu),
-		ignoreSubKeys(ignoreKeys),     // ignore keys provided by user
-		filterEncryptedKeys(d, false), // only include encrypted keys
+		filterKeys(doguConfigKeys, false, []string{"sa-"}), // only include keys from dogu.json
+		ignoreSubKeys(ignoreKeys),                          // ignore keys provided by user
+		filterEncryptedKeys(d, false),                      // only include encrypted keys
 	)
 	if err != nil {
 		return nil, fmt.Errorf("could not get sensitive dogu config: %w", err)
