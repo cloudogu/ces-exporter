@@ -43,7 +43,7 @@ type kubernetesClient interface {
 }
 
 type controllerProvider interface {
-	createControllers() (*systeminfo.Controller, *configuration.Controller, *maintenance.Controller, *export.Controller)
+	createControllers(ctx context.Context) (*systeminfo.Controller, *configuration.Controller, *maintenance.Controller, *export.Controller)
 }
 
 type server struct {
@@ -51,15 +51,14 @@ type server struct {
 	controllerProvider controllerProvider
 }
 
-func newServer(ctx context.Context, config core.Configuration) (*server, error) {
+func newServer(config core.Configuration) (*server, error) {
 	var provider controllerProvider
 	if config.IsClassic {
-		fqdn := os.Getenv(fqdnEnv)
-		if fqdn == "" {
-			return nil, fmt.Errorf("FQDN environment variable is unset")
+		var err error
+		provider, err = newClassicControllerProvider(&config)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create classic server: %w", err)
 		}
-
-		provider = newClassicControllerProvider(ctx, config, createRegistry(fqdn), os.WriteFile)
 	} else {
 		err := bup.AddToScheme(scheme.Scheme)
 		if err != nil {
@@ -81,7 +80,7 @@ func (s *server) run(ctx context.Context) error {
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 
-	srv := s.createEndpoints()
+	srv := s.createEndpoints(ctx)
 
 	httpServer := &http.Server{
 		Addr:    ":8080",
@@ -111,8 +110,8 @@ func (s *server) run(ctx context.Context) error {
 	return nil
 }
 
-func (s *server) createEndpoints() http.Handler {
-	systemInfoController, configController, maintenanceModeController, exportModeController := s.controllerProvider.createControllers()
+func (s *server) createEndpoints(ctx context.Context) http.Handler {
+	systemInfoController, configController, maintenanceModeController, exportModeController := s.controllerProvider.createControllers(ctx)
 
 	authMiddleware := core.NewAuthMiddleware(s.config)
 

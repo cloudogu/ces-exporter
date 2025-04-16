@@ -27,27 +27,34 @@ type watchConfigurationContext interface {
 type writeFileFunc func(name string, data []byte, perm os.FileMode) error
 
 type classicControllerProvider struct {
+	config *core.Configuration
+	write  writeFileFunc
+	reg    watchConfigurationContext
 }
 
-func (c *classicControllerProvider) createControllers() (*systeminfo.Controller, *configuration.Controller, *maintenance.Controller, *export.Controller) {
-	etcdClient, err := maintenance.GetEtcdClient()
-	if err != nil {
-		panic(fmt.Errorf("failed to get etcd client: %w", err))
-	}
-	maintenanceModeProvider := maintenance.NewClassicProvider(&maintenance.EtcdConfigRepo{Etcdclient: etcdClient})
-	maintenanceModeController := maintenance.NewController(maintenanceModeProvider)
+func (c *classicControllerProvider) createControllers(ctx context.Context) (*systeminfo.Controller, *configuration.Controller, *maintenance.Controller, *export.Controller) {
+	watchApiKeyConfig(ctx, c.reg, c.config)
+	watchSshKeyConfig(ctx, c.reg, c.write)
 
 	return &systeminfo.Controller{},
 		&configuration.Controller{},
-		maintenanceModeController,
+		&maintenance.Controller{},
 		&export.Controller{}
 }
 
-func newClassicControllerProvider(ctx context.Context, config core.Configuration, reg watchConfigurationContext, writeFileFunc writeFileFunc) *classicControllerProvider {
-	watchApiKeyConfig(ctx, reg, &config)
-	watchSshKeyConfig(ctx, reg, writeFileFunc)
+func newClassicControllerProvider(conf *core.Configuration) (*classicControllerProvider, error) {
+	fqdn := os.Getenv(fqdnEnv)
+	if fqdn == "" {
+		return nil, fmt.Errorf("FQDN environment variable is unset")
+	}
 
-	return &classicControllerProvider{}
+	reg := createRegistry(fqdn)
+
+	return &classicControllerProvider{
+		config: conf,
+		write:  os.WriteFile,
+		reg:    reg,
+	}, nil
 }
 
 func createRegistry(fqdn string) watchConfigurationContext {
@@ -74,7 +81,7 @@ func watchApiKeyConfig(ctx context.Context, reg watchConfigurationContext, confi
 	go func() {
 		v, err := reg.Get(regKeyApi)
 		if err != nil {
-			slog.Error(err.Error())
+			slog.Error(fmt.Sprintf("Failed to read API key %s from etcd: %s", regKeyApi, err.Error()))
 		} else {
 			config.ApiKey = v
 		}
@@ -91,7 +98,7 @@ func watchApiKeyConfig(ctx context.Context, reg watchConfigurationContext, confi
 }
 
 func writeAuthorizedKey(v string, write writeFileFunc) {
-	slog.Info(fmt.Sprintf("The authroized ssz public key has changed to %s", v))
+	slog.Info(fmt.Sprintf("The authorized ssh public key has changed to %s", v))
 	err := write(authorizedKeys, []byte(v), sshKeyFileMode)
 	if err != nil {
 		slog.Error(fmt.Sprintf("Could not write changed ssh key to file: %s", err.Error()))
@@ -106,7 +113,7 @@ func watchSshKeyConfig(ctx context.Context, reg watchConfigurationContext, write
 	go func() {
 		v, err := reg.Get(regKeySsh)
 		if err != nil {
-			slog.Error(err.Error())
+			slog.Error(fmt.Sprintf("Failed to read public key %s from etcd: %s", regKeySsh, err.Error()))
 		} else {
 			writeAuthorizedKey(v, write)
 		}

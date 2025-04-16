@@ -3,14 +3,14 @@ package export
 import (
 	"context"
 	"fmt"
+	"log/slog"
+
 	"github.com/adhocore/gronx"
 	"github.com/adhocore/gronx/pkg/tasker"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"log/slog"
 )
 
-type CronJobFunction func() (int, error)
-
+// CronJob is a multinode specific export implementation which puts dogu pods into export mode.
 type CronJob struct {
 	namespace   string
 	doguClient  doguClient
@@ -29,10 +29,10 @@ type taskRunner interface {
 
 type newTaskerFunc func(opt tasker.Option) taskRunner
 
-func NewCronJob(expr string, ecosystemClient doguClient, namespace string, verboseCron bool) *CronJob {
+func NewCronJob(expr string, doguClient doguClient, namespace string, verboseCron bool) *CronJob {
 	return &CronJob{
 		namespace:   namespace,
-		doguClient:  ecosystemClient,
+		doguClient:  doguClient,
 		expr:        expr,
 		verboseCron: verboseCron,
 		newTasker: func(opt tasker.Option) taskRunner {
@@ -64,7 +64,7 @@ func (cj *CronJob) Stop() {
 	}
 }
 
-/* this handles the actual exporter */
+// callCronJob handles the actual exporter
 func (cj *CronJob) callCronJob(ctx context.Context) (int, error) {
 	slog.Info("start export mode cronjob due to timetable ")
 	dogus, err := cj.doguClient.List(ctx, metav1.ListOptions{})
@@ -83,7 +83,7 @@ func (cj *CronJob) callCronJob(ctx context.Context) (int, error) {
 		}
 	}
 
-	// the cron job do not fail. All errors will be logged
+	// the cron job does not fail. All errors will be logged
 	slog.Info("export mode cron job finished")
 	return 0, nil
 }

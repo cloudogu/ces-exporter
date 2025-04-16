@@ -6,6 +6,7 @@ set -o pipefail
 installed_version=$(dpkg-query -W -f='${Version}' ces-exporter)
 docker rm -f ces-exporter
 
+echo "Starting ces-exporter..."
 docker run -p 7022:22 -v /var/lib/ces:/data -v /etc/ces/node_master:/etc/ces/node_master --net cesnet1 --name ces-exporter --restart=always -d "ces-exporter:${installed_version}"
 EXPORTER_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ces-exporter)
 # Create service in etcd registry to make the nginx route the api endpoints

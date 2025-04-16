@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/cloudogu/ces-exporter/configuration"
 	"github.com/cloudogu/ces-exporter/core"
@@ -12,7 +13,6 @@ import (
 	libdogu "github.com/cloudogu/k8s-registry-lib/dogu"
 	"github.com/cloudogu/k8s-registry-lib/repository"
 	"k8s.io/client-go/kubernetes"
-	"log"
 	"log/slog"
 	ctrl "sigs.k8s.io/controller-runtime"
 	rclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -34,7 +34,7 @@ func newMultinodeControllerProvider(config core.Configuration) (*multinodeContro
 
 	rtclient, err := rclient.New(clusterConfig, rclient.Options{})
 	if err != nil {
-		log.Fatalf("Error creating client: %v", err)
+		return nil, fmt.Errorf("error creating client for the multinode controller: %w", err)
 	}
 
 	bclient := core.NewBackupScheduleRuntimeClient(rtclient, config.Namespace)
@@ -63,7 +63,7 @@ func newMultinodeControllerProvider(config core.Configuration) (*multinodeContro
 	}, nil
 }
 
-func (m *multinodeControllerProvider) createControllers() (*systeminfo.Controller, *configuration.Controller, *maintenance.Controller, *export.Controller) {
+func (m *multinodeControllerProvider) createControllers(_ context.Context) (*systeminfo.Controller, *configuration.Controller, *maintenance.Controller, *export.Controller) {
 	configMaps := m.client.CoreV1().ConfigMaps(m.config.Namespace)
 	secrets := m.client.CoreV1().Secrets(m.config.Namespace)
 	globalConfigRepo := repository.NewGlobalConfigRepository(configMaps)
@@ -112,6 +112,6 @@ func (m *multinodeControllerProvider) startCronJob(dogus ecoSystemV2.DoguInterfa
 	err := cj.Run()
 
 	if err != nil {
-		slog.Error("Failed to start cronjob:", "err", err)
+		slog.Error(fmt.Sprintf("failed to start cronjob: %s", err.Error()))
 	}
 }

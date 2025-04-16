@@ -3,4 +3,5 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+echo "Stopping ces-exporter..."
 docker rm -f ces-exporter
