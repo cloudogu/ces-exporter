@@ -81,7 +81,7 @@ func watchApiKeyConfig(ctx context.Context, reg watchConfigurationContext, confi
 	go func() {
 		v, err := reg.Get(regKeyApi)
 		if err != nil {
-			slog.Error(err.Error())
+			slog.Error(fmt.Sprintf("Failed to read API key %s from etcd: %s", regKeyApi, err.Error()))
 		} else {
 			config.ApiKey = v
 		}
