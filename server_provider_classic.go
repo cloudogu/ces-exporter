@@ -36,9 +36,16 @@ func (c *classicControllerProvider) createControllers(ctx context.Context) (*sys
 	watchApiKeyConfig(ctx, c.reg, c.config)
 	watchSshKeyConfig(ctx, c.reg, c.write)
 
+	etcdClient, err := maintenance.GetEtcdClient()
+	if err != nil {
+		panic(fmt.Errorf("failed to get etcd client: %w", err))
+	}
+	maintenanceModeProvider := maintenance.NewClassicProvider(&maintenance.EtcdConfigRepo{Etcdclient: etcdClient})
+	maintenanceModeController := maintenance.NewController(maintenanceModeProvider)
+
 	return &systeminfo.Controller{},
 		&configuration.Controller{},
-		&maintenance.Controller{},
+		maintenanceModeController,
 		&export.Controller{}
 }
 
