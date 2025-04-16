@@ -12,14 +12,14 @@ const (
 	maintenanceModeEtcdKey = "/config/_global/maintenance"
 )
 
-type etcdConfigRepo interface {
+type etcdRepo interface {
 	Get(string) (string, error)
 	Update(key string, value string) (string, error)
 	Delete(string) error
 }
 
 type ClassicMaintenanceModeProvider struct {
-	etcdConfigRepo etcdConfigRepo
+	etcdConfigRepo etcdRepo
 }
 
 type KeysApi interface {
@@ -27,11 +27,11 @@ type KeysApi interface {
 }
 
 type EtcdConfigRepo struct {
-	etcdConfigRepo
+	etcdRepo
 	Etcdclient KeysApi
 }
 
-func NewClassicProvider(repo etcdConfigRepo) *ClassicMaintenanceModeProvider {
+func NewClassicProvider(repo etcdRepo) *ClassicMaintenanceModeProvider {
 	return &ClassicMaintenanceModeProvider{repo}
 }
 
