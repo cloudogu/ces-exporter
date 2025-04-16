@@ -36,7 +36,7 @@ func getEtcdEndpoint() (string, error) {
 	return fmt.Sprintf("http://%s:4001", nMaster), nil
 }
 
-func getEtcdClient() (client.KeysAPI, error) {
+func GetEtcdClient() (client.KeysAPI, error) {
 	clientOnce.Do(func() {
 		etcdEndpoint, err := getEtcdEndpoint()
 		if err != nil {
@@ -68,7 +68,7 @@ func getKeyValues(path string, filters ...filterOption) ([]core.KeyValue, error)
 		return fmt.Errorf("failed to get dir keys: %w", err)
 	}
 
-	c, err := getEtcdClient()
+	c, err := GetEtcdClient()
 	if err != nil {
 		return nil, wrapErr(err)
 	}
