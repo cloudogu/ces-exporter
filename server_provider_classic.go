@@ -113,7 +113,7 @@ func watchSshKeyConfig(ctx context.Context, reg watchConfigurationContext, write
 	go func() {
 		v, err := reg.Get(regKeySsh)
 		if err != nil {
-			slog.Error(err.Error())
+			slog.Error(fmt.Sprintf("Failed to read public key %s from etcd: %s", regKeySsh, err.Error()))
 		} else {
 			writeAuthorizedKey(v, write)
 		}
