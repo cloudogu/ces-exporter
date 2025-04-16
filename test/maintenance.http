@@ -9,6 +9,8 @@ X-CES-EXPORTER-API-KEY: {{apiKey}}
 
 {
   "activate": true,
-  "title": "Migration in progress",
-  "message": "This CES is migrating to a new instance"
+  "message": {
+    "title": "Migration in progress",
+    "text": "This CES is migrating to a new instance"
+  }
 }

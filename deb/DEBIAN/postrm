@@ -7,5 +7,11 @@ set +o pipefail
 
 docker rm -f ces-exporter
 docker images "ces-exporter" --format "{{.Repository}}:{{.Tag}}" | xargs -r docker rmi -f
+# Remove service of exporter
+etcdctl rm services/exporter/registrator:exporter:8025
 
-sudo ufw delete allow 7022
+if dpkg-query -W ufw &> /dev/null; then
+  ufw delete allow 7022
+else
+  echo "The ufw package is not installed. Make sure to manually remove access to port 7022"
+fi

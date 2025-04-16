@@ -100,6 +100,12 @@ template-importer-public-key: $(BINARY_YQ)
     fi
 
 .PHONY: apikey-secret
-apikey-secret: $(BINARY_YQ)
+apikey-secret: $(BINARY_YQ) ## generates a K8s secret for the API key from an environment variable
 	@kubectl create secret generic ces-exporter-api --from-literal=apiKey=${EXPORTER_API_KEY} --namespace="${NAMESPACE}" --context="${KUBE_CONTEXT_NAME}"
 
+.PHONY: helm-apply-dev
+helm-apply-dev:
+	@sed -i -E "s/(^VERSION=[[:digit:]].[[:digit:]].[[:digit:]])/\1-$$(date +%s)/g" Makefile
+	@make helm-apply
+	@sed -i -E "s/(^VERSION=[[:digit:]].[[:digit:]].[[:digit:]])-.*/\1/g" Makefile
+	@sed -i -E "s/(tag: [[:digit:]].[[:digit:]].[[:digit:]])-.*/\1/g" k8s/helm/values.yaml

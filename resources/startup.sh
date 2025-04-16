@@ -15,8 +15,6 @@ echo "                   V///   '°°°°      (/////)      °°°°'   ////  "
 echo "                    V/////(////////\. '°°°' ./////////(///(/'   "
 echo "                       'V/(/////////////////////////////V'      "
 
-echo "Preparing public-key..."
-
 FQDN="$(cat /etc/ces/node_master)"
 export FQDN
 
