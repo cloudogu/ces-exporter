@@ -98,7 +98,7 @@ func watchApiKeyConfig(ctx context.Context, reg watchConfigurationContext, confi
 }
 
 func writeAuthorizedKey(v string, write writeFileFunc) {
-	slog.Info(fmt.Sprintf("The authroized ssh public key has changed to %s", v))
+	slog.Info(fmt.Sprintf("The authorized ssh public key has changed to %s", v))
 	err := write(authorizedKeys, []byte(v), sshKeyFileMode)
 	if err != nil {
 		slog.Error(fmt.Sprintf("Could not write changed ssh key to file: %s", err.Error()))
