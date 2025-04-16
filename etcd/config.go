@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	_GlobalConfigPath = "/config/_global"
-	_DoguConfigPath   = "/config"
+	globalConfigPath = "/config/_global"
+	doguConfigPath   = "/config"
 )
 
 var (
@@ -121,7 +121,7 @@ func decryptEncryptedKeys(d decrypter) filterOption {
 
 func GetGlobalConfig(ignoreKeys []string) (core.GlobalConfig, error) {
 	return getKeyValues(
-		_GlobalConfigPath,
+		globalConfigPath,
 		ignoreSubKeys(ignoreKeys),
 	)
 }
@@ -162,7 +162,7 @@ func GetNormalConfig(dogu string, ignoreKeys []string) ([]core.KeyValue, error) 
 	}
 
 	normalConfig, err := getKeyValues(
-		path.Join(_DoguConfigPath, dogu),
+		path.Join(doguConfigPath, dogu),
 		filterKeys(doguConfigKeys, false, []string{}), // only include keys from dogu.json
 		ignoreSubKeys(ignoreKeys),                     // ignore keys provided by user
 		filterEncryptedKeys(d, true),                  // exclude encrypted keys
@@ -189,7 +189,7 @@ func GetLocalConfig(dogu string, ignoreKeys []string) ([]core.KeyValue, error) {
 	ignoreKeysWithServiceAccount := append(ignoreKeys, "/sa-")
 
 	lcoalConfig, err := getKeyValues(
-		path.Join(_DoguConfigPath, dogu),
+		path.Join(doguConfigPath, dogu),
 		filterKeys(doguConfigKeys, true, []string{}), // exclude keys from dogu.json
 		decryptEncryptedKeys(d),                      // include all encrypted keys
 		ignoreSubKeys(ignoreKeysWithServiceAccount),  // ignore keys provided by user
@@ -213,7 +213,7 @@ func GetSensitiveConfig(dogu string, ignoreKeys []string) ([]core.KeyValue, erro
 	}
 
 	sensitiveConfig, err := getKeyValues(
-		path.Join(_DoguConfigPath, dogu),
+		path.Join(doguConfigPath, dogu),
 		filterKeys(doguConfigKeys, false, []string{"sa-"}), // only include keys from dogu.json
 		ignoreSubKeys(ignoreKeys),                          // ignore keys provided by user
 		filterEncryptedKeys(d, false),                      // only include encrypted keys

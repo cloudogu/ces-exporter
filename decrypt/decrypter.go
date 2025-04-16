@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	_KeyProviderKey = "key_provider"
+	keyProviderKey = "key_provider"
 )
 
 var (
@@ -34,7 +34,7 @@ func GetKeyProvider(getGCfg getGlobalConfigFunc) (*keys.KeyProvider, error) {
 		}
 
 		for _, kv := range globalCfg {
-			if strings.Contains(kv.Key, _KeyProviderKey) {
+			if strings.Contains(kv.Key, keyProviderKey) {
 				provider, pErr := keys.NewKeyProvider(kv.Value)
 				if pErr != nil {
 					keyProviderErr = fmt.Errorf("failed to create key provider: %w", pErr)

@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	_DoguPath = "/dogu_v2"
+	doguPath = "/dogu_v2"
 )
 
 type ExcludeOption func(cfg core.ConfigurationField) bool
@@ -43,10 +43,10 @@ func getDoguConfigKeySet(dogu string, exclude ...ExcludeOption) (map[string]bool
 }
 
 func GetAllDogus() ([]string, error) {
-	kvSlice, err := getKeyValues(_DoguPath)
+	kvSlice, err := getKeyValues(doguPath)
 
 	if err != nil {
-		return nil, fmt.Errorf("could not dogu dir %s: %w", _DoguPath, err)
+		return nil, fmt.Errorf("could not dogu dir %s: %w", doguPath, err)
 	}
 
 	dogus := make([]string, 0, len(kvSlice))
@@ -63,7 +63,7 @@ func GetAllDogus() ([]string, error) {
 }
 
 func GetDoguSpec(dogu string) (core.Dogu, error) {
-	currentDoguList, err := getKeyValues(path.Join(_DoguPath, dogu, "current"))
+	currentDoguList, err := getKeyValues(path.Join(doguPath, dogu, "current"))
 	if err != nil {
 		if isKeyNotFoundError(err) {
 			err = ErrDoguNotFound
@@ -76,7 +76,7 @@ func GetDoguSpec(dogu string) (core.Dogu, error) {
 
 	slog.Debug("Found current version for dogu", "dogu", dogu, "version", doguVersion)
 
-	doguJsonSlice, err := getKeyValues(path.Join(_DoguPath, dogu, doguVersion))
+	doguJsonSlice, err := getKeyValues(path.Join(doguPath, dogu, doguVersion))
 	if err != nil {
 		return core.Dogu{}, fmt.Errorf("could not read dogu json for dogu %s and version %s: %w", dogu, doguVersion, err)
 	}

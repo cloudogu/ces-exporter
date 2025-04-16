@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	_NodeMasterPath = "/etc/ces/node_master"
+	nodeMasterPath = "/etc/ces/node_master"
 )
 
 var (
@@ -24,7 +24,7 @@ var (
 )
 
 func getEtcdEndpoint() (string, error) {
-	nodeFile, err := os.ReadFile(_NodeMasterPath)
+	nodeFile, err := os.ReadFile(nodeMasterPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to read node master file: %w", err)
 	}
