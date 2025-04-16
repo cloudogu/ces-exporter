@@ -10,17 +10,24 @@ import (
 )
 
 const (
+	// doguPath is the base etcd path where Dogu specifications are stored.
 	doguPath = "/dogu_v2"
 )
 
+// ExcludeOption is a function type used to filter configuration fields from a Dogu spec.
 type ExcludeOption func(cfg core.ConfigurationField) bool
 
+// ExcludeGlobalConfig is an ExcludeOption that excludes configuration fields marked as global.
 func ExcludeGlobalConfig() ExcludeOption {
 	return func(cfg core.ConfigurationField) bool {
 		return cfg.Global
 	}
 }
 
+// getDoguConfigKeySet returns a set of configuration key names defined in the Dogu spec
+// for the given Dogu. Optionally excludes certain fields using provided ExcludeOptions.
+//
+// Each returned key has a value of true in the map if included, or false if excluded.
 func getDoguConfigKeySet(dogu string, exclude ...ExcludeOption) (map[string]bool, error) {
 	doguConfigKeySet := make(map[string]bool)
 
@@ -42,6 +49,10 @@ func getDoguConfigKeySet(dogu string, exclude ...ExcludeOption) (map[string]bool
 	return doguConfigKeySet, nil
 }
 
+// GetAllDogus returns a list of all Dogu names present in the etcd registry.
+//
+// It scans for keys ending with `/current` under the dogu path and extracts the
+// Dogu name from the path components.
 func GetAllDogus() ([]string, error) {
 	kvSlice, err := getKeyValues(doguPath)
 
@@ -62,6 +73,10 @@ func GetAllDogus() ([]string, error) {
 	return dogus, nil
 }
 
+// GetDoguSpec retrieves the current Dogu specification for the given Dogu name.
+//
+// It first determines the active version of the Dogu by reading the `/current` key,
+// then retrieves and unmarshals the corresponding JSON specification.
 func GetDoguSpec(dogu string) (core.Dogu, error) {
 	currentDoguList, err := getKeyValues(path.Join(doguPath, dogu, "current"))
 	if err != nil {
