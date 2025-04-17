@@ -14,8 +14,8 @@ type backupScheduleProvider struct {
 	getConfig getConfigFunc
 }
 
-func newBackupScheduleProvider(getConfig getConfigFunc) *backupScheduleProvider {
-	return &backupScheduleProvider{
+func newBackupScheduleProvider(getConfig getConfigFunc) backupScheduleProvider {
+	return backupScheduleProvider{
 		getConfig: getConfig,
 	}
 }
