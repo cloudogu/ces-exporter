@@ -12,7 +12,7 @@ import (
 	"sync"
 )
 
-const (
+var (
 	nodeMasterPath = "/etc/ces/node_master"
 )
 
@@ -22,6 +22,8 @@ var (
 	clientErr  error
 	clientOnce sync.Once
 )
+
+type getKeyValuesClientFuncType func(path string, filters ...core.FilterOption) ([]core.KeyValue, error)
 
 func getEtcdEndpoint() (string, error) {
 	nodeFile, err := os.ReadFile(nodeMasterPath)
@@ -36,34 +38,34 @@ func getEtcdEndpoint() (string, error) {
 	return fmt.Sprintf("http://%s:4001", nMaster), nil
 }
 
+func createEtcdClient() (client.KeysAPI, error) {
+	etcdEndpoint, err := getEtcdEndpoint()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get etcd endpoint: %w", err)
+	}
+
+	cfg := client.Config{
+		Endpoints: []string{etcdEndpoint},
+		Transport: client.DefaultTransport,
+	}
+
+	c, err := client.New(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create etcd client: %w", err)
+	}
+
+	return client.NewKeysAPI(c), nil
+}
+
 func getEtcdClient() (client.KeysAPI, error) {
 	clientOnce.Do(func() {
-		etcdEndpoint, err := getEtcdEndpoint()
-		if err != nil {
-			clientErr = fmt.Errorf("failed to get etcd endpoint: %w", err)
-			return
-		}
-
-		cfg := client.Config{
-			Endpoints: []string{etcdEndpoint},
-			Transport: client.DefaultTransport,
-		}
-
-		c, err := client.New(cfg)
-		if err != nil {
-			clientErr = fmt.Errorf("failed to create etcd client: %w", err)
-			return
-		}
-
-		etcdClient = client.NewKeysAPI(c)
+		etcdClient, clientErr = createEtcdClient()
 	})
 
 	return etcdClient, clientErr
 }
 
-type filterOption func(kvs []core.KeyValue) []core.KeyValue
-
-func getKeyValues(path string, filters ...filterOption) ([]core.KeyValue, error) {
+func getKeyValues(path string, filters ...core.FilterOption) ([]core.KeyValue, error) {
 	wrapErr := func(err error) error {
 		return fmt.Errorf("failed to get dir keys: %w", err)
 	}

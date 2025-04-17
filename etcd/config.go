@@ -6,6 +6,7 @@ import (
 	"github.com/cloudogu/ces-exporter/decrypt"
 	"log/slog"
 	"path"
+	"regexp"
 	"strings"
 )
 
@@ -26,9 +27,9 @@ type decrypter interface {
 	Decrypt(input string) (string, error)
 }
 
-// filterKeys creates a filterOption that includes or excludes key-value pairs
+// filterKeys creates a FilterOption that includes or excludes key-value pairs
 // based on a predefined key set and a list of exceptions.
-func filterKeys(filterSet map[string]bool, exclude bool, exceptions []string) filterOption {
+func filterKeys(filterSet map[string]bool, exclude bool, exceptions []string) core.FilterOption {
 	return func(kvs []core.KeyValue) []core.KeyValue {
 		filtered := make([]core.KeyValue, 0, len(kvs))
 
@@ -55,16 +56,27 @@ func filterKeys(filterSet map[string]bool, exclude bool, exceptions []string) fi
 	}
 }
 
-// ignoreSubKeys returns a filterOption that removes key-value pairs
-// whose keys contain any of the specified subKey strings.
-func ignoreSubKeys(subKeys []string) filterOption {
+// ignoreSubKeys returns a FilterOption that removes key-value pairs
+// whose keys matches the specified regexes.
+func ignoreSubKeys(regexes []string) core.FilterOption {
+	regexList := make([]*regexp.Regexp, 0, len(regexes))
+	for _, regexString := range regexes {
+		regex, err := regexp.Compile(regexString)
+		if err != nil {
+			slog.Warn("failed to compile regex, regex will be ignored", "regex", regexString, "error", err)
+			continue
+		}
+
+		regexList = append(regexList, regex)
+	}
+
 	return func(kvs []core.KeyValue) []core.KeyValue {
 		filtered := make([]core.KeyValue, 0, len(kvs))
 		for _, kv := range kvs {
 			skip := false
 
-			for _, subKey := range subKeys {
-				if strings.Contains(kv.Key, subKey) {
+			for _, regex := range regexList {
+				if regex.MatchString(kv.Key) {
 					skip = true
 					break
 				}
@@ -81,10 +93,10 @@ func ignoreSubKeys(subKeys []string) filterOption {
 	}
 }
 
-// filterEncryptedKeys returns a filterOption that includes or excludes encrypted values,
+// filterEncryptedKeys returns a FilterOption that includes or excludes encrypted values,
 // based on the `exclude` flag. When exclude is true, encrypted values are removed;
 // otherwise, they are decrypted and included.
-func filterEncryptedKeys(d decrypter, exclude bool) filterOption {
+func filterEncryptedKeys(d decrypter, exclude bool) core.FilterOption {
 	return func(kvs []core.KeyValue) []core.KeyValue {
 		filtered := make([]core.KeyValue, 0, len(kvs))
 
@@ -110,9 +122,9 @@ func filterEncryptedKeys(d decrypter, exclude bool) filterOption {
 	}
 }
 
-// decryptEncryptedKeys returns a filterOption that decrypts all decryptable key-values.
+// decryptEncryptedKeys returns a FilterOption that decrypts all decryptable key-values.
 // If decryption fails, the original value is preserved.
-func decryptEncryptedKeys(d decrypter) filterOption {
+func decryptEncryptedKeys(d decrypter) core.FilterOption {
 	return func(kvs []core.KeyValue) []core.KeyValue {
 		filtered := make([]core.KeyValue, 0, len(kvs))
 
