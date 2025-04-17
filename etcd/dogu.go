@@ -3,7 +3,7 @@ package etcd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cloudogu/cesapp-lib/core"
+	cesLibCore "github.com/cloudogu/cesapp-lib/core"
 	"log/slog"
 	"path"
 	"strings"
@@ -14,12 +14,16 @@ const (
 	doguPath = "/dogu_v2"
 )
 
+var (
+	doguGetKeyValues getKeyValuesClientFuncType = getKeyValues
+)
+
 // ExcludeOption is a function type used to filter configuration fields from a Dogu spec.
-type ExcludeOption func(cfg core.ConfigurationField) bool
+type ExcludeOption func(cfg cesLibCore.ConfigurationField) bool
 
 // ExcludeGlobalConfig is an ExcludeOption that excludes configuration fields marked as global.
 func ExcludeGlobalConfig() ExcludeOption {
-	return func(cfg core.ConfigurationField) bool {
+	return func(cfg cesLibCore.ConfigurationField) bool {
 		return cfg.Global
 	}
 }
@@ -54,10 +58,9 @@ func getDoguConfigKeySet(dogu string, exclude ...ExcludeOption) (map[string]bool
 // It scans for keys ending with `/current` under the dogu path and extracts the
 // Dogu name from the path components.
 func GetAllDogus() ([]string, error) {
-	kvSlice, err := getKeyValues(doguPath)
-
+	kvSlice, err := doguGetKeyValues(doguPath)
 	if err != nil {
-		return nil, fmt.Errorf("could not dogu dir %s: %w", doguPath, err)
+		return nil, fmt.Errorf("could not list installed dogus %s: %w", doguPath, err)
 	}
 
 	dogus := make([]string, 0, len(kvSlice))
@@ -77,32 +80,32 @@ func GetAllDogus() ([]string, error) {
 //
 // It first determines the active version of the Dogu by reading the `/current` key,
 // then retrieves and unmarshals the corresponding JSON specification.
-func GetDoguSpec(dogu string) (core.Dogu, error) {
-	currentDoguList, err := getKeyValues(path.Join(doguPath, dogu, "current"))
+func GetDoguSpec(dogu string) (cesLibCore.Dogu, error) {
+	currentDoguList, err := doguGetKeyValues(path.Join(doguPath, dogu, "current"))
 	if err != nil {
 		if isKeyNotFoundError(err) {
 			err = ErrDoguNotFound
 		}
 
-		return core.Dogu{}, fmt.Errorf("could not read key 'current' for dogu %s: %w", dogu, err)
+		return cesLibCore.Dogu{}, fmt.Errorf("could not read key 'current' for dogu %s: %w", dogu, err)
 	}
 
 	doguVersion := currentDoguList[0].Value
 
 	slog.Debug("Found current version for dogu", "dogu", dogu, "version", doguVersion)
 
-	doguJsonSlice, err := getKeyValues(path.Join(doguPath, dogu, doguVersion))
+	doguJsonSlice, err := doguGetKeyValues(path.Join(doguPath, dogu, doguVersion))
 	if err != nil {
-		return core.Dogu{}, fmt.Errorf("could not read dogu json for dogu %s and version %s: %w", dogu, doguVersion, err)
+		return cesLibCore.Dogu{}, fmt.Errorf("could not read dogu json for dogu %s and version %s: %w", dogu, doguVersion, err)
 	}
 
 	doguJson := doguJsonSlice[0].Value
 
-	var doguSpec core.Dogu
+	var doguSpec cesLibCore.Dogu
 
 	err = json.Unmarshal([]byte(doguJson), &doguSpec)
 	if err != nil {
-		return core.Dogu{}, fmt.Errorf("could not unmarshal dogu json for %s and version %s: %w", dogu, doguVersion, err)
+		return cesLibCore.Dogu{}, fmt.Errorf("could not unmarshal dogu json for %s and version %s: %w", dogu, doguVersion, err)
 	}
 
 	return doguSpec, nil
