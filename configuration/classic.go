@@ -27,22 +27,36 @@ var skippedKeys = map[string][]string{
 var _ Provider = (*ClassicProvider)(nil)
 
 type ClassicProvider struct {
+	getConfig          getConfigFunc
+	getGlobalConfig    getGlobalConfigFunc
+	getDogus           getAllDogusFunc
+	getNormalConfig    getNormalConfigFunc
+	getSensitiveConfig getSensitiveConfigFunc
+	getLocalConfig     getLocalConfigFunc
 }
 
 func NewClassicProvider() Provider {
-	return &ClassicProvider{}
+	return &ClassicProvider{
+		getConfig:          etcd.GetConfig,
+		getGlobalConfig:    etcd.GetGlobalConfig,
+		getDogus:           etcd.GetAllDogus,
+		getNormalConfig:    etcd.GetNormalConfig,
+		getSensitiveConfig: etcd.GetSensitiveConfig,
+		getLocalConfig:     etcd.GetLocalConfig,
+	}
 }
 
 func (c ClassicProvider) getBackupSchedules(_ context.Context) ([]core.BackupSchedule, error) {
-	return getBackupSchedules()
+	return newBackupScheduleProvider(c.getConfig).
+		getBackupSchedules()
 }
 
 func (c ClassicProvider) getGlobalConfigs(_ context.Context) ([]core.KeyValue, error) {
-	return etcd.GetGlobalConfig(skippedKeys["global"])
+	return c.getGlobalConfig(skippedKeys["global"])
 }
 
 func (c ClassicProvider) getDoguConfigs(_ context.Context) ([]core.DoguConfig, error) {
-	dogus, err := etcd.GetAllDogus()
+	dogus, err := c.getDogus()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all dogus: %w", err)
 	}
