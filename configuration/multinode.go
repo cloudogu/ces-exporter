@@ -7,9 +7,9 @@ import (
 	"log/slog"
 )
 
-var _ Provider = (*MultinodeConfigurationProvider)(nil)
+var _ Provider = (*MultinodeProvider)(nil)
 
-type MultinodeConfigurationProvider struct {
+type MultinodeProvider struct {
 	namespace           string
 	sensitiveRepo       doguConfigRepository
 	doguConfigRepo      doguConfigRepository
@@ -25,8 +25,8 @@ func NewMultinodeConfigurationProvider(
 	globalConfigRepo globalConfigRepository,
 	doguVersionRegistry doguVersionRegistry,
 	client backupScheduleRuntimeClient,
-) *MultinodeConfigurationProvider {
-	return &MultinodeConfigurationProvider{
+) *MultinodeProvider {
+	return &MultinodeProvider{
 		namespace:           namespace,
 		sensitiveRepo:       sensitiveRepo,
 		doguConfigRepo:      doguConfigRepo,
@@ -36,7 +36,7 @@ func NewMultinodeConfigurationProvider(
 	}
 }
 
-func (c MultinodeConfigurationProvider) getGlobalConfigs(ctx context.Context) ([]core.KeyValue, error) {
+func (c MultinodeProvider) getGlobalConfigs(ctx context.Context) ([]core.KeyValue, error) {
 	repo, err := c.globalConfigRepo.Get(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get global config: %w", err)
@@ -53,7 +53,7 @@ func (c MultinodeConfigurationProvider) getGlobalConfigs(ctx context.Context) ([
 	return globalConfigs, nil
 }
 
-func (c MultinodeConfigurationProvider) getDoguConfigs(ctx context.Context) ([]core.DoguConfig, error) {
+func (c MultinodeProvider) getDoguConfigs(ctx context.Context) ([]core.DoguConfig, error) {
 	slog.Debug("get dogu configs...")
 	dogus, err := c.doguVersionRegistry.GetCurrentOfAll(ctx)
 	if err != nil {
@@ -102,7 +102,7 @@ func (c MultinodeConfigurationProvider) getDoguConfigs(ctx context.Context) ([]c
 	return doguConfigs, nil
 }
 
-func (c MultinodeConfigurationProvider) getBackupSchedules(ctx context.Context) ([]core.BackupSchedule, error) {
+func (c MultinodeProvider) getBackupSchedules(ctx context.Context) ([]core.BackupSchedule, error) {
 	var schedulesResult []core.BackupSchedule
 
 	schedules, err := c.client.ListBackupSchedules(ctx)

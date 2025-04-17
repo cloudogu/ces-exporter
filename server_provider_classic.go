@@ -37,7 +37,7 @@ func (c *classicControllerProvider) createControllers(ctx context.Context) (*sys
 	watchSshKeyConfig(ctx, c.reg, c.write)
 
 	return &systeminfo.Controller{},
-		&configuration.Controller{},
+		configuration.NewController(configuration.NewClassicProvider()),
 		&maintenance.Controller{},
 		&export.Controller{}
 }
