@@ -6,6 +6,7 @@ import (
 	"github.com/cloudogu/ces-exporter/decrypt"
 	"log/slog"
 	"path"
+	"regexp"
 	"strings"
 )
 
@@ -56,15 +57,26 @@ func filterKeys(filterSet map[string]bool, exclude bool, exceptions []string) co
 }
 
 // ignoreSubKeys returns a FilterOption that removes key-value pairs
-// whose keys contain any of the specified subKey strings.
-func ignoreSubKeys(subKeys []string) core.FilterOption {
+// whose keys matches the specified regexes.
+func ignoreSubKeys(regexes []string) core.FilterOption {
+	regexList := make([]*regexp.Regexp, 0, len(regexes))
+	for _, regexString := range regexes {
+		regex, err := regexp.Compile(regexString)
+		if err != nil {
+			slog.Warn("failed to compile regex, regex will be ignored", "regex", regexString, "error", err)
+			continue
+		}
+
+		regexList = append(regexList, regex)
+	}
+
 	return func(kvs []core.KeyValue) []core.KeyValue {
 		filtered := make([]core.KeyValue, 0, len(kvs))
 		for _, kv := range kvs {
 			skip := false
 
-			for _, subKey := range subKeys {
-				if strings.Contains(kv.Key, subKey) {
+			for _, regex := range regexList {
+				if regex.MatchString(kv.Key) {
 					skip = true
 					break
 				}
