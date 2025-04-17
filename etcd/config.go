@@ -20,6 +20,8 @@ const (
 var (
 	// createDecryptFunc references the decrypter constructor used throughout this module.
 	createDecryptFunc = decrypt.CreateDecrypter
+	// configGetKeyValues references the getKeyValues from client.go used throughout this module.
+	configGetKeyValues getKeyValuesClientFuncType = getKeyValues
 )
 
 // decrypter defines an interface for decrypting encrypted strings.
@@ -104,7 +106,6 @@ func filterEncryptedKeys(d decrypter, exclude bool) core.FilterOption {
 			dValue, err := d.Decrypt(kv.Value)
 
 			if (err == nil && exclude) || (err != nil && !exclude) {
-				slog.Debug("excluded key", "key", kv.Key)
 				continue
 			}
 
@@ -146,7 +147,7 @@ func decryptEncryptedKeys(d decrypter) core.FilterOption {
 
 // GetGlobalConfig returns the global configuration, optionally excluding specified keys.
 func GetGlobalConfig(ignoreKeys []string) (core.GlobalConfig, error) {
-	return getKeyValues(
+	return configGetKeyValues(
 		globalConfigPath,
 		ignoreSubKeys(ignoreKeys),
 	)
@@ -191,7 +192,7 @@ func GetNormalConfig(dogu string, ignoreKeys []string) ([]core.KeyValue, error) 
 		return nil, fmt.Errorf("could not create decrypter: %w", err)
 	}
 
-	normalConfig, err := getKeyValues(
+	normalConfig, err := configGetKeyValues(
 		path.Join(doguConfigPath, dogu),
 		filterKeys(doguConfigKeys, false, []string{}), // only include keys from dogu.json
 		ignoreSubKeys(ignoreKeys),                     // ignore keys provided by user
@@ -220,7 +221,7 @@ func GetLocalConfig(dogu string, ignoreKeys []string) ([]core.KeyValue, error) {
 	// add service-account-keys to ignore-list for localConfig
 	ignoreKeysWithServiceAccount := append(ignoreKeys, "/sa-")
 
-	lcoalConfig, err := getKeyValues(
+	lcoalConfig, err := configGetKeyValues(
 		path.Join(doguConfigPath, dogu),
 		filterKeys(doguConfigKeys, true, []string{}), // exclude keys from dogu.json
 		decryptEncryptedKeys(d),                      // include all encrypted keys
@@ -246,7 +247,7 @@ func GetSensitiveConfig(dogu string, ignoreKeys []string) ([]core.KeyValue, erro
 		return nil, fmt.Errorf("could not create decrypter: %w", err)
 	}
 
-	sensitiveConfig, err := getKeyValues(
+	sensitiveConfig, err := configGetKeyValues(
 		path.Join(doguConfigPath, dogu),
 		filterKeys(doguConfigKeys, false, []string{"sa-"}), // only include keys from dogu.json
 		ignoreSubKeys(ignoreKeys),                          // ignore keys provided by user
