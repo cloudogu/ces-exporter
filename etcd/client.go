@@ -23,6 +23,8 @@ var (
 	clientOnce sync.Once
 )
 
+type getKeyValuesClientFuncType func(path string, filters ...core.FilterOption) ([]core.KeyValue, error)
+
 func getEtcdEndpoint() (string, error) {
 	nodeFile, err := os.ReadFile(nodeMasterPath)
 	if err != nil {
@@ -63,9 +65,7 @@ func getEtcdClient() (client.KeysAPI, error) {
 	return etcdClient, clientErr
 }
 
-type filterOption func(kvs []core.KeyValue) []core.KeyValue
-
-func getKeyValues(path string, filters ...filterOption) ([]core.KeyValue, error) {
+func getKeyValues(path string, filters ...core.FilterOption) ([]core.KeyValue, error) {
 	wrapErr := func(err error) error {
 		return fmt.Errorf("failed to get dir keys: %w", err)
 	}

@@ -5,6 +5,8 @@ type KeyValue struct {
 	Value string `json:"value"`
 }
 
+type FilterOption func(kvs []KeyValue) []KeyValue
+
 type BackupSchedule struct {
 	Name     string `json:"name"`
 	Schedule string `json:"schedule"`
