@@ -13,6 +13,7 @@ import (
 const (
 	// keyProviderKey is the key used to identify the key provider entry in the global config.
 	keyProviderKey = "key_provider"
+	doguVolumePath = "/data"
 )
 
 var (
