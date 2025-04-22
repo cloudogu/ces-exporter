@@ -81,7 +81,7 @@ func Test_getEtcdClient(t *testing.T) {
 	// ensure clientOnce is only called once
 	clientOnce.Do(func() {
 		etcdClient = nil
-		clientErr = assert.AnError
+		errClient = assert.AnError
 	})
 
 	assert.NoError(t, err)
@@ -126,7 +126,7 @@ func Test_getKeyValues(t *testing.T) {
 			}, nil)
 
 		etcdClient = mockEtcdClient
-		clientErr = nil
+		errClient = nil
 
 		keyValues, err := getKeyValues("config")
 		assert.NoError(t, err)
@@ -150,7 +150,7 @@ func Test_getKeyValues(t *testing.T) {
 			}, nil)
 
 		etcdClient = mockEtcdClient
-		clientErr = nil
+		errClient = nil
 
 		keyValues, err := getKeyValues("config", func(kvs []core.KeyValue) []core.KeyValue {
 			// test files that deletes every value
@@ -173,7 +173,7 @@ func Test_getKeyValues(t *testing.T) {
 			}, nil)
 
 		etcdClient = mockEtcdClient
-		clientErr = nil
+		errClient = nil
 
 		keyValues, err := getKeyValues("config",
 			func(kvs []core.KeyValue) []core.KeyValue {
@@ -197,12 +197,12 @@ func Test_getKeyValues(t *testing.T) {
 	})
 
 	t.Run("getEtcdClient returns error", func(t *testing.T) {
-		clientErr = assert.AnError
+		errClient = assert.AnError
 		_, err := getKeyValues("config")
 
-		assert.ErrorIs(t, err, clientErr)
+		assert.ErrorIs(t, err, errClient)
 
-		clientErr = nil
+		errClient = nil
 	})
 
 	t.Run("error getting key value from etcd", func(t *testing.T) {
@@ -210,7 +210,7 @@ func Test_getKeyValues(t *testing.T) {
 		mockEtcdClient.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(nil, assert.AnError)
 
 		etcdClient = mockEtcdClient
-		clientErr = nil
+		errClient = nil
 
 		_, err := getKeyValues("config")
 

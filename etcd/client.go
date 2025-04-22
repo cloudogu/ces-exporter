@@ -19,7 +19,7 @@ var (
 var (
 	// singleton instance for etcd client
 	etcdClient client.KeysAPI
-	clientErr  error
+	errClient  error
 	clientOnce sync.Once
 )
 
@@ -59,10 +59,10 @@ func createEtcdClient() (client.KeysAPI, error) {
 
 func getEtcdClient() (client.KeysAPI, error) {
 	clientOnce.Do(func() {
-		etcdClient, clientErr = createEtcdClient()
+		etcdClient, errClient = createEtcdClient()
 	})
 
-	return etcdClient, clientErr
+	return etcdClient, errClient
 }
 
 func getKeyValues(path string, filters ...core.FilterOption) ([]core.KeyValue, error) {
