@@ -131,13 +131,13 @@ func TestCreateDecrypter(t *testing.T) {
 	const doguName = "testDogu"
 
 	t.Run("create decrypter", func(t *testing.T) {
-		oldBaseVolumePath := doguVolumeBasePath
+		oldBaseVolumePath := doguVolumePath
 		tmpDir := os.TempDir()
 
-		doguVolumeBasePath = tmpDir
+		doguVolumePath = tmpDir
 
 		defer func() {
-			doguVolumeBasePath = oldBaseVolumePath
+			doguVolumePath = oldBaseVolumePath
 		}()
 
 		privateKeyPath := path.Join(tmpDir, fmt.Sprintf("/%s/volumes/_private", doguName))
@@ -177,13 +177,13 @@ func TestCreateDecrypter(t *testing.T) {
 		keyProvider = &keys.KeyProvider{}
 		errKeyProvider = nil
 
-		oldBaseVolumePath2 := doguVolumeBasePath
+		oldBaseVolumePath2 := doguVolumePath
 
 		defer func() {
-			doguVolumeBasePath = oldBaseVolumePath2
+			doguVolumePath = oldBaseVolumePath2
 		}()
 
-		doguVolumeBasePath = "invalid"
+		doguVolumePath = "invalid"
 
 		getGlobalCfgMock := mocks.NewGetGlobalConfigFunc(t)
 
