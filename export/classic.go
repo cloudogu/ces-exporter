@@ -12,24 +12,24 @@ import (
 	"strings"
 )
 
-type execWrapper interface {
+type execClient interface {
 	GetAllDogus() ([]string, error)
 	ContainerList(ctx context.Context, options container.ListOptions) ([]types.Container, error)
 	ContainerInspect(ctx context.Context, containerID string) (types.ContainerJSON, error)
 }
 
-type ExportExecWrapper struct {
-	execWrapper
+type ExecClient struct {
+	execClient
 }
 
 type ClassicExportModeProvider struct {
 	currentExportDogu string
-	etcdAccess        execWrapper
+	execClient        execClient
 	config            core.Configuration
 }
 
-func NewClassicExportModeProvider(conf core.Configuration, etcdAccess execWrapper) *ClassicExportModeProvider {
-	return &ClassicExportModeProvider{config: conf, etcdAccess: etcdAccess}
+func NewClassicExportModeProvider(conf core.Configuration) *ClassicExportModeProvider {
+	return &ClassicExportModeProvider{config: conf, execClient: &ExecClient{}}
 }
 
 // GetExportDogu gets the dogu.name currently set in the ces-exporter-dogu-exporter service
@@ -65,14 +65,14 @@ func (c *ClassicExportModeProvider) SetExportDogu(doguName string, ctx context.C
 
 func (c *ClassicExportModeProvider) GetExportMode(ctx context.Context) (*exportModeStatus, error) {
 	// Get all dogus
-	dogus, err := c.etcdAccess.GetAllDogus()
+	dogus, err := c.execClient.GetAllDogus()
 	if err != nil {
 		return nil, err
 	}
 
 	// Filter dogus that are installed but not started - nether healthy nor unhealthy
 	var dockercontainers = make(map[string]bool)
-	containers, _ := c.etcdAccess.ContainerList(ctx, container.ListOptions{})
+	containers, _ := c.execClient.ContainerList(ctx, container.ListOptions{})
 	for _, con := range containers {
 		containername := strings.Split(strings.Join(con.Names, ","), "/")[1]
 		dockercontainers[containername] = true
@@ -86,7 +86,7 @@ func (c *ClassicExportModeProvider) GetExportMode(ctx context.Context) (*exportM
 			continue
 		}
 
-		cj, err := c.etcdAccess.ContainerInspect(ctx, dogu)
+		cj, err := c.execClient.ContainerInspect(ctx, dogu)
 		if err != nil {
 			slog.Error("error getting container json", "err", err)
 			healthy = false
@@ -107,7 +107,7 @@ func (c *ClassicExportModeProvider) GetExportMode(ctx context.Context) (*exportM
 }
 
 func (c *ClassicExportModeProvider) checkDogu(dogu string) (string, error) {
-	dogus, err := c.etcdAccess.GetAllDogus()
+	dogus, err := c.execClient.GetAllDogus()
 	if err != nil {
 		return "", fmt.Errorf("failed to get dogu list: %w", err)
 	}
@@ -124,11 +124,11 @@ func (c *ClassicExportModeProvider) checkDogu(dogu string) (string, error) {
 	return dogu, nil
 }
 
-func (e *ExportExecWrapper) GetAllDogus() ([]string, error) {
+func (e *ExecClient) GetAllDogus() ([]string, error) {
 	return etcd.GetAllDogus()
 }
 
-func (e *ExportExecWrapper) ContainerList(ctx context.Context, options container.ListOptions) ([]types.Container, error) {
+func (e *ExecClient) ContainerList(ctx context.Context, options container.ListOptions) ([]types.Container, error) {
 	// Get Docker client
 	docker, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
@@ -137,7 +137,7 @@ func (e *ExportExecWrapper) ContainerList(ctx context.Context, options container
 	return docker.ContainerList(ctx, container.ListOptions{})
 }
 
-func (e *ExportExecWrapper) ContainerInspect(ctx context.Context, containerID string) (types.ContainerJSON, error) {
+func (e *ExecClient) ContainerInspect(ctx context.Context, containerID string) (types.ContainerJSON, error) {
 	// Get Docker client
 	docker, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {

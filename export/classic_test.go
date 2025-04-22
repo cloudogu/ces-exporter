@@ -13,11 +13,11 @@ import (
 func TestCGetExportDogu(t *testing.T) {
 	t.Run("should return get export dogu", func(t *testing.T) {
 		config := core.Configuration{ClassicExportPort: 7022}
-		etcdAccess := newMockExecWrapper(t)
+		execClient := newMockExecClient(t)
 
-		etcdAccess.EXPECT().GetAllDogus().Return([]string{"test_A"}, nil)
+		execClient.EXPECT().GetAllDogus().Return([]string{"test_A"}, nil)
 
-		provider := NewClassicExportModeProvider(config, etcdAccess)
+		provider := ClassicExportModeProvider{config: config, execClient: execClient}
 
 		provider.currentExportDogu = "test_A"
 
@@ -31,10 +31,10 @@ func TestCGetExportDogu(t *testing.T) {
 func TestCSetExportDogu(t *testing.T) {
 	t.Run("should set export dogu", func(t *testing.T) {
 		config := core.Configuration{ClassicExportPort: 7022}
-		etcdAccess := newMockExecWrapper(t)
+		execClient := newMockExecClient(t)
 
-		etcdAccess.EXPECT().GetAllDogus().Return([]string{"test_A"}, nil)
-		provider := NewClassicExportModeProvider(config, etcdAccess)
+		execClient.EXPECT().GetAllDogus().Return([]string{"test_A"}, nil)
+		provider := ClassicExportModeProvider{config: config, execClient: execClient}
 
 		dogu, _ := provider.SetExportDogu("test_A", context.Background())
 
@@ -44,10 +44,10 @@ func TestCSetExportDogu(t *testing.T) {
 	})
 	t.Run("fail on export non existent dogu", func(t *testing.T) {
 		config := core.Configuration{ClassicExportPort: 7022}
-		etcdAccess := newMockExecWrapper(t)
+		execClient := newMockExecClient(t)
 
-		etcdAccess.EXPECT().GetAllDogus().Return([]string{"test_A"}, nil)
-		provider := NewClassicExportModeProvider(config, etcdAccess)
+		execClient.EXPECT().GetAllDogus().Return([]string{"test_A"}, nil)
+		provider := ClassicExportModeProvider{config: config, execClient: execClient}
 
 		_, err := provider.SetExportDogu("test_B", context.Background())
 
@@ -58,10 +58,10 @@ func TestCSetExportDogu(t *testing.T) {
 func TestCGetExportMode(t *testing.T) {
 	t.Run("should return get export mode as false", func(t *testing.T) {
 		config := core.Configuration{ClassicExportPort: 7022}
-		remoteAccess := newMockExecWrapper(t)
+		execClient := newMockExecClient(t)
 
-		remoteAccess.EXPECT().GetAllDogus().Return([]string{"test_A"}, nil)
-		remoteAccess.EXPECT().ContainerList(mock.Anything, mock.Anything).Return([]types.Container{types.Container{
+		execClient.EXPECT().GetAllDogus().Return([]string{"test_A"}, nil)
+		execClient.EXPECT().ContainerList(mock.Anything, mock.Anything).Return([]types.Container{types.Container{
 			Names: []string{"/test_A"},
 		}}, nil)
 		var state = types.ContainerJSON{
@@ -73,9 +73,9 @@ func TestCGetExportMode(t *testing.T) {
 				},
 			},
 		}
-		remoteAccess.EXPECT().ContainerInspect(mock.Anything, "test_A").Return(state, nil)
+		execClient.EXPECT().ContainerInspect(mock.Anything, "test_A").Return(state, nil)
 
-		provider := NewClassicExportModeProvider(config, remoteAccess)
+		provider := ClassicExportModeProvider{config: config, execClient: execClient}
 
 		mode, _ := provider.GetExportMode(context.Background())
 
@@ -83,10 +83,10 @@ func TestCGetExportMode(t *testing.T) {
 	})
 	t.Run("should return get export mode as true", func(t *testing.T) {
 		config := core.Configuration{ClassicExportPort: 7022}
-		remoteAccess := newMockExecWrapper(t)
+		execClient := newMockExecClient(t)
 
-		remoteAccess.EXPECT().GetAllDogus().Return([]string{"test_A", "test_B"}, nil)
-		remoteAccess.EXPECT().ContainerList(mock.Anything, mock.Anything).Return([]types.Container{types.Container{
+		execClient.EXPECT().GetAllDogus().Return([]string{"test_A", "test_B"}, nil)
+		execClient.EXPECT().ContainerList(mock.Anything, mock.Anything).Return([]types.Container{types.Container{
 			Names: []string{"/test_A"},
 		}}, nil)
 		var state = types.ContainerJSON{
@@ -98,9 +98,9 @@ func TestCGetExportMode(t *testing.T) {
 				},
 			},
 		}
-		remoteAccess.EXPECT().ContainerInspect(mock.Anything, "test_A").Return(state, nil)
+		execClient.EXPECT().ContainerInspect(mock.Anything, "test_A").Return(state, nil)
 
-		provider := NewClassicExportModeProvider(config, remoteAccess)
+		provider := ClassicExportModeProvider{config: config, execClient: execClient}
 
 		mode, _ := provider.GetExportMode(context.Background())
 
@@ -108,11 +108,11 @@ func TestCGetExportMode(t *testing.T) {
 	})
 	t.Run("should return error on export mode", func(t *testing.T) {
 		config := core.Configuration{ClassicExportPort: 7022}
-		remoteAccess := newMockExecWrapper(t)
+		execClient := newMockExecClient(t)
 
-		remoteAccess.EXPECT().GetAllDogus().Return([]string{"test_A"}, fmt.Errorf("testerror"))
+		execClient.EXPECT().GetAllDogus().Return([]string{"test_A"}, fmt.Errorf("testerror"))
 
-		provider := NewClassicExportModeProvider(config, remoteAccess)
+		provider := ClassicExportModeProvider{config: config, execClient: execClient}
 
 		_, err := provider.GetExportMode(context.Background())
 
@@ -120,16 +120,16 @@ func TestCGetExportMode(t *testing.T) {
 	})
 	t.Run("should return error on export mode in docker inspect", func(t *testing.T) {
 		config := core.Configuration{ClassicExportPort: 7022}
-		remoteAccess := newMockExecWrapper(t)
+		execClient := newMockExecClient(t)
 
-		remoteAccess.EXPECT().GetAllDogus().Return([]string{"test_A", "test_B"}, nil)
-		remoteAccess.EXPECT().ContainerList(mock.Anything, mock.Anything).Return([]types.Container{types.Container{
+		execClient.EXPECT().GetAllDogus().Return([]string{"test_A", "test_B"}, nil)
+		execClient.EXPECT().ContainerList(mock.Anything, mock.Anything).Return([]types.Container{types.Container{
 			Names: []string{"/test_A"},
 		}}, nil)
 
-		remoteAccess.EXPECT().ContainerInspect(mock.Anything, "test_A").Return(types.ContainerJSON{}, fmt.Errorf("testerror"))
+		execClient.EXPECT().ContainerInspect(mock.Anything, "test_A").Return(types.ContainerJSON{}, fmt.Errorf("testerror"))
 
-		provider := NewClassicExportModeProvider(config, remoteAccess)
+		provider := ClassicExportModeProvider{config: config, execClient: execClient}
 
 		mode, _ := provider.GetExportMode(context.Background())
 
