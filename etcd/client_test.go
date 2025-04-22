@@ -164,6 +164,38 @@ func Test_getKeyValues(t *testing.T) {
 		assert.Len(t, keyValues, 0)
 	})
 
+	t.Run("apply multiple filters to keyValues received", func(t *testing.T) {
+		mockEtcdClient := mocks.NewKeysAPI(t)
+
+		mockEtcdClient.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(
+			&client.Response{
+				Node: createKeyValueStub(),
+			}, nil)
+
+		etcdClient = mockEtcdClient
+		clientErr = nil
+
+		keyValues, err := getKeyValues("config",
+			func(kvs []core.KeyValue) []core.KeyValue {
+				// test files that deletes every value
+				assert.Len(t, kvs, 2)
+				return []core.KeyValue{}
+			},
+			func(kvs []core.KeyValue) []core.KeyValue {
+				assert.Len(t, kvs, 0)
+				return []core.KeyValue{
+					{Key: "newKey", Value: "newValue"},
+				}
+			},
+		)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, keyValues)
+
+		assert.Len(t, keyValues, 1)
+		assert.Equal(t, core.KeyValue{Key: "newKey", Value: "newValue"}, keyValues[0])
+	})
+
 	t.Run("getEtcdClient returns error", func(t *testing.T) {
 		clientErr = assert.AnError
 		_, err := getKeyValues("config")

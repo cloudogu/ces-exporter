@@ -24,9 +24,9 @@ var (
 	keyProviderOnce sync.Once
 )
 
-// getGlobalConfigFunc defines a function type that retrieves the global config,
+// GetGlobalConfigFunc defines a function type that retrieves the global config,
 // optionally ignoring some keys.
-type getGlobalConfigFunc func(ignoreKeys []string) (core.GlobalConfig, error)
+type GetGlobalConfigFunc func(ignoreKeys []string) (core.GlobalConfig, error)
 
 // getPrivateKeyPath constructs the file path to the private key PEM file
 // for a given dogu name.
@@ -41,7 +41,7 @@ func getPrivateKeyPath(dogu string) string {
 // The function ensures thread-safe lazy initialization and returns the same
 // instance for subsequent calls. If an error occurs during initialization,
 // it is returned alongside a nil provider.
-func GetKeyProvider(getGCfg getGlobalConfigFunc) (*keys.KeyProvider, error) {
+func GetKeyProvider(getGCfg GetGlobalConfigFunc) (*keys.KeyProvider, error) {
 	keyProviderOnce.Do(func() {
 		globalCfg, err := getGCfg([]string{})
 		if err != nil {
@@ -73,7 +73,7 @@ func GetKeyProvider(getGCfg getGlobalConfigFunc) (*keys.KeyProvider, error) {
 // CreateDecrypter creates a Decrypter instance using the private key for the specified dogu.
 // It retrieves the KeyProvider and loads the private key from the filesystem.
 // Returns an error if the provider or private key could not be retrieved.
-func CreateDecrypter(dogu string, getGCfg getGlobalConfigFunc) (Decrypter, error) {
+func CreateDecrypter(dogu string, getGCfg GetGlobalConfigFunc) (Decrypter, error) {
 	provider, err := GetKeyProvider(getGCfg)
 	if err != nil {
 		return Decrypter{}, fmt.Errorf("failed to get key provider: %w", err)
