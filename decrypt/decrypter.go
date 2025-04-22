@@ -12,6 +12,7 @@ import (
 const (
 	// keyProviderKey is the key used to identify the key provider entry in the global config.
 	keyProviderKey = "key_provider"
+	doguVolumePath = "/data"
 )
 
 var (
@@ -30,7 +31,7 @@ type GetGlobalConfigFunc func(ignoreKeys []string) (core.GlobalConfig, error)
 // getPrivateKeyPath constructs the file path to the private key PEM file
 // for a given dogu name.
 func getPrivateKeyPath(dogu string) string {
-	return fmt.Sprintf("/var/lib/ces/%s/volumes/_private/private.pem", dogu)
+	return fmt.Sprintf("%s/%s/volumes/_private/private.pem", doguVolumePath, dogu)
 }
 
 // GetKeyProvider initializes and returns a singleton instance of KeyProvider.
