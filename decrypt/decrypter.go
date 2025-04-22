@@ -5,6 +5,7 @@ import (
 	"github.com/cloudogu/ces-exporter/core"
 	"github.com/cloudogu/cesapp-lib/keys"
 	"log/slog"
+	"path"
 	"strings"
 	"sync"
 )
@@ -24,7 +25,7 @@ var (
 )
 
 var (
-	doguProviateKeyPath = "/var/lib/ces/%s/volumes/_private/private.pem"
+	doguVolumeBasePath = "/var/lib/ces"
 )
 
 // GetGlobalConfigFunc defines a function type that retrieves the global config,
@@ -34,7 +35,8 @@ type GetGlobalConfigFunc func(ignoreKeys []string) (core.GlobalConfig, error)
 // getPrivateKeyPath constructs the file path to the private key PEM file
 // for a given dogu name.
 func getPrivateKeyPath(dogu string) string {
-	return fmt.Sprintf(doguProviateKeyPath, dogu)
+	doguPrivateKeyPath := fmt.Sprintf("/%s/volumes/_private/private.pem", dogu)
+	return path.Join(doguVolumeBasePath, doguPrivateKeyPath)
 }
 
 func createKeyProvider(getGCfg GetGlobalConfigFunc) (*keys.KeyProvider, error) {
