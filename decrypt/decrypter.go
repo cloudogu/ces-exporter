@@ -5,6 +5,7 @@ import (
 	"github.com/cloudogu/ces-exporter/core"
 	"github.com/cloudogu/cesapp-lib/keys"
 	"log/slog"
+	"path"
 	"strings"
 	"sync"
 )
@@ -12,16 +13,19 @@ import (
 const (
 	// keyProviderKey is the key used to identify the key provider entry in the global config.
 	keyProviderKey = "key_provider"
-	doguVolumePath = "/data"
 )
 
 var (
 	// keyProvider is the singleton instance of the KeyProvider.
 	keyProvider *keys.KeyProvider
-	// keyProviderErr stores any error that occurred during KeyProvider initialization.
-	keyProviderErr error
+	// errKeyProvider stores any error that occurred during KeyProvider initialization.
+	errKeyProvider error
 	// keyProviderOnce ensures the KeyProvider is only initialized once.
 	keyProviderOnce sync.Once
+)
+
+var (
+	doguVolumePath = "/data"
 )
 
 // GetGlobalConfigFunc defines a function type that retrieves the global config,
@@ -31,7 +35,30 @@ type GetGlobalConfigFunc func(ignoreKeys []string) (core.GlobalConfig, error)
 // getPrivateKeyPath constructs the file path to the private key PEM file
 // for a given dogu name.
 func getPrivateKeyPath(dogu string) string {
-	return fmt.Sprintf("%s/%s/volumes/_private/private.pem", doguVolumePath, dogu)
+	doguPrivateKeyPath := fmt.Sprintf("/%s/volumes/_private/private.pem", dogu)
+	return path.Join(doguVolumePath, doguPrivateKeyPath)
+}
+
+func createKeyProvider(getGCfg GetGlobalConfigFunc) (*keys.KeyProvider, error) {
+	globalCfg, err := getGCfg([]string{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get global config: %w", err)
+	}
+
+	for _, kv := range globalCfg {
+		if strings.Contains(kv.Key, keyProviderKey) {
+			provider, pErr := keys.NewKeyProvider(kv.Value)
+			if pErr != nil {
+				return nil, fmt.Errorf("failed to create key provider: %w", pErr)
+			}
+
+			slog.Info("Use KeyProvider to decrypt sensitive configs", "provider", kv.Value)
+
+			return provider, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no key provider found for global config")
 }
 
 // GetKeyProvider initializes and returns a singleton instance of KeyProvider.
@@ -43,31 +70,10 @@ func getPrivateKeyPath(dogu string) string {
 // it is returned alongside a nil provider.
 func GetKeyProvider(getGCfg GetGlobalConfigFunc) (*keys.KeyProvider, error) {
 	keyProviderOnce.Do(func() {
-		globalCfg, err := getGCfg([]string{})
-		if err != nil {
-			keyProviderErr = fmt.Errorf("failed to get global config: %w", err)
-			return
-		}
-
-		for _, kv := range globalCfg {
-			if strings.Contains(kv.Key, keyProviderKey) {
-				provider, pErr := keys.NewKeyProvider(kv.Value)
-				if pErr != nil {
-					keyProviderErr = fmt.Errorf("failed to create key provider: %w", pErr)
-					return
-				}
-
-				slog.Debug("KeyProvided extracted", "provider", kv.Value)
-
-				keyProvider = provider
-				return
-			}
-		}
-
-		keyProviderErr = fmt.Errorf("no key provider found for global config")
+		keyProvider, errKeyProvider = createKeyProvider(getGCfg)
 	})
 
-	return keyProvider, keyProviderErr
+	return keyProvider, errKeyProvider
 }
 
 // CreateDecrypter creates a Decrypter instance using the private key for the specified dogu.
