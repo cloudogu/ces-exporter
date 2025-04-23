@@ -13,15 +13,15 @@ type Provider interface {
 	GetExportMode(ctx context.Context) (*exportModeStatus, error)
 }
 
-type MultinodeExportModeController struct {
+type Controller struct {
 	provider Provider
 }
 
-func NewMultinodeExportModeController(provider Provider) *MultinodeExportModeController {
-	return &MultinodeExportModeController{provider: provider}
+func NewController(provider Provider) *Controller {
+	return &Controller{provider: provider}
 }
 
-func (m *MultinodeExportModeController) GetExportDogu(w http.ResponseWriter, r *http.Request) {
+func (m *Controller) GetExportDogu(w http.ResponseWriter, r *http.Request) {
 	doguExp, err := m.provider.GetExportDogu(r.Context())
 	if err != nil {
 		core.ErrorResponse(w, http.StatusNotFound, fmt.Sprintf("failed to get export dogu: %s", err.Error()))
@@ -31,7 +31,7 @@ func (m *MultinodeExportModeController) GetExportDogu(w http.ResponseWriter, r *
 	core.JSON(w, http.StatusOK, doguExp)
 }
 
-func (m *MultinodeExportModeController) SetExportDogu(w http.ResponseWriter, r *http.Request) {
+func (m *Controller) SetExportDogu(w http.ResponseWriter, r *http.Request) {
 	doguName := r.PathValue("doguName")
 	if doguName == "" {
 		core.BadRequest(w, "doguName must not be empty")
@@ -47,7 +47,7 @@ func (m *MultinodeExportModeController) SetExportDogu(w http.ResponseWriter, r *
 	core.JSON(w, http.StatusOK, doguExp)
 }
 
-func (m *MultinodeExportModeController) GetExportMode(w http.ResponseWriter, r *http.Request) {
+func (m *Controller) GetExportMode(w http.ResponseWriter, r *http.Request) {
 	// delegate call to multinode or classic provider
 	mode, err := m.provider.GetExportMode(r.Context())
 

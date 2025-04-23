@@ -9,6 +9,9 @@
 !export/**/*
 !maintenance/**/*
 !systeminfo/**/*
+!decrypt/**/*
+!etcd/**/*
 !vendor/**/*
 !Makefile
 !.git/**/*
+!resources/**/*

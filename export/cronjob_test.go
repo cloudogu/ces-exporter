@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/adhocore/gronx/pkg/tasker"
 	"github.com/cloudogu/ces-exporter/core"
 	v2 "github.com/cloudogu/k8s-dogu-operator/v3/api/v2"
 	"github.com/stretchr/testify/mock"
@@ -162,6 +163,17 @@ func TestRunCronJob(t *testing.T) {
 		doguClient.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
 		cronjob := NewCronJob(expr, doguClient, "ecosystem", true)
+		mockTasker := newMockTaskRunner(t)
+		mockTasker.EXPECT().Task("* * * * *", mock.Anything).Return(nil)
+		mockTasker.EXPECT().Running().Return(true)
+		mockTasker.EXPECT().Run().Run(func() {
+			_, err := cronjob.callCronJob(context.Background())
+			require.NoError(t, err)
+		})
+		mockTasker.EXPECT().Stop()
+		cronjob.newTasker = func(opt tasker.Option) taskRunner {
+			return mockTasker
+		}
 
 		// set os env so ReadConfigFromEnv runs without errors
 		_ = os.Setenv(core.CronJobVerboseEnv, "true")
@@ -172,7 +184,7 @@ func TestRunCronJob(t *testing.T) {
 			_ = cronjob.Run()
 		}()
 
-		time.Sleep(65 * time.Second) // slightly more than 1 minute
+		time.Sleep(100 * time.Millisecond)
 
 		require.Contains(t, buf.String(), "Activate export mode for dogu 'test_A'")
 		cronjob.Stop()
@@ -187,6 +199,17 @@ func TestRunCronJob(t *testing.T) {
 		doguClient.EXPECT().List(mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
 
 		cronjob := NewCronJob(expr, doguClient, "ecosystem", false)
+		mockTasker := newMockTaskRunner(t)
+		mockTasker.EXPECT().Task("* * * * *", mock.Anything).Return(nil)
+		mockTasker.EXPECT().Running().Return(true)
+		mockTasker.EXPECT().Run().Run(func() {
+			_, err := cronjob.callCronJob(context.Background())
+			require.NoError(t, err)
+		})
+		mockTasker.EXPECT().Stop()
+		cronjob.newTasker = func(opt tasker.Option) taskRunner {
+			return mockTasker
+		}
 
 		// set os env so ReadConfigFromEnv runs without errors
 		_ = os.Setenv(core.CronJobVerboseEnv, "true")
@@ -197,7 +220,7 @@ func TestRunCronJob(t *testing.T) {
 			_ = cronjob.Run()
 		}()
 
-		time.Sleep(65 * time.Second) // slightly more than 1 minute
+		time.Sleep(100 * time.Millisecond)
 
 		require.NotContains(t, buf.String(), "Activate export mode for dogu 'test_A'")
 		require.Contains(t, buf.String(), "Error while getting dogu list")

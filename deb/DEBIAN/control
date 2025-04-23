@@ -1,0 +1,8 @@
+Section: misc
+Priority: optional
+Homepage: https://cloudogu.com
+Package: ces-exporter
+Version: 0.0.0
+Maintainer: Cloudogu GmbH <hello@cloudogu.com>
+Architecture: amd64
+Description: Package to export ces

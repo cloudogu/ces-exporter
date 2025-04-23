@@ -26,7 +26,7 @@ func TestGetExportDogu(t *testing.T) {
 
 		ep := NewMockProvider(t)
 		ep.EXPECT().GetExportDogu(mock.Anything).Return(&dogu, nil)
-		mec := NewMultinodeExportModeController(ep)
+		mec := NewController(ep)
 
 		rr := httptest.NewRecorder()
 		handler := http.HandlerFunc(mec.GetExportDogu)
@@ -43,7 +43,7 @@ func TestGetExportDogu(t *testing.T) {
 
 		ep := NewMockProvider(t)
 		ep.EXPECT().GetExportDogu(mock.Anything).Return(nil, fmt.Errorf("testerror"))
-		mec := NewMultinodeExportModeController(ep)
+		mec := NewController(ep)
 
 		rr := httptest.NewRecorder()
 		handler := http.HandlerFunc(mec.GetExportDogu)
@@ -68,7 +68,7 @@ func TestSetExportDogu(t *testing.T) {
 
 		ep := NewMockProvider(t)
 		ep.EXPECT().SetExportDogu(mock.Anything, mock.Anything).Return(&dogu, nil)
-		mec := NewMultinodeExportModeController(ep)
+		mec := NewController(ep)
 
 		rr := httptest.NewRecorder()
 		handler := http.HandlerFunc(mec.SetExportDogu)
@@ -87,7 +87,7 @@ func TestSetExportDogu(t *testing.T) {
 
 		ep := NewMockProvider(t)
 		ep.EXPECT().SetExportDogu(mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
-		mec := NewMultinodeExportModeController(ep)
+		mec := NewController(ep)
 
 		rr := httptest.NewRecorder()
 		handler := http.HandlerFunc(mec.SetExportDogu)
@@ -104,7 +104,7 @@ func TestSetExportDogu(t *testing.T) {
 		require.NoError(t, err)
 
 		ep := NewMockProvider(t)
-		mec := NewMultinodeExportModeController(ep)
+		mec := NewController(ep)
 
 		rr := httptest.NewRecorder()
 		handler := http.HandlerFunc(mec.SetExportDogu)
@@ -128,7 +128,7 @@ func TestGetExportMode(t *testing.T) {
 		ep := NewMockProvider(t)
 		ep.EXPECT().GetExportMode(mock.Anything).Return(&exportMode, nil)
 
-		mec := NewMultinodeExportModeController(ep)
+		mec := NewController(ep)
 
 		rr := httptest.NewRecorder()
 		handler := http.HandlerFunc(mec.GetExportMode)
@@ -145,7 +145,7 @@ func TestGetExportMode(t *testing.T) {
 		ep := NewMockProvider(t)
 		ep.EXPECT().GetExportMode(mock.Anything).Return(nil, fmt.Errorf("testerror"))
 
-		mec := NewMultinodeExportModeController(ep)
+		mec := NewController(ep)
 
 		rr := httptest.NewRecorder()
 		handler := http.HandlerFunc(mec.GetExportMode)

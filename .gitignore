@@ -3,4 +3,5 @@
 target
 .bin
 k8s/helm/charts
-vendor
+vendor/
+deb/**/tmp/*

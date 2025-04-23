@@ -46,9 +46,7 @@ func NewMultinodeExportModeProvider(namespace string, configMaps configMaps, eco
 	}
 }
 
-/*
-GetExportDogu gets the dogu.name currently set in the ces-exporter-dogu-exporter service
-*/
+// GetExportDogu gets the dogu.name currently set in the ces-exporter-dogu-exporter service
 func (m MultinodeExportModeProvider) GetExportDogu(ctx context.Context) (*doguExport, error) {
 	service, _ := m.serviceclient.Get(ctx, cesDoguExporter, metav1.GetOptions{})
 	doguName := service.Spec.Selector[doguv2.DoguLabelName]
@@ -62,17 +60,20 @@ func (m MultinodeExportModeProvider) GetExportDogu(ctx context.Context) (*doguEx
 	return &doguExport, nil
 }
 
-/*
-SetExportDogu sets the given dogu as dogu.name in the ces-exporter-dogu-exporter service
-*/
+// SetExportDogu sets the given dogu as dogu.name in the ces-exporter-dogu-exporter service
 func (m MultinodeExportModeProvider) SetExportDogu(doguName string, ctx context.Context) (*doguExport, error) {
 	service, _ := m.serviceclient.Get(ctx, cesDoguExporter, metav1.GetOptions{})
 	service.Spec.Selector[doguv2.DoguLabelName] = doguName
 	port := service.Spec.Ports[0]
 
-	_, err := m.serviceclient.Update(ctx, service, metav1.UpdateOptions{})
+	_, err := m.doguclient.Get(ctx, doguName, metav1.GetOptions{})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not get dogu resource for current export dogu: %s", err)
+	}
+
+	_, err = m.serviceclient.Update(ctx, service, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to update exporter service: %w", err)
 	}
 
 	doguExport := doguExport{

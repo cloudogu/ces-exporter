@@ -12,24 +12,49 @@ COPY go.sum go.sum
 RUN go mod download
 
 # Copy the go source
-COPY main.go main.go
+COPY *.go .
 COPY core core
 COPY configuration configuration
 COPY export export
 COPY maintenance maintenance
 COPY systeminfo systeminfo
+COPY etcd etcd
+COPY decrypt decrypt
 
 # Build
 RUN go mod vendor
 RUN go build -mod=vendor -o target/ces-exporter
 
-
-# Use distroless as minimal base image to package the manager binary
-# Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+FROM alpine:3.21 AS classic
 LABEL maintainer="hello@cloudogu.com" \
       NAME="ces-exporter" \
       VERSION="0.0.1"
+
+ENV MODE=classic
+
+COPY resources /
+
+WORKDIR /
+
+COPY --from=builder /workspace/target/ces-exporter .
+
+RUN apk update && apk upgrade && \
+  apk --no-cache add bash openssh rsync nfs-utils && \
+  ssh-keygen -A && sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+  mkdir -p /root/.ssh && chmod -R 700 /root && chmod -R 600 /root/.ssh
+
+EXPOSE 8080
+
+ENTRYPOINT ["/startup.sh"]
+
+# Use distroless as minimal base image to package the manager binary
+# Refer to https://github.com/GoogleContainerTools/distroless for more details
+FROM gcr.io/distroless/static:nonroot AS multinode
+LABEL maintainer="hello@cloudogu.com" \
+      NAME="ces-exporter" \
+      VERSION="0.0.1"
+
+ENV MODE=multinode
 
 WORKDIR /
 COPY --from=builder /workspace/target/ces-exporter .
