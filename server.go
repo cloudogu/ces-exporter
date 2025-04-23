@@ -24,10 +24,11 @@ import (
 )
 
 const (
-	regKeyApi      = "/config/ces-exporter/authentication/api_key"
-	regKeySsh      = "/config/ces-exporter/authentication/public_key"
-	sshKeyFileMode = fs.FileMode(0600)
-	authorizedKeys = "/root/.ssh/authorized_keys"
+	regKeyApi                  = "/config/ces-exporter/authentication/api_key"
+	regKeySsh                  = "/config/ces-exporter/authentication/public_key"
+	regKeyVolumeIncreaseFactor = "/config/ces-exporter/volumeIncreaseFactor"
+	sshKeyFileMode             = fs.FileMode(0600)
+	authorizedKeys             = "/root/.ssh/authorized_keys"
 )
 
 type ecosystemComponentClient interface {
