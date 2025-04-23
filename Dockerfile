@@ -52,6 +52,7 @@ RUN --mount=type=cache,target=/var/cache/apk \
         openssh \
         rsync \
         nfs-utils \
+        btrfs-progs \
         && \
         update-ca-certificates
 
