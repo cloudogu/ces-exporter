@@ -57,7 +57,7 @@ func createEtcdClient() (client.KeysAPI, error) {
 	return client.NewKeysAPI(c), nil
 }
 
-func getEtcdClient() (client.KeysAPI, error) {
+func GetEtcdClient() (client.KeysAPI, error) {
 	clientOnce.Do(func() {
 		etcdClient, errClient = createEtcdClient()
 	})
@@ -70,7 +70,7 @@ func getKeyValues(path string, filters ...core.FilterOption) ([]core.KeyValue, e
 		return fmt.Errorf("failed to get dir keys: %w", err)
 	}
 
-	c, err := getEtcdClient()
+	c, err := GetEtcdClient()
 	if err != nil {
 		return nil, wrapErr(err)
 	}

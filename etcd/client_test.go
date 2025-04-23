@@ -74,7 +74,7 @@ func Test_getEtcdClient(t *testing.T) {
 `)
 	defer reset()
 
-	eClient, err := getEtcdClient()
+	eClient, err := GetEtcdClient()
 	assert.NoError(t, err)
 	assert.NotNil(t, eClient)
 
