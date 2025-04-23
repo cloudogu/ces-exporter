@@ -2,6 +2,8 @@ module github.com/cloudogu/ces-exporter
 
 go 1.24.1
 
+toolchain go1.24.2
+
 require (
 	github.com/adhocore/gronx v1.19.5
 	github.com/cloudogu/ces-commons-lib v0.2.0
