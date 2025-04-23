@@ -21,7 +21,6 @@ COPY systeminfo systeminfo
 COPY etcd etcd
 COPY decrypt decrypt
 
-
 # Build
 RUN go mod vendor
 RUN go build -mod=vendor -o target/ces-exporter
