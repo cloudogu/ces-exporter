@@ -221,7 +221,7 @@ func GetLocalConfig(dogu string, ignoreKeys []string) ([]core.KeyValue, error) {
 	// add service-account-keys to ignore-list for localConfig
 	ignoreKeysWithServiceAccount := append(ignoreKeys, "/sa-")
 
-	lcoalConfig, err := configGetKeyValues(
+	localConfig, err := configGetKeyValues(
 		path.Join(doguConfigPath, dogu),
 		filterKeys(doguConfigKeys, true, []string{}), // exclude keys from dogu.json
 		decryptEncryptedKeys(d),                      // include all encrypted keys
@@ -231,7 +231,7 @@ func GetLocalConfig(dogu string, ignoreKeys []string) ([]core.KeyValue, error) {
 		return nil, fmt.Errorf("could not get dogu config: %w", err)
 	}
 
-	return lcoalConfig, nil
+	return localConfig, nil
 }
 
 // GetSensitiveConfig returns only encrypted Dogu configuration keys
