@@ -57,7 +57,7 @@ func createEtcdClient() (client.KeysAPI, error) {
 	return client.NewKeysAPI(c), nil
 }
 
-func GetEtcdClient() (client.KeysAPI, error) {
+func getEtcdClient() (client.KeysAPI, error) {
 	clientOnce.Do(func() {
 		etcdClient, errClient = createEtcdClient()
 	})
@@ -70,7 +70,7 @@ func getKeyValues(path string, filters ...core.FilterOption) ([]core.KeyValue, e
 		return fmt.Errorf("failed to get dir keys: %w", err)
 	}
 
-	c, err := GetEtcdClient()
+	c, err := getEtcdClient()
 	if err != nil {
 		return nil, wrapErr(err)
 	}
@@ -110,4 +110,42 @@ func isKeyNotFoundError(err error) bool {
 	}
 
 	return false
+}
+
+func Get(key string, options *client.GetOptions) (string, error) {
+	c, err := getEtcdClient()
+	if err != nil {
+		return "", err
+	}
+	resp, err := c.Get(context.Background(), key, options)
+	if err != nil && strings.Contains(err.Error(), "Key not found") {
+		return "", nil
+	} else if err != nil {
+		return "", err
+	}
+	return resp.Node.Value, nil
+}
+
+func Update(key string, value string, options *client.SetOptions) (string, error) {
+	c, err := getEtcdClient()
+	if err != nil {
+		return "", err
+	}
+	resp, err := c.Set(context.Background(), key, value, options)
+	if err != nil {
+		return "", err
+	}
+	return resp.Node.Value, nil
+}
+
+func Delete(key string, options *client.DeleteOptions) error {
+	c, err := getEtcdClient()
+	if err != nil {
+		return err
+	}
+	_, err = c.Delete(context.Background(), key, options)
+	if err != nil {
+		return err
+	}
+	return nil
 }

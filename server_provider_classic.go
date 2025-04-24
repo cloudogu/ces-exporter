@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/cloudogu/ces-exporter/configuration"
 	"github.com/cloudogu/ces-exporter/core"
-	"github.com/cloudogu/ces-exporter/etcd"
 	"github.com/cloudogu/ces-exporter/export"
 	"github.com/cloudogu/ces-exporter/maintenance"
 	"github.com/cloudogu/ces-exporter/systeminfo"
@@ -37,11 +36,7 @@ func (c *classicControllerProvider) createControllers(ctx context.Context) (*sys
 	watchApiKeyConfig(ctx, c.reg, c.config)
 	watchSshKeyConfig(ctx, c.reg, c.write)
 
-	etcdClient, err := etcd.GetEtcdClient()
-	if err != nil {
-		panic(fmt.Errorf("failed to get etcd client: %w", err))
-	}
-	maintenanceModeProvider := maintenance.NewClassicProvider(&maintenance.EtcdConfigRepo{Etcdclient: etcdClient})
+	maintenanceModeProvider := maintenance.NewClassicProvider()
 	maintenanceModeController := maintenance.NewController(maintenanceModeProvider)
 
 	return &systeminfo.Controller{},

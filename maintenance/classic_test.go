@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"go.etcd.io/etcd/client/v2"
 	"testing"
 )
 
 func TestCGetMaintenanceMode(t *testing.T) {
 	t.Run("should return maintenance mode is inactive", func(t *testing.T) {
-		etcdRepoMock := newMockEtcdConfigRepo(t)
+		etcdRepoMock := newMockEtcdGetter(t)
 
-		etcdRepoMock.EXPECT().Get(maintenanceModeEtcdKey).Return("", nil)
+		etcdRepoMock.EXPECT().Get(maintenanceModeEtcdKey, mock.Anything).Return("", nil)
 
-		provider := NewClassicProvider(etcdRepoMock)
+		provider := &ClassicMaintenanceModeProvider{
+			etcdGetter: etcdRepoMock,
+		}
 
 		status, err := provider.GetMaintenanceMode(context.TODO())
 		require.NoError(t, err)
@@ -23,11 +24,13 @@ func TestCGetMaintenanceMode(t *testing.T) {
 	})
 
 	t.Run("should return maintenance mode is active", func(t *testing.T) {
-		etcdRepoMock := newMockEtcdConfigRepo(t)
+		etcdRepoMock := newMockEtcdGetter(t)
 
-		etcdRepoMock.EXPECT().Get(maintenanceModeEtcdKey).Return("some value", nil)
+		etcdRepoMock.EXPECT().Get(maintenanceModeEtcdKey, mock.Anything).Return("some value", nil)
 
-		provider := NewClassicProvider(etcdRepoMock)
+		provider := &ClassicMaintenanceModeProvider{
+			etcdGetter: etcdRepoMock,
+		}
 
 		status, err := provider.GetMaintenanceMode(context.TODO())
 		require.NoError(t, err)
@@ -35,11 +38,13 @@ func TestCGetMaintenanceMode(t *testing.T) {
 	})
 
 	t.Run("should fail on get global config", func(t *testing.T) {
-		etcdRepoMock := newMockEtcdConfigRepo(t)
+		etcdRepoMock := newMockEtcdGetter(t)
 
-		etcdRepoMock.EXPECT().Get(maintenanceModeEtcdKey).Return("some value", fmt.Errorf("testerror"))
+		etcdRepoMock.EXPECT().Get(maintenanceModeEtcdKey, mock.Anything).Return("some value", fmt.Errorf("testerror"))
 
-		provider := NewClassicProvider(etcdRepoMock)
+		provider := &ClassicMaintenanceModeProvider{
+			etcdGetter: etcdRepoMock,
+		}
 
 		_, err := provider.GetMaintenanceMode(context.TODO())
 		require.Contains(t, err.Error(), "failed to get etcd value:")
@@ -48,7 +53,7 @@ func TestCGetMaintenanceMode(t *testing.T) {
 
 func TestCDeactivateMaintenanceMode(t *testing.T) {
 	t.Run("should return maintenance mode is inactive", func(t *testing.T) {
-		etcdRepoMock := newMockEtcdConfigRepo(t)
+		etcdRepoMock := newMockEtcdGetter(t)
 		mmReq := maintenanceModeRequest{
 			Activate: false,
 			Message: Message{
@@ -57,8 +62,10 @@ func TestCDeactivateMaintenanceMode(t *testing.T) {
 			},
 		}
 
-		etcdRepoMock.EXPECT().Delete(maintenanceModeEtcdKey).Return(nil)
-		provider := NewClassicProvider(etcdRepoMock)
+		etcdRepoMock.EXPECT().Delete(maintenanceModeEtcdKey, mock.Anything).Return(nil)
+		provider := &ClassicMaintenanceModeProvider{
+			etcdGetter: etcdRepoMock,
+		}
 
 		status, err := provider.SetMaintenanceMode(mmReq, context.TODO())
 		require.NoError(t, err)
@@ -66,7 +73,7 @@ func TestCDeactivateMaintenanceMode(t *testing.T) {
 	})
 
 	t.Run("should return error", func(t *testing.T) {
-		etcdRepoMock := newMockEtcdConfigRepo(t)
+		etcdRepoMock := newMockEtcdGetter(t)
 		mmReq := maintenanceModeRequest{
 			Activate: false,
 			Message: Message{
@@ -74,9 +81,11 @@ func TestCDeactivateMaintenanceMode(t *testing.T) {
 				Text:  "testmessage",
 			},
 		}
-		etcdRepoMock.EXPECT().Delete(maintenanceModeEtcdKey).Return(fmt.Errorf("testerror"))
+		etcdRepoMock.EXPECT().Delete(maintenanceModeEtcdKey, mock.Anything).Return(fmt.Errorf("testerror"))
 
-		provider := NewClassicProvider(etcdRepoMock)
+		provider := &ClassicMaintenanceModeProvider{
+			etcdGetter: etcdRepoMock,
+		}
 
 		_, err := provider.SetMaintenanceMode(mmReq, context.TODO())
 		require.Contains(t, err.Error(), "failed to remove maintenance-etcd key: testerror")
@@ -85,11 +94,13 @@ func TestCDeactivateMaintenanceMode(t *testing.T) {
 
 func TestCActivateMaintenanceMode(t *testing.T) {
 	t.Run("should return maintenance mode is active", func(t *testing.T) {
-		etcdRepoMock := newMockEtcdConfigRepo(t)
+		etcdRepoMock := newMockEtcdGetter(t)
 
-		etcdRepoMock.EXPECT().Update(maintenanceModeEtcdKey, mock.Anything).Return("some value", nil)
+		etcdRepoMock.EXPECT().Update(maintenanceModeEtcdKey, mock.Anything, mock.Anything).Return("some value", nil)
 
-		provider := NewClassicProvider(etcdRepoMock)
+		provider := &ClassicMaintenanceModeProvider{
+			etcdGetter: etcdRepoMock,
+		}
 		req := maintenanceModeRequest{
 			Activate: true,
 		}
@@ -99,11 +110,13 @@ func TestCActivateMaintenanceMode(t *testing.T) {
 	})
 
 	t.Run("should return error", func(t *testing.T) {
-		etcdRepoMock := newMockEtcdConfigRepo(t)
+		etcdRepoMock := newMockEtcdGetter(t)
 
-		etcdRepoMock.EXPECT().Update(maintenanceModeEtcdKey, mock.Anything).Return("some value", fmt.Errorf("testerror"))
+		etcdRepoMock.EXPECT().Update(maintenanceModeEtcdKey, mock.Anything, mock.Anything).Return("some value", fmt.Errorf("testerror"))
 
-		provider := NewClassicProvider(etcdRepoMock)
+		provider := &ClassicMaintenanceModeProvider{
+			etcdGetter: etcdRepoMock,
+		}
 
 		req := maintenanceModeRequest{
 			Activate: true,
@@ -114,58 +127,10 @@ func TestCActivateMaintenanceMode(t *testing.T) {
 
 }
 
-func TestEtcdCommandWrapper(t *testing.T) {
-	t.Run("test getter ok", func(t *testing.T) {
-		mockApi := NewMockKeysApi(t)
-		mockApi.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(&client.Response{
-			Node: &client.Node{Value: "this is my value"},
-		}, nil)
-		repo := &EtcdConfigRepo{Etcdclient: mockApi}
-		get, _ := repo.Get(maintenanceModeEtcdKey)
-		require.Contains(t, get, "this is my value")
-	})
-	t.Run("test getter key not found", func(t *testing.T) {
-		mockApi := NewMockKeysApi(t)
-		mockApi.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("Key not found"))
-		repo := &EtcdConfigRepo{Etcdclient: mockApi}
-		get, _ := repo.Get(maintenanceModeEtcdKey)
-		require.Equal(t, get, "")
-	})
-	t.Run("test getter error", func(t *testing.T) {
-		mockApi := NewMockKeysApi(t)
-		mockApi.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
-		repo := &EtcdConfigRepo{Etcdclient: mockApi}
-		get, _ := repo.Get(maintenanceModeEtcdKey)
-		require.Equal(t, get, "")
-	})
-	t.Run("test setter ok", func(t *testing.T) {
-		mockApi := NewMockKeysApi(t)
-		mockApi.EXPECT().Set(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&client.Response{
-			Node: &client.Node{Value: "{\"title\": \"newTitle\"}"},
-		}, nil)
-		repo := &EtcdConfigRepo{Etcdclient: mockApi}
-		update, _ := repo.Update(maintenanceModeEtcdKey, "{\"title\": \"newTitle\"}")
-		require.Contains(t, update, "{\"title\": \"newTitle\"}")
-	})
-	t.Run("test setter error", func(t *testing.T) {
-		mockApi := NewMockKeysApi(t)
-		mockApi.EXPECT().Set(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
-		repo := &EtcdConfigRepo{Etcdclient: mockApi}
-		update, _ := repo.Update(maintenanceModeEtcdKey, "{\"title\": \"newTitle\"}")
-		require.Equal(t, update, "")
-	})
-	t.Run("test delete ok", func(t *testing.T) {
-		mockApi := NewMockKeysApi(t)
-		mockApi.EXPECT().Delete(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
-		repo := &EtcdConfigRepo{Etcdclient: mockApi}
-		err := repo.Delete(maintenanceModeEtcdKey)
-		require.NoError(t, err)
-	})
-	t.Run("test delete error", func(t *testing.T) {
-		mockApi := NewMockKeysApi(t)
-		mockApi.EXPECT().Delete(mock.Anything, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
-		repo := &EtcdConfigRepo{Etcdclient: mockApi}
-		err := repo.Delete(maintenanceModeEtcdKey)
-		require.Error(t, err)
+func TestCClassicConstructor(t *testing.T) {
+	t.Run("create new instance", func(t *testing.T) {
+		provider := NewClassicProvider()
+
+		require.NotNil(t, provider.etcdGetter)
 	})
 }
