@@ -20,6 +20,8 @@ func TestReadConfigFromEnv(t *testing.T) {
 		require.NoError(t, err)
 		err = os.Setenv("MODE", "classic")
 		require.NoError(t, err)
+		err = os.Setenv(volumeBasePath, "/test")
+		require.NoError(t, err)
 
 		conf, err := ReadConfigFromEnv()
 
@@ -29,6 +31,7 @@ func TestReadConfigFromEnv(t *testing.T) {
 		assert.Equal(t, "myApiKey", conf.ApiKey)
 		assert.Equal(t, "ecosystem", conf.Namespace)
 		assert.Equal(t, true, conf.IsClassic)
+		assert.Equal(t, "/test", conf.VolumesBasePath)
 	})
 
 	t.Run("should read config from env for multinode", func(t *testing.T) {
@@ -42,6 +45,8 @@ func TestReadConfigFromEnv(t *testing.T) {
 		require.NoError(t, err)
 		err = os.Unsetenv("MODE")
 		require.NoError(t, err)
+		err = os.Setenv(volumeBasePath, "/test")
+		require.NoError(t, err)
 
 		conf, err := ReadConfigFromEnv()
 
@@ -51,6 +56,7 @@ func TestReadConfigFromEnv(t *testing.T) {
 		assert.Equal(t, "myApiKey", conf.ApiKey)
 		assert.Equal(t, "ecosystem", conf.Namespace)
 		assert.Equal(t, false, conf.IsClassic)
+		assert.Equal(t, "/test", conf.VolumesBasePath)
 	})
 
 	t.Run("should fail for missing api-key", func(t *testing.T) {
@@ -109,5 +115,18 @@ func TestReadConfigFromEnv(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "myApiKey", conf.ApiKey)
 		assert.Equal(t, "INFO", conf.LogLevel)
+	})
+
+	t.Run("should read config from env and set default volume base path if missing env", func(t *testing.T) {
+		err := os.Setenv("API_KEY", "myApiKey")
+		require.NoError(t, err)
+		err = os.Setenv("NAMESPACE", "ecosystem")
+		require.NoError(t, err)
+		err = os.Unsetenv(volumeBasePath)
+
+		conf, err := ReadConfigFromEnv()
+
+		require.NoError(t, err)
+		assert.Equal(t, defaultVolumeBasePath, conf.VolumesBasePath)
 	})
 }

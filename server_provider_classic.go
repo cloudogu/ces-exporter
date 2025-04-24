@@ -13,10 +13,14 @@ import (
 	"go.etcd.io/etcd/client/v2"
 	"log/slog"
 	"os"
+	"strconv"
 )
 
 const (
 	fqdnEnv = "FQDN"
+	// defaultVolumeIncreaseFactor represents the default percentage by which a Dogu's volume size should be increased
+	// when calculating the target volume size.
+	defaultVolumeIncreaseFactor = 0.3
 )
 
 type watchConfigurationContext interface {
@@ -39,7 +43,10 @@ func (c *classicControllerProvider) createControllers(ctx context.Context) (*sys
 	exportModeProvider := export.NewClassicExportModeProvider(*c.config)
 	exportModeController := export.NewController(exportModeProvider)
 
-	return &systeminfo.Controller{},
+	systemInfoProvider := systeminfo.NewSingleNodeSystemInfoProvider(c.config.VolumesBasePath, getVolumeIncreaseFactor(c.reg))
+	systemInfoController := systeminfo.NewController(systemInfoProvider)
+
+	return systemInfoController,
 		&configuration.Controller{},
 		&maintenance.Controller{},
 		exportModeController
@@ -129,4 +136,20 @@ func watchSshKeyConfig(ctx context.Context, reg watchConfigurationContext, write
 
 		reg.Watch(ctx, regKeySsh, false, sshKeyWatcher)
 	}()
+}
+
+func getVolumeIncreaseFactor(reg watchConfigurationContext) float32 {
+	volumeIncreaseFactorString, err := reg.Get(regKeyVolumeIncreaseFactor)
+	if err != nil || volumeIncreaseFactorString == "" {
+		slog.Warn("Could not read volume increase factor from registry. Using default value of 0.3.")
+		return defaultVolumeIncreaseFactor
+	}
+
+	volumeIncreaseFactorF64, err := strconv.ParseFloat(volumeIncreaseFactorString, 32)
+	if err != nil {
+		slog.Warn("Could not parse volume increase factor from registry. Using default value of 0.3.")
+		return defaultVolumeIncreaseFactor
+	}
+
+	return float32(volumeIncreaseFactorF64)
 }

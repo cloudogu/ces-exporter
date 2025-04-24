@@ -44,6 +44,7 @@ func TestUpdateApiKeysAndSshKey(t *testing.T) {
 		err := os.Setenv(fqdnEnv, "fqdn")
 		require.NoError(t, err)
 		confCtx := newMockWatchConfigurationContext(t)
+		confCtx.EXPECT().Get(regKeyVolumeIncreaseFactor).Return("0.3", nil)
 		confCtx.EXPECT().Get(regKeyApi).Return("oldval", nil).Once()
 		confCtx.EXPECT().Get(regKeySsh).Return("oldssh", nil).Once()
 		confCtx.EXPECT().
@@ -112,4 +113,38 @@ func TestUpdateApiKeysAndSshKey(t *testing.T) {
 		time.Sleep(500 * time.Millisecond)
 		assert.Equal(t, "newval", srv.config.ApiKey)
 	})
+}
+
+func Test_getVolumeIncreaseFactor(t *testing.T) {
+	regMock := newMockWatchConfigurationContext(t)
+
+	var mockedReturnValue string
+	var mockedError error
+
+	regMock.EXPECT().Get(regKeyVolumeIncreaseFactor).RunAndReturn(func(_ string) (string, error) {
+		return mockedReturnValue, mockedError
+	})
+
+	tests := []struct {
+		name                 string
+		volumeIncreaseFactor string
+		mErr                 error
+		expected             float32
+	}{
+		{name: "30%", volumeIncreaseFactor: "0.3", expected: 0.3},
+		{name: "110%", volumeIncreaseFactor: "1.1", expected: 1.1},
+		{name: "50,55%", volumeIncreaseFactor: "0.555", expected: 0.555},
+		{name: "invalid factor", volumeIncreaseFactor: "invalid", expected: defaultVolumeIncreaseFactor},
+		{name: "registry error", mErr: assert.AnError, expected: defaultVolumeIncreaseFactor},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockedReturnValue = tt.volumeIncreaseFactor
+			mockedError = tt.mErr
+
+			actual := getVolumeIncreaseFactor(regMock)
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
 }

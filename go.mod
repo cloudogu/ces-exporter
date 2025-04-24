@@ -14,7 +14,7 @@ require (
 	github.com/cloudogu/k8s-registry-lib v0.5.1
 	github.com/docker/docker v27.5.0+incompatible
 	github.com/stretchr/testify v1.10.0
-	go.etcd.io/etcd/client/v2 v2.305.17
+	go.etcd.io/etcd/client/v2 v2.305.18
 	k8s.io/api v0.32.3
 	k8s.io/apimachinery v0.32.3
 	k8s.io/client-go v0.32.3
