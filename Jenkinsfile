@@ -22,7 +22,7 @@ currentBranch = "${env.BRANCH_NAME}"
 registryNamespace = "k8s"
 registryUrl = "registry.cloudogu.com"
 
-goVersion = "1.24.1"
+goVersion = "1.24.2"
 helmTargetDir = "target/k8s"
 helmChartDir = "${helmTargetDir}/helm"
 
