@@ -40,13 +40,16 @@ func (c *classicControllerProvider) createControllers(ctx context.Context) (*sys
 	watchApiKeyConfig(ctx, c.reg, c.config)
 	watchSshKeyConfig(ctx, c.reg, c.write)
 
+	exportModeProvider := export.NewClassicExportModeProvider(*c.config)
+	exportModeController := export.NewController(exportModeProvider)
+
 	systemInfoProvider := systeminfo.NewSingleNodeSystemInfoProvider(c.config.VolumesBasePath, getVolumeIncreaseFactor(c.reg))
 	systemInfoController := systeminfo.NewController(systemInfoProvider)
 
 	return systemInfoController,
 		&configuration.Controller{},
 		&maintenance.Controller{},
-		&export.Controller{}
+		exportModeController
 }
 
 func newClassicControllerProvider(conf *core.Configuration) (*classicControllerProvider, error) {
