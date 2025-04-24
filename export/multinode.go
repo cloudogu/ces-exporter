@@ -12,7 +12,6 @@ import (
 
 const (
 	cesDoguExporter = "ces-exporter-dogu-exporter"
-	dataVolumePath  = "/data"
 )
 
 type configMaps interface {
