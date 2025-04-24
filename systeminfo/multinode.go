@@ -65,6 +65,7 @@ func (m *MultinodeSystemInfoProvider) getComponents(ctx context.Context) ([]comp
 func (m *MultinodeSystemInfoProvider) getDogus(ctx context.Context) ([]dogu, error) {
 	slog.Debug("collect dogus from local dogu registry...")
 	localDoguReg := libdogu.NewDoguVersionRegistry(m.configMaps)
+	doguRepository := libdogu.NewLocalDoguDescriptorRepository(m.configMaps)
 
 	var dogus []dogu
 	localDogus, err := localDoguReg.GetCurrentOfAll(ctx)
@@ -74,6 +75,12 @@ func (m *MultinodeSystemInfoProvider) getDogus(ctx context.Context) ([]dogu, err
 
 	for _, d := range localDogus {
 		slog.Debug(fmt.Sprintf("found dogu %s in version %s in local dogu registry", d.Name.String(), d.Version.String()))
+
+		doguDescriptor, err := doguRepository.Get(ctx, d)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get dogu descriptor for dogu %s: %w", d.Name.String(), err)
+		}
+
 		var size int64
 		pvc, err := m.pvc.Get(ctx, d.Name.String(), metav1.GetOptions{})
 		if err != nil {
@@ -83,7 +90,7 @@ func (m *MultinodeSystemInfoProvider) getDogus(ctx context.Context) ([]dogu, err
 		}
 
 		dogus = append(dogus, dogu{
-			Name:    d.Name.String(),
+			Name:    doguDescriptor.Name,
 			Version: d.Version.String(),
 			Volume: volume{
 				SizeInBytes: size,
