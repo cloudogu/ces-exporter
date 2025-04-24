@@ -12,19 +12,19 @@ import (
 	"strings"
 )
 
-type execClient interface {
+type execCli interface {
 	GetAllDogus() ([]string, error)
 	ContainerList(ctx context.Context, options container.ListOptions) ([]types.Container, error)
 	ContainerInspect(ctx context.Context, containerID string) (types.ContainerJSON, error)
 }
 
 type ExecClient struct {
-	execClient
+	execCli
 }
 
 type ClassicExportModeProvider struct {
 	currentExportDogu string
-	execClient        execClient
+	execClient        execCli
 	config            core.Configuration
 }
 
