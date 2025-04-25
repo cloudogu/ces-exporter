@@ -49,8 +49,11 @@ func (c *classicControllerProvider) createControllers(ctx context.Context) (*sys
 	maintenanceModeProvider := maintenance.NewClassicProvider()
 	maintenanceModeController := maintenance.NewController(maintenanceModeProvider)
 
+	configurationProvider := configuration.NewClassicProvider()
+	configurationController := configuration.NewController(configurationProvider)
+
 	return systemInfoController,
-		&configuration.Controller{},
+		configurationController,
 		maintenanceModeController,
 		exportModeController
 }

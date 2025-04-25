@@ -12,9 +12,9 @@ type Controller struct {
 }
 
 type Provider interface {
-	getGlobalConfigs(ctx context.Context) ([]keyValue, error)
-	getDoguConfigs(ctx context.Context) ([]doguConfig, error)
-	getBackupSchedules(ctx context.Context) ([]backupSchedule, error)
+	getGlobalConfigs(ctx context.Context) ([]core.KeyValue, error)
+	getDoguConfigs(ctx context.Context) ([]core.DoguConfig, error)
+	getBackupSchedules(ctx context.Context) ([]core.BackupSchedule, error)
 }
 
 func NewController(provider Provider) *Controller {
@@ -42,7 +42,7 @@ func (c Controller) GetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &configuration{
+	response := &core.ExportResponse{
 		GlobalConfig:    globalConfigs,
 		DoguConfigs:     doguConfigs,
 		BackupSchedules: schedulesResult,

@@ -15,14 +15,14 @@ type BackupSchedule struct {
 type GlobalConfig []KeyValue
 
 type DoguConfig struct {
-	Name            string           `json:"name"`
-	NormalConfig    []KeyValue       `json:"normal"`
-	LocalConfig     []KeyValue       `json:"local"`
-	SensitiveConfig []KeyValue       `json:"sensitive"`
-	BackupSchedules []BackupSchedule `json:"backupSchedules"`
+	Name            string     `json:"name"`
+	NormalConfig    []KeyValue `json:"normal"`
+	LocalConfig     []KeyValue `json:"local"`
+	SensitiveConfig []KeyValue `json:"sensitive"`
 }
 
 type ExportResponse struct {
-	GlobalConfig GlobalConfig `json:"global"`
-	DoguConfigs  []DoguConfig `json:"dogus"`
+	GlobalConfig    GlobalConfig     `json:"global"`
+	DoguConfigs     []DoguConfig     `json:"dogus"`
+	BackupSchedules []BackupSchedule `json:"backupSchedules"`
 }

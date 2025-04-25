@@ -19,28 +19,28 @@ func TestGetConfig(t *testing.T) {
 		require.NoError(t, err)
 
 		provider := NewMockProvider(t)
-		globalConfigs := []keyValue{
+		globalConfigs := []core.KeyValue{
 			{
 				Key:   "a",
 				Value: "b",
 			},
 		}
-		doguConfigs := []doguConfig{
+		doguConfigs := []core.DoguConfig{
 			{
 				Name: "d1",
-				NormalConfig: []keyValue{
+				NormalConfig: []core.KeyValue{
 					{
 						Key:   "c",
 						Value: "d",
 					},
 				},
-				LocalConfig: []keyValue{
+				LocalConfig: []core.KeyValue{
 					{
 						Key:   "e",
 						Value: "f",
 					},
 				},
-				SensitiveConfig: []keyValue{
+				SensitiveConfig: []core.KeyValue{
 					{
 						Key:   "g",
 						Value: "h",
@@ -48,7 +48,7 @@ func TestGetConfig(t *testing.T) {
 				},
 			},
 		}
-		backupSchedules := []backupSchedule{
+		backupSchedules := []core.BackupSchedule{
 			{
 				Name:     "b1",
 				Schedule: "12345",
@@ -64,7 +64,7 @@ func TestGetConfig(t *testing.T) {
 		handler := http.HandlerFunc(controller.GetConfig)
 
 		handler.ServeHTTP(rr, req)
-		expectedResponse := &configuration{
+		expectedResponse := &core.ExportResponse{
 			GlobalConfig:    globalConfigs,
 			DoguConfigs:     doguConfigs,
 			BackupSchedules: backupSchedules,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/ces-exporter/core"
 	v1 "github.com/cloudogu/k8s-backup-operator/pkg/api/v1"
 	"github.com/cloudogu/k8s-registry-lib/config"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +23,7 @@ func TestGetGlobalConfigs(t *testing.T) {
 		provider := NewMultinodeConfigurationProvider("", nil, nil, globalConfigRepo, nil, nil)
 		configs, err := provider.getGlobalConfigs(context.TODO())
 		assert.NoError(t, err)
-		assert.Equal(t, []keyValue{
+		assert.Equal(t, []core.KeyValue{
 			{
 				Key:   "key",
 				Value: "value",
@@ -56,17 +57,17 @@ func TestGetDoguConfigs(t *testing.T) {
 		provider := NewMultinodeConfigurationProvider("", sc, dc, nil, dvc, nil)
 		configs, err := provider.getDoguConfigs(context.TODO())
 		assert.NoError(t, err)
-		assert.Equal(t, []doguConfig{
+		assert.Equal(t, []core.DoguConfig{
 			{
 				Name: "d1",
-				NormalConfig: []keyValue{
+				NormalConfig: []core.KeyValue{
 					{
 						Key:   "a",
 						Value: "b",
 					},
 				},
-				LocalConfig: []keyValue{},
-				SensitiveConfig: []keyValue{
+				LocalConfig: []core.KeyValue{},
+				SensitiveConfig: []core.KeyValue{
 					{
 						Key:   "e",
 						Value: "f",
@@ -138,7 +139,7 @@ func TestGetBackupSchedules(t *testing.T) {
 		configs, err := provider.getBackupSchedules(context.TODO())
 		assert.NoError(t, err)
 		require.Equal(t, 1, len(configs))
-		assert.Equal(t, backupSchedule{
+		assert.Equal(t, core.BackupSchedule{
 			Name:     "schedule",
 			Schedule: "12345",
 		}, configs[0])

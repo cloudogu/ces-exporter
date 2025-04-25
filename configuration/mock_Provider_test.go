@@ -5,6 +5,7 @@ package configuration
 import (
 	context "context"
 
+	core "github.com/cloudogu/ces-exporter/core"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -22,23 +23,23 @@ func (_m *MockProvider) EXPECT() *MockProvider_Expecter {
 }
 
 // getBackupSchedules provides a mock function with given fields: ctx
-func (_m *MockProvider) getBackupSchedules(ctx context.Context) ([]backupSchedule, error) {
+func (_m *MockProvider) getBackupSchedules(ctx context.Context) ([]core.BackupSchedule, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for getBackupSchedules")
 	}
 
-	var r0 []backupSchedule
+	var r0 []core.BackupSchedule
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]backupSchedule, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) ([]core.BackupSchedule, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []backupSchedule); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) []core.BackupSchedule); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]backupSchedule)
+			r0 = ret.Get(0).([]core.BackupSchedule)
 		}
 	}
 
@@ -69,34 +70,34 @@ func (_c *MockProvider_getBackupSchedules_Call) Run(run func(ctx context.Context
 	return _c
 }
 
-func (_c *MockProvider_getBackupSchedules_Call) Return(_a0 []backupSchedule, _a1 error) *MockProvider_getBackupSchedules_Call {
+func (_c *MockProvider_getBackupSchedules_Call) Return(_a0 []core.BackupSchedule, _a1 error) *MockProvider_getBackupSchedules_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockProvider_getBackupSchedules_Call) RunAndReturn(run func(context.Context) ([]backupSchedule, error)) *MockProvider_getBackupSchedules_Call {
+func (_c *MockProvider_getBackupSchedules_Call) RunAndReturn(run func(context.Context) ([]core.BackupSchedule, error)) *MockProvider_getBackupSchedules_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // getDoguConfigs provides a mock function with given fields: ctx
-func (_m *MockProvider) getDoguConfigs(ctx context.Context) ([]doguConfig, error) {
+func (_m *MockProvider) getDoguConfigs(ctx context.Context) ([]core.DoguConfig, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for getDoguConfigs")
 	}
 
-	var r0 []doguConfig
+	var r0 []core.DoguConfig
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]doguConfig, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) ([]core.DoguConfig, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []doguConfig); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) []core.DoguConfig); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]doguConfig)
+			r0 = ret.Get(0).([]core.DoguConfig)
 		}
 	}
 
@@ -127,34 +128,34 @@ func (_c *MockProvider_getDoguConfigs_Call) Run(run func(ctx context.Context)) *
 	return _c
 }
 
-func (_c *MockProvider_getDoguConfigs_Call) Return(_a0 []doguConfig, _a1 error) *MockProvider_getDoguConfigs_Call {
+func (_c *MockProvider_getDoguConfigs_Call) Return(_a0 []core.DoguConfig, _a1 error) *MockProvider_getDoguConfigs_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockProvider_getDoguConfigs_Call) RunAndReturn(run func(context.Context) ([]doguConfig, error)) *MockProvider_getDoguConfigs_Call {
+func (_c *MockProvider_getDoguConfigs_Call) RunAndReturn(run func(context.Context) ([]core.DoguConfig, error)) *MockProvider_getDoguConfigs_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // getGlobalConfigs provides a mock function with given fields: ctx
-func (_m *MockProvider) getGlobalConfigs(ctx context.Context) ([]keyValue, error) {
+func (_m *MockProvider) getGlobalConfigs(ctx context.Context) ([]core.KeyValue, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for getGlobalConfigs")
 	}
 
-	var r0 []keyValue
+	var r0 []core.KeyValue
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]keyValue, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) ([]core.KeyValue, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []keyValue); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) []core.KeyValue); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]keyValue)
+			r0 = ret.Get(0).([]core.KeyValue)
 		}
 	}
 
@@ -185,12 +186,12 @@ func (_c *MockProvider_getGlobalConfigs_Call) Run(run func(ctx context.Context))
 	return _c
 }
 
-func (_c *MockProvider_getGlobalConfigs_Call) Return(_a0 []keyValue, _a1 error) *MockProvider_getGlobalConfigs_Call {
+func (_c *MockProvider_getGlobalConfigs_Call) Return(_a0 []core.KeyValue, _a1 error) *MockProvider_getGlobalConfigs_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockProvider_getGlobalConfigs_Call) RunAndReturn(run func(context.Context) ([]keyValue, error)) *MockProvider_getGlobalConfigs_Call {
+func (_c *MockProvider_getGlobalConfigs_Call) RunAndReturn(run func(context.Context) ([]core.KeyValue, error)) *MockProvider_getGlobalConfigs_Call {
 	_c.Call.Return(run)
 	return _c
 }

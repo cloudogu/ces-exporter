@@ -3,31 +3,13 @@ package configuration
 import (
 	"context"
 	"fmt"
-	"github.com/cloudogu/ces-commons-lib/dogu"
-	bup "github.com/cloudogu/k8s-backup-operator/pkg/api/v1"
-	"github.com/cloudogu/k8s-registry-lib/config"
+	"github.com/cloudogu/ces-exporter/core"
 	"log/slog"
 )
 
-type doguVersionRegistry interface {
-	GetCurrentOfAll(ctx context.Context) ([]dogu.SimpleNameVersion, error)
-}
+var _ Provider = (*MultinodeProvider)(nil)
 
-type backupScheduleRuntimeClient interface {
-	ListBackupSchedules(ctx context.Context) (*bup.BackupScheduleList, error)
-}
-
-type doguConfigRepository interface {
-	Get(ctx context.Context, name dogu.SimpleName) (config.DoguConfig, error)
-}
-
-type globalConfigRepository interface {
-	Get(ctx context.Context) (config.GlobalConfig, error)
-}
-
-var _ Provider = (*MultinodeConfigurationProvider)(nil)
-
-type MultinodeConfigurationProvider struct {
+type MultinodeProvider struct {
 	namespace           string
 	sensitiveRepo       doguConfigRepository
 	doguConfigRepo      doguConfigRepository
@@ -43,8 +25,8 @@ func NewMultinodeConfigurationProvider(
 	globalConfigRepo globalConfigRepository,
 	doguVersionRegistry doguVersionRegistry,
 	client backupScheduleRuntimeClient,
-) *MultinodeConfigurationProvider {
-	return &MultinodeConfigurationProvider{
+) *MultinodeProvider {
+	return &MultinodeProvider{
 		namespace:           namespace,
 		sensitiveRepo:       sensitiveRepo,
 		doguConfigRepo:      doguConfigRepo,
@@ -54,15 +36,15 @@ func NewMultinodeConfigurationProvider(
 	}
 }
 
-func (c MultinodeConfigurationProvider) getGlobalConfigs(ctx context.Context) ([]keyValue, error) {
+func (c MultinodeProvider) getGlobalConfigs(ctx context.Context) ([]core.KeyValue, error) {
 	repo, err := c.globalConfigRepo.Get(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get global config: %w", err)
 	}
 
-	var globalConfigs []keyValue
+	var globalConfigs []core.KeyValue
 	for k, v := range repo.GetAll() {
-		globalConfigs = append(globalConfigs, keyValue{
+		globalConfigs = append(globalConfigs, core.KeyValue{
 			Key:   k.String(),
 			Value: v.String(),
 		})
@@ -71,25 +53,25 @@ func (c MultinodeConfigurationProvider) getGlobalConfigs(ctx context.Context) ([
 	return globalConfigs, nil
 }
 
-func (c MultinodeConfigurationProvider) getDoguConfigs(ctx context.Context) ([]doguConfig, error) {
+func (c MultinodeProvider) getDoguConfigs(ctx context.Context) ([]core.DoguConfig, error) {
 	slog.Debug("get dogu configs...")
 	dogus, err := c.doguVersionRegistry.GetCurrentOfAll(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get installed dogus: %w", err)
 	}
 
-	var doguConfigs []doguConfig
+	var doguConfigs []core.DoguConfig
 	for _, d := range dogus {
 		slog.Debug(fmt.Sprintf("get configs for dogu %s", d.Name))
 		dConfig, err := c.doguConfigRepo.Get(ctx, d.Name)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get dogu config for dogu %s: %w", d.Name, err)
 		}
-		dConfigKeys := []keyValue{}
+		dConfigKeys := []core.KeyValue{}
 		slog.Debug(fmt.Sprintf("found %d normal config keys for dogu %s", len(dConfig.GetAll()), d.Name.String()))
 		for k, v := range dConfig.GetAll() {
 			slog.Debug(fmt.Sprintf("found normal config key %s for dogu %s", k, d.Name.String()))
-			dConfigKeys = append(dConfigKeys, keyValue{
+			dConfigKeys = append(dConfigKeys, core.KeyValue{
 				Key:   k.String(),
 				Value: v.String(),
 			})
@@ -99,29 +81,29 @@ func (c MultinodeConfigurationProvider) getDoguConfigs(ctx context.Context) ([]d
 		if err != nil {
 			return nil, fmt.Errorf("failed to get sensitive dogu config for dogu %s: %w", d.Name, err)
 		}
-		dSecretKeys := []keyValue{}
+		dSecretKeys := []core.KeyValue{}
 		slog.Debug(fmt.Sprintf("found %d sensitive config keys for dogu %s", len(sConfig.GetAll()), d.Name.String()))
 		for k, v := range sConfig.GetAll() {
 			slog.Debug(fmt.Sprintf("found sensitive config key %s for dogu %s", k, d.Name.String()))
-			dSecretKeys = append(dSecretKeys, keyValue{
+			dSecretKeys = append(dSecretKeys, core.KeyValue{
 				Key:   k.String(),
 				Value: v.String(),
 			})
 		}
 
-		doguConfigs = append(doguConfigs, doguConfig{
+		doguConfigs = append(doguConfigs, core.DoguConfig{
 			Name:            d.Name.String(),
 			NormalConfig:    dConfigKeys,
 			SensitiveConfig: dSecretKeys,
-			LocalConfig:     []keyValue{},
+			LocalConfig:     []core.KeyValue{},
 		})
 	}
 
 	return doguConfigs, nil
 }
 
-func (c MultinodeConfigurationProvider) getBackupSchedules(ctx context.Context) ([]backupSchedule, error) {
-	var schedulesResult []backupSchedule
+func (c MultinodeProvider) getBackupSchedules(ctx context.Context) ([]core.BackupSchedule, error) {
+	var schedulesResult []core.BackupSchedule
 
 	schedules, err := c.client.ListBackupSchedules(ctx)
 	if err != nil {
@@ -129,7 +111,7 @@ func (c MultinodeConfigurationProvider) getBackupSchedules(ctx context.Context) 
 	}
 
 	for _, schedule := range schedules.Items {
-		schedulesResult = append(schedulesResult, backupSchedule{
+		schedulesResult = append(schedulesResult, core.BackupSchedule{
 			Name:     schedule.Name,
 			Schedule: schedule.Spec.Schedule,
 		})
