@@ -6,6 +6,7 @@ import (
 	v1 "github.com/cloudogu/k8s-component-operator/pkg/api/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -68,6 +69,11 @@ func TestMultinodeSystemInfoProvider(t *testing.T) {
 					}, BinaryData: nil},
 				},
 			}, nil)
+			cm.EXPECT().Get(mock.Anything, "dogu-spec-mydogu", mock.Anything).Return(&corev1.ConfigMap{
+				Data: map[string]string{
+					"1.0.0-1": "{\n  \"Name\": \"official/mydogu\",\n  \"Version\": \"1.0.0-1\"\n}",
+				},
+			}, nil)
 			pvc := newMockPvcClient(t)
 			pvc.EXPECT().Get(mock.Anything, "mydogu", mock.Anything).Return(&corev1.PersistentVolumeClaim{
 				Status: corev1.PersistentVolumeClaimStatus{
@@ -78,7 +84,7 @@ func TestMultinodeSystemInfoProvider(t *testing.T) {
 			}, nil)
 			provider := NewMultinodeSystemInfoProvider(cm, pvc, "namespace", nil)
 			expectedDogus := []dogu{
-				{Name: "mydogu", Version: "1.0.0-1", Volume: volume{SizeInBytes: 1073741824}},
+				{Name: "official/mydogu", Version: "1.0.0-1", Volume: volume{SizeInBytes: 1073741824}},
 			}
 			dogus, err := provider.getDogus(context.Background())
 			assert.NoError(t, err)
@@ -96,6 +102,29 @@ func TestMultinodeSystemInfoProvider(t *testing.T) {
 			assert.Nil(t, components)
 		})
 
+		t.Run("fail on get dogu-descriptor", func(t *testing.T) {
+			cm := newMockConfigMaps(t)
+			cm.EXPECT().List(mock.Anything, mock.Anything).Return(&corev1.ConfigMapList{
+				Items: []corev1.ConfigMap{
+					{ObjectMeta: metav1.ObjectMeta{
+						Labels: map[string]string{
+							"dogu.name": "mydogu",
+						},
+					}, Immutable: nil, Data: map[string]string{
+						"current": "1.0.0-1",
+					}, BinaryData: nil},
+				},
+			}, nil)
+			cm.EXPECT().Get(mock.Anything, "dogu-spec-mydogu", mock.Anything).Return(nil, assert.AnError)
+
+			provider := NewMultinodeSystemInfoProvider(cm, nil, "namespace", nil)
+
+			_, err := provider.getDogus(context.Background())
+			require.Error(t, err)
+
+			assert.ErrorContains(t, err, "failed to get dogu descriptor for dogu mydogu: failed to get dogu descriptor config map for dogu \"mydogu\": assert.AnError")
+		})
+
 		t.Run("fail on get volume size - no error => volume size zero", func(t *testing.T) {
 			cm := newMockConfigMaps(t)
 			cm.EXPECT().List(mock.Anything, mock.Anything).Return(&corev1.ConfigMapList{
@@ -109,6 +138,11 @@ func TestMultinodeSystemInfoProvider(t *testing.T) {
 					}, BinaryData: nil},
 				},
 			}, nil)
+			cm.EXPECT().Get(mock.Anything, "dogu-spec-mydogu", mock.Anything).Return(&corev1.ConfigMap{
+				Data: map[string]string{
+					"1.0.0-1": "{\n  \"Name\": \"official/mydogu\",\n  \"Version\": \"1.0.0-1\"\n}",
+				},
+			}, nil)
 			pvc := newMockPvcClient(t)
 			pvc.EXPECT().Get(mock.Anything, "mydogu", mock.Anything).Return(nil, fmt.Errorf(""))
 			provider := NewMultinodeSystemInfoProvider(cm, pvc, "", nil)
@@ -116,7 +150,7 @@ func TestMultinodeSystemInfoProvider(t *testing.T) {
 			dogus, err := provider.getDogus(context.Background())
 			assert.NoError(t, err)
 			expectedDogus := []dogu{
-				{Name: "mydogu", Version: "1.0.0-1", Volume: volume{SizeInBytes: 0}},
+				{Name: "official/mydogu", Version: "1.0.0-1", Volume: volume{SizeInBytes: 0}},
 			}
 
 			assert.Equal(t, expectedDogus, dogus)

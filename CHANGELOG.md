@@ -18,5 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New Make-Target (`make debian`) to build a debian package to install the exporter in a classic CES [#12]
   - This also contains several refactorings to make the application run without a kubernetes environment
 
+### Fixed
+- Use full dogu-name in the system-info api-endpoint of the multinode-exporter 
+
 ## [v0.0.1] - 2025-03-14
 - initial release
