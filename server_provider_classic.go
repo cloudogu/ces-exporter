@@ -53,7 +53,6 @@ func (c *classicControllerProvider) createControllers(ctx context.Context) (*sys
 		&configuration.Controller{},
 		maintenanceModeController,
 		exportModeController
-
 }
 
 func newClassicControllerProvider(conf *core.Configuration) (*classicControllerProvider, error) {
@@ -140,4 +139,20 @@ func watchSshKeyConfig(ctx context.Context, reg watchConfigurationContext, write
 
 		reg.Watch(ctx, regKeySsh, false, sshKeyWatcher)
 	}()
+}
+
+func getVolumeIncreaseFactor(reg watchConfigurationContext) float32 {
+	volumeIncreaseFactorString, err := reg.Get(regKeyVolumeIncreaseFactor)
+	if err != nil || volumeIncreaseFactorString == "" {
+		slog.Warn("Could not read volume increase factor from registry. Using default value of 0.3.")
+		return defaultVolumeIncreaseFactor
+	}
+
+	volumeIncreaseFactorF64, err := strconv.ParseFloat(volumeIncreaseFactorString, 32)
+	if err != nil {
+		slog.Warn("Could not parse volume increase factor from registry. Using default value of 0.3.")
+		return defaultVolumeIncreaseFactor
+	}
+
+	return float32(volumeIncreaseFactorF64)
 }
