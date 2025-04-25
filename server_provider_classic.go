@@ -13,10 +13,14 @@ import (
 	"go.etcd.io/etcd/client/v2"
 	"log/slog"
 	"os"
+	"strconv"
 )
 
 const (
 	fqdnEnv = "FQDN"
+	// defaultVolumeIncreaseFactor represents the default percentage by which a Dogu's volume size should be increased
+	// when calculating the target volume size.
+	defaultVolumeIncreaseFactor = 0.3
 )
 
 type watchConfigurationContext interface {
@@ -36,13 +40,20 @@ func (c *classicControllerProvider) createControllers(ctx context.Context) (*sys
 	watchApiKeyConfig(ctx, c.reg, c.config)
 	watchSshKeyConfig(ctx, c.reg, c.write)
 
+	exportModeProvider := export.NewClassicExportModeProvider(*c.config)
+	exportModeController := export.NewController(exportModeProvider)
+
+	systemInfoProvider := systeminfo.NewSingleNodeSystemInfoProvider(c.config.VolumesBasePath, getVolumeIncreaseFactor(c.reg))
+	systemInfoController := systeminfo.NewController(systemInfoProvider)
+
 	maintenanceModeProvider := maintenance.NewClassicProvider()
 	maintenanceModeController := maintenance.NewController(maintenanceModeProvider)
 
-	return &systeminfo.Controller{},
+	return systemInfoController,
 		&configuration.Controller{},
 		maintenanceModeController,
-		&export.Controller{}
+		exportModeController
+
 }
 
 func newClassicControllerProvider(conf *core.Configuration) (*classicControllerProvider, error) {

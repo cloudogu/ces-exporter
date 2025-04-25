@@ -12,6 +12,16 @@ ARG GO_VERSION=1.24.2
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION} AS build
 WORKDIR /workspace
 
+# Copy the go source
+COPY *.go .
+COPY core core
+COPY configuration configuration
+COPY export export
+COPY maintenance maintenance
+COPY systeminfo systeminfo
+COPY etcd etcd
+COPY decrypt decrypt
+
 # Download dependencies as a separate step to take advantage of Docker's caching.
 # Leverage a cache mount to /go/pkg/mod/ to speed up subsequent builds.
 # Leverage bind mounts to go.sum and go.mod to avoid having to copy them into
@@ -52,6 +62,7 @@ RUN --mount=type=cache,target=/var/cache/apk \
         openssh \
         rsync \
         nfs-utils \
+        btrfs-progs \
         && \
         update-ca-certificates
 

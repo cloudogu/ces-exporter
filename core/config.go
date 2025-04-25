@@ -13,11 +13,14 @@ const (
 	ApiKeyEnv         = "API_KEY"
 	CronJobVerboseEnv = "EXPORT_CRON_VERBOSE"
 	CronJobEnv        = "EXPORT_CRON"
+	volumeBasePath    = "VOLUME_BASE"
 )
 
 const (
-	errorFormat = "environment variable %s is not set"
-	modeClassic = "classic"
+	errorFormat           = "environment variable %s is not set"
+	modeClassic           = "classic"
+	classicPort           = 7022
+	defaultVolumeBasePath = "/data"
 )
 
 // Configuration holds all possible configurations of the exporter app
@@ -37,6 +40,10 @@ type Configuration struct {
 	VerboseCron bool
 	// IsClassic defines if the application should start with classic ces configuration or multinode ces configuration
 	IsClassic bool
+	// Exporter Port in classic mode
+	ClassicExportPort int
+	// VolumesBasePath defines the base directory path for storing volume-related data.
+	VolumesBasePath string
 }
 
 func ReadConfigFromEnv() (Configuration, error) {
@@ -69,6 +76,13 @@ func ReadConfigFromEnv() (Configuration, error) {
 	conf.CronExp = os.Getenv(CronJobEnv)
 
 	conf.VerboseCron = os.Getenv(CronJobVerboseEnv) == "true"
+
+	conf.ClassicExportPort = classicPort
+
+	conf.VolumesBasePath = os.Getenv(volumeBasePath)
+	if conf.VolumesBasePath == "" {
+		conf.VolumesBasePath = defaultVolumeBasePath
+	}
 
 	return conf, nil
 }
