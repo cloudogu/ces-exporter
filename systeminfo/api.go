@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	globalConfigKeyFqdn = "fqdn"
+	globalConfigKeyFqdn = "/fqdn"
 )
 
 type Controller struct {

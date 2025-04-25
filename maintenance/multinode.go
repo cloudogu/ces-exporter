@@ -2,7 +2,6 @@ package maintenance
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/cloudogu/k8s-registry-lib/config"
 	"log/slog"
@@ -73,14 +72,4 @@ func (m MultinodeMaintenanceModeProvider) GetMaintenanceMode(ctx context.Context
 	}
 
 	return status, nil
-}
-
-// BuildMaintenanceJSON results in this json format: {"title": "some title", "text": "some text"}
-func BuildMaintenanceJSON(mReq maintenanceModeRequest) (config.Value, error) {
-	jsonConfig, err := json.Marshal(mReq.Message)
-	if err != nil {
-		return "", fmt.Errorf("unable to create maintenance mode config json: %s", err)
-	}
-
-	return config.Value(jsonConfig), nil
 }

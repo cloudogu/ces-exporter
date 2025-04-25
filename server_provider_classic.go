@@ -13,10 +13,14 @@ import (
 	"go.etcd.io/etcd/client/v2"
 	"log/slog"
 	"os"
+	"strconv"
 )
 
 const (
 	fqdnEnv = "FQDN"
+	// defaultVolumeIncreaseFactor represents the default percentage by which a Dogu's volume size should be increased
+	// when calculating the target volume size.
+	defaultVolumeIncreaseFactor = 0.3
 )
 
 type watchConfigurationContext interface {
@@ -36,10 +40,19 @@ func (c *classicControllerProvider) createControllers(ctx context.Context) (*sys
 	watchApiKeyConfig(ctx, c.reg, c.config)
 	watchSshKeyConfig(ctx, c.reg, c.write)
 
-	return &systeminfo.Controller{},
+	exportModeProvider := export.NewClassicExportModeProvider(*c.config)
+	exportModeController := export.NewController(exportModeProvider)
+
+	systemInfoProvider := systeminfo.NewSingleNodeSystemInfoProvider(c.config.VolumesBasePath, getVolumeIncreaseFactor(c.reg))
+	systemInfoController := systeminfo.NewController(systemInfoProvider)
+
+	maintenanceModeProvider := maintenance.NewClassicProvider()
+	maintenanceModeController := maintenance.NewController(maintenanceModeProvider)
+
+	return systemInfoController,
 		configuration.NewController(configuration.NewClassicProvider()),
-		&maintenance.Controller{},
-		&export.Controller{}
+		maintenanceModeController,
+		exportModeController
 }
 
 func newClassicControllerProvider(conf *core.Configuration) (*classicControllerProvider, error) {
@@ -126,4 +139,20 @@ func watchSshKeyConfig(ctx context.Context, reg watchConfigurationContext, write
 
 		reg.Watch(ctx, regKeySsh, false, sshKeyWatcher)
 	}()
+}
+
+func getVolumeIncreaseFactor(reg watchConfigurationContext) float32 {
+	volumeIncreaseFactorString, err := reg.Get(regKeyVolumeIncreaseFactor)
+	if err != nil || volumeIncreaseFactorString == "" {
+		slog.Warn("Could not read volume increase factor from registry. Using default value of 0.3.")
+		return defaultVolumeIncreaseFactor
+	}
+
+	volumeIncreaseFactorF64, err := strconv.ParseFloat(volumeIncreaseFactorString, 32)
+	if err != nil {
+		slog.Warn("Could not parse volume increase factor from registry. Using default value of 0.3.")
+		return defaultVolumeIncreaseFactor
+	}
+
+	return float32(volumeIncreaseFactorF64)
 }

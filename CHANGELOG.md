@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changed
 - Update makefiles to 9.8.0
 - Implement system info endpoint [#6]
-- Implement export mode endpoint [#14]
+- implement maintenance mode endpoint [#18]
+- Implement export mode endpoint for multinode [#14] and classic mode [#20]
 - Implement configuration endpoint for classic ces [#16]
 
 ## Added
