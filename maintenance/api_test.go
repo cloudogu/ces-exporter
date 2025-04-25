@@ -152,6 +152,32 @@ func TestSetMaintenanceMode(t *testing.T) {
 	})
 }
 
+func TestBuildMaintenanceJSON(t *testing.T) {
+	t.Run("should build maintenance mode json", func(t *testing.T) {
+		mmReq := maintenanceModeRequest{
+			Activate: false,
+			Message: Message{
+				Title: "test",
+				Text:  "testmessage",
+			},
+		}
+		status, _ := BuildMaintenanceJSON(mmReq)
+		require.Equal(t, status.String(), "{\"title\":\"test\",\"text\":\"testmessage\"}")
+	})
+
+	t.Run("should build maintenance mode json with empty request", func(t *testing.T) {
+		mmReq := maintenanceModeRequest{
+			Activate: false,
+			Message: Message{
+				Title: "",
+				Text:  "",
+			},
+		}
+		status, _ := BuildMaintenanceJSON(mmReq)
+		require.Equal(t, status.String(), "{\"title\":\"\",\"text\":\"\"}")
+	})
+}
+
 func requireHttpError(t *testing.T, code int, msg string, recorder *httptest.ResponseRecorder) {
 	t.Helper()
 	assert.Equal(t, code, recorder.Code)

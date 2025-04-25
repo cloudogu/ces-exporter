@@ -46,9 +46,12 @@ func (c *classicControllerProvider) createControllers(ctx context.Context) (*sys
 	systemInfoProvider := systeminfo.NewSingleNodeSystemInfoProvider(c.config.VolumesBasePath, getVolumeIncreaseFactor(c.reg))
 	systemInfoController := systeminfo.NewController(systemInfoProvider)
 
+	maintenanceModeProvider := maintenance.NewClassicProvider()
+	maintenanceModeController := maintenance.NewController(maintenanceModeProvider)
+
 	return systemInfoController,
 		&configuration.Controller{},
-		&maintenance.Controller{},
+		maintenanceModeController,
 		exportModeController
 }
 
