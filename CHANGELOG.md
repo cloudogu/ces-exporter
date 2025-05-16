@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Use full dogu-name in the system-info api-endpoint of the multinode-exporter 
+- Registration with registrator 
+- Error getting backup schedules when backup-dogu was not installed
 
 ## [v0.0.1] - 2025-03-14
 - initial release

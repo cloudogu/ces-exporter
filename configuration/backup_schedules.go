@@ -1,8 +1,10 @@
 package configuration
 
 import (
+	"errors"
 	"fmt"
 	"github.com/cloudogu/ces-exporter/core"
+	"github.com/cloudogu/ces-exporter/etcd"
 	"strings"
 )
 
@@ -34,6 +36,10 @@ func convertTimeToCron(time string) string {
 func (e *backupScheduleProvider) getBackupSchedules() ([]core.BackupSchedule, error) {
 	keys, err := e.getConfig("backup", []string{})
 	if err != nil {
+		if errors.Is(err, etcd.ErrDoguNotFound) {
+			return []core.BackupSchedule{}, nil
+		}
+
 		return nil, fmt.Errorf("failed to get backup config: %w", err)
 	}
 
