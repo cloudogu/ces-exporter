@@ -3,6 +3,7 @@ package export
 import (
 	"context"
 	"fmt"
+	"path"
 
 	doguv2 "github.com/cloudogu/k8s-dogu-operator/v3/api/v2"
 	apiCorev1 "k8s.io/api/core/v1"
@@ -51,16 +52,16 @@ func (m MultinodeExportModeProvider) GetExportDogu(ctx context.Context) (*doguEx
 	doguName := service.Spec.Selector[doguv2.DoguLabelName]
 	port := service.Spec.Ports[0]
 
-	doguExport := doguExport{
+	dE := &doguExport{
 		Dogu:         doguName,
-		VolumePath:   dataVolumePath,
+		VolumePath:   path.Join(dataVolumePath, doguName),
 		ExporterPort: int(port.Port),
 	}
-	return &doguExport, nil
+	return dE, nil
 }
 
 // SetExportDogu sets the given dogu as dogu.name in the ces-exporter-dogu-exporter service
-func (m MultinodeExportModeProvider) SetExportDogu(doguName string, ctx context.Context) (*doguExport, error) {
+func (m MultinodeExportModeProvider) SetExportDogu(ctx context.Context, doguName string) (*doguExport, error) {
 	service, _ := m.serviceclient.Get(ctx, cesDoguExporter, metav1.GetOptions{})
 	service.Spec.Selector[doguv2.DoguLabelName] = doguName
 	port := service.Spec.Ports[0]
@@ -75,12 +76,12 @@ func (m MultinodeExportModeProvider) SetExportDogu(doguName string, ctx context.
 		return nil, fmt.Errorf("failed to update exporter service: %w", err)
 	}
 
-	doguExport := doguExport{
+	dE := &doguExport{
 		Dogu:         doguName,
-		VolumePath:   dataVolumePath,
+		VolumePath:   path.Join(dataVolumePath, doguName),
 		ExporterPort: int(port.Port),
 	}
-	return &doguExport, nil
+	return dE, nil
 }
 
 func (m MultinodeExportModeProvider) GetExportMode(ctx context.Context) (*exportModeStatus, error) {
