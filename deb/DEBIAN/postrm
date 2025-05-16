@@ -8,7 +8,9 @@ set +o pipefail
 docker rm -f ces-exporter
 docker images "ces-exporter" --format "{{.Repository}}:{{.Tag}}" | xargs -r docker rmi -f
 # Remove service of exporter
-etcdctl rm services/exporter/registrator:exporter:8025
+etcdctl rm -r /services/ces-exporter-22
+etcdctl rm -r /services/ces-exporter-8080
+etcdctl rm -r /services/ces-exporter
 
 if dpkg-query -W ufw &> /dev/null; then
   ufw delete allow 7022
