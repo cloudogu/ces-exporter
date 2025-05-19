@@ -13,7 +13,7 @@ const (
 
 type Provider interface {
 	GetExportDogu(ctx context.Context) (*doguExport, error)
-	SetExportDogu(doguName string, ctx context.Context) (*doguExport, error)
+	SetExportDogu(ctx context.Context, doguName string) (*doguExport, error)
 	GetExportMode(ctx context.Context) (*exportModeStatus, error)
 }
 
@@ -42,7 +42,7 @@ func (m *Controller) SetExportDogu(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	doguExp, err := m.provider.SetExportDogu(doguName, r.Context())
+	doguExp, err := m.provider.SetExportDogu(r.Context(), doguName)
 	if err != nil {
 		core.InternalServerErrorResponse(w, fmt.Errorf("failed to set export dogu: %w", err))
 		return

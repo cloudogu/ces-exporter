@@ -30,7 +30,7 @@ func TestMNGetExportDogu(t *testing.T) {
 
 		require.Equal(t, 8080, dogu.ExporterPort)
 		require.Equal(t, "test_A", dogu.Dogu)
-		require.Equal(t, "/data", dogu.VolumePath)
+		require.Equal(t, "/data/test_A", dogu.VolumePath)
 	})
 }
 func TestMNSetExportDogu(t *testing.T) {
@@ -52,11 +52,11 @@ func TestMNSetExportDogu(t *testing.T) {
 
 		serviceClient.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
-		dogu, _ := provider.SetExportDogu("test_A", context.Background())
+		dogu, _ := provider.SetExportDogu(context.Background(), "test_A")
 
 		require.Equal(t, 8080, dogu.ExporterPort)
 		require.Equal(t, "test_A", dogu.Dogu)
-		require.Equal(t, "/data", dogu.VolumePath)
+		require.Equal(t, "/data/test_A", dogu.VolumePath)
 	})
 	t.Run("fail on error with service update", func(t *testing.T) {
 		configMaps := newMockConfigMaps(t)
@@ -76,7 +76,7 @@ func TestMNSetExportDogu(t *testing.T) {
 
 		serviceClient.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
 
-		_, err := provider.SetExportDogu("test_A", context.Background())
+		_, err := provider.SetExportDogu(context.Background(), "test_A")
 
 		require.Contains(t, err.Error(), "failed to update exporter service: testerror")
 	})
@@ -96,7 +96,7 @@ func TestMNSetExportDogu(t *testing.T) {
 		}, nil)
 		doguClient.EXPECT().Get(mock.Anything, "test_A", mock.Anything).Return(nil, fmt.Errorf("testerror"))
 
-		_, err := provider.SetExportDogu("test_A", context.Background())
+		_, err := provider.SetExportDogu(context.Background(), "test_A")
 
 		require.Contains(t, err.Error(), "could not get dogu resource for current export dogu: testerror")
 	})

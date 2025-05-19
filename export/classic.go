@@ -9,6 +9,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"log/slog"
+	"path"
 	"strings"
 )
 
@@ -31,34 +32,34 @@ func NewClassicExportModeProvider(conf core.Configuration) *ClassicExportModePro
 }
 
 // GetExportDogu gets the dogu.name currently set in the ces-exporter-dogu-exporter service
-func (c *ClassicExportModeProvider) GetExportDogu(ctx context.Context) (*doguExport, error) {
+func (c *ClassicExportModeProvider) GetExportDogu(_ context.Context) (*doguExport, error) {
 	dogu, err := c.checkDogu(c.currentExportDogu)
 	if err != nil {
 		return nil, err
 	}
 
-	doguExport := doguExport{
+	dE := &doguExport{
 		Dogu:         dogu,
-		VolumePath:   dataVolumePath,
+		VolumePath:   path.Join(dataVolumePath, dogu),
 		ExporterPort: c.config.ClassicExportPort,
 	}
-	return &doguExport, nil
+	return dE, nil
 }
 
 // SetExportDogu sets the given dogu as dogu.name in the ces-exporter-dogu-exporter service
-func (c *ClassicExportModeProvider) SetExportDogu(doguName string, ctx context.Context) (*doguExport, error) {
+func (c *ClassicExportModeProvider) SetExportDogu(_ context.Context, doguName string) (*doguExport, error) {
 	dogu, err := c.checkDogu(doguName)
 	if err != nil {
 		return nil, err
 	}
 	c.currentExportDogu = dogu
 
-	doguExport := doguExport{
+	dE := &doguExport{
 		Dogu:         dogu,
-		VolumePath:   dataVolumePath,
+		VolumePath:   path.Join(dataVolumePath, dogu),
 		ExporterPort: c.config.ClassicExportPort,
 	}
-	return &doguExport, nil
+	return dE, nil
 }
 
 func (c *ClassicExportModeProvider) GetExportMode(ctx context.Context) (*exportModeStatus, error) {

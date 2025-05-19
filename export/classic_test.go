@@ -25,9 +25,10 @@ func TestCGetExportDogu(t *testing.T) {
 
 		require.Equal(t, 7022, dogu.ExporterPort)
 		require.Equal(t, "test_A", dogu.Dogu)
-		require.Equal(t, "/data", dogu.VolumePath)
+		require.Equal(t, "/data/test_A", dogu.VolumePath)
 	})
 }
+
 func TestCSetExportDogu(t *testing.T) {
 	t.Run("should set export dogu", func(t *testing.T) {
 		config := core.Configuration{ClassicExportPort: 7022}
@@ -36,11 +37,11 @@ func TestCSetExportDogu(t *testing.T) {
 		execClient.EXPECT().GetAllDogus().Return([]string{"test_A"}, nil)
 		provider := ClassicExportModeProvider{config: config, execClient: execClient}
 
-		dogu, _ := provider.SetExportDogu("test_A", context.Background())
+		dogu, _ := provider.SetExportDogu(context.Background(), "test_A")
 
 		require.Equal(t, 7022, dogu.ExporterPort)
 		require.Equal(t, "test_A", dogu.Dogu)
-		require.Equal(t, "/data", dogu.VolumePath)
+		require.Equal(t, "/data/test_A", dogu.VolumePath)
 	})
 	t.Run("fail on export non existent dogu", func(t *testing.T) {
 		config := core.Configuration{ClassicExportPort: 7022}
@@ -49,7 +50,7 @@ func TestCSetExportDogu(t *testing.T) {
 		execClient.EXPECT().GetAllDogus().Return([]string{"test_A"}, nil)
 		provider := ClassicExportModeProvider{config: config, execClient: execClient}
 
-		_, err := provider.SetExportDogu("test_B", context.Background())
+		_, err := provider.SetExportDogu(context.Background(), "test_B")
 
 		require.Contains(t, err.Error(), "can not get dogu test_B")
 	})
