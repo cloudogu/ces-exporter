@@ -12,3 +12,7 @@ The SSH key must be a valid public key and match the private key stored in the i
 with a corresponding SSH command. In order to store this correctly in the exporter,
 must be saved in etcd. The key responsible for this in etcd is
 `/config/ces-exporter/authentication/public_key`.
+
+## Using the api key
+
+Requests to the exporter API need to be using the `X-CES-EXPORTER-API-KEY` header.
