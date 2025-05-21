@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.0.2] - 2025-05-21
 ## Changed
 - Update makefiles to 9.8.0
 - Implement system info endpoint [#6]
