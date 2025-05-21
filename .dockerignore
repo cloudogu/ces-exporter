@@ -1,0 +1,17 @@
+# Deny all
+*/**
+
+# Allow only resources
+!go.*
+!build/**/*
+!configuration/**/*
+!core/**/*
+!export/**/*
+!maintenance/**/*
+!systeminfo/**/*
+!decrypt/**/*
+!etcd/**/*
+!vendor/**/*
+!Makefile
+!.git/**/*
+!resources/**/*

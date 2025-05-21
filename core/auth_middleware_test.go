@@ -10,7 +10,7 @@ import (
 
 func TestNewAuthMiddleware(t *testing.T) {
 	t.Run("should not allow unauthorized requests without header", func(t *testing.T) {
-		authMiddleware := NewAuthMiddleware(Configuration{ApiKey: "test123"})
+		authMiddleware := NewAuthMiddleware(&Configuration{ApiKey: "test123"})
 
 		handler := authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
@@ -30,7 +30,7 @@ func TestNewAuthMiddleware(t *testing.T) {
 	})
 
 	t.Run("should not allow unauthorized requests with empty header", func(t *testing.T) {
-		authMiddleware := NewAuthMiddleware(Configuration{ApiKey: "test123"})
+		authMiddleware := NewAuthMiddleware(&Configuration{ApiKey: "test123"})
 
 		handler := authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
@@ -51,7 +51,7 @@ func TestNewAuthMiddleware(t *testing.T) {
 	})
 
 	t.Run("should not allow unauthorized requests with wrong header", func(t *testing.T) {
-		authMiddleware := NewAuthMiddleware(Configuration{ApiKey: "test123"})
+		authMiddleware := NewAuthMiddleware(&Configuration{ApiKey: "test123"})
 
 		handler := authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
@@ -72,7 +72,7 @@ func TestNewAuthMiddleware(t *testing.T) {
 	})
 
 	t.Run("should allow requests with correct header", func(t *testing.T) {
-		authMiddleware := NewAuthMiddleware(Configuration{ApiKey: "test123"})
+		authMiddleware := NewAuthMiddleware(&Configuration{ApiKey: "test123"})
 
 		handler := authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)

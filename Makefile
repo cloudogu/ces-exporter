@@ -1,8 +1,8 @@
 ARTIFACT_ID=ces-exporter
-MAKEFILES_VERSION=9.6.0
-VERSION=0.0.1
+MAKEFILES_VERSION=9.9.1
+VERSION=0.0.2
 
-GOTAG=1.24.1
+GOTAG=1.24.2
 MOCKERY_VERSION=v2.53.0
 LINT_VERSION?=v1.64.2
 .DEFAULT_GOAL:=help
@@ -17,12 +17,15 @@ HELM_PRE_GENERATE_TARGETS = helm-values-update-image-version
 HELM_POST_GENERATE_TARGETS = helm-values-replace-image-repo template-stage template-log-level template-image-pull-policy template-importer-public-key
 CHECK_VAR_TARGETS=check-all-vars
 IMAGE_IMPORT_TARGET=image-import
+IMAGE=ces-exporter:${VERSION}
+
+include build/make/variables.mk
+PREPARE_PACKAGE=$(DEBIAN_CONTENT_DIR)/control/postinst $(DEBIAN_CONTENT_DIR)/control/postrm prepare-classic-docker
 
 ADDITIONAL_CLEAN=clean_charts
 clean_charts:
 	rm -rf ${K8S_HELM_RESSOURCES}/charts
 
-include build/make/variables.mk
 include build/make/dependencies-gomod.mk
 include build/make/build.mk
 include build/make/test-common.mk
@@ -33,6 +36,22 @@ include build/make/mocks.mk
 include build/make/release.mk
 include build/make/self-update.mk
 include build/make/k8s-component.mk
+include build/make/package-debian.mk
+include build/make/deploy-debian.mk
+
+$(DEBIAN_CONTENT_DIR)/control/postinst: $(DEBIAN_CONTENT_DIR)/control
+	@install -p -m 0755 $(WORKDIR)/deb/DEBIAN/postinst $@
+
+$(DEBIAN_CONTENT_DIR)/control/postrm: $(DEBIAN_CONTENT_DIR)/control
+	@install -p -m 0755 $(WORKDIR)/deb/DEBIAN/postrm $@
+
+.PHONY: prepare-classic-docker
+prepare-classic-docker:
+	echo "Classic docker build for ces-exporter:${VERSION}"
+	mkdir -p ${DEBIAN_CONTENT_DIR}/data/tmp/
+	rm -f ${DEBIAN_CONTENT_DIR}/data/tmp/exporter-image.tar
+	docker build -t ${IMAGE} --target classic .
+	docker image save -o ${DEBIAN_CONTENT_DIR}/data/tmp/exporter-image.tar ${IMAGE}
 
 .PHONY: mocks
 mocks: ${MOCKERY_BIN} ${MOCKERY_YAML} ## target is used to generate mocks for all interfaces in a project.
@@ -81,6 +100,12 @@ template-importer-public-key: $(BINARY_YQ)
     fi
 
 .PHONY: apikey-secret
-apikey-secret: $(BINARY_YQ)
+apikey-secret: $(BINARY_YQ) ## generates a K8s secret for the API key from an environment variable
 	@kubectl create secret generic ces-exporter-api --from-literal=apiKey=${EXPORTER_API_KEY} --namespace="${NAMESPACE}" --context="${KUBE_CONTEXT_NAME}"
 
+.PHONY: helm-apply-dev
+helm-apply-dev:
+	@sed -i -E "s/(^VERSION=[[:digit:]].[[:digit:]].[[:digit:]])/\1-$$(date +%s)/g" Makefile
+	@make helm-apply
+	@sed -i -E "s/(^VERSION=[[:digit:]].[[:digit:]].[[:digit:]])-.*/\1/g" Makefile
+	@sed -i -E "s/(tag: [[:digit:]].[[:digit:]].[[:digit:]])-.*/\1/g" k8s/helm/values.yaml

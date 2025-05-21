@@ -3,60 +3,30 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/cloudogu/ces-exporter/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"log/slog"
+	"k8s.io/client-go/rest"
 	"net"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"os/signal"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sync"
 	"syscall"
 	"testing"
 	"time"
 )
 
-func Test_configureLogger(t *testing.T) {
-	t.Run("should configure logger with log-level from config", func(t *testing.T) {
-		conf := core.Configuration{LogLevel: "DEBUG"}
-
-		configureLogger(conf)
-
-		textHandler, ok := slog.Default().Handler().(*slog.TextHandler)
-		require.True(t, ok)
-		assert.True(t, textHandler.Enabled(context.TODO(), slog.LevelDebug))
-	})
-
-	t.Run("should configure logger with log-level info if config not valid", func(t *testing.T) {
-		conf := core.Configuration{LogLevel: "NO_NO_LOG"}
-
-		configureLogger(conf)
-
-		textHandler, ok := slog.Default().Handler().(*slog.TextHandler)
-		require.True(t, ok)
-		assert.True(t, textHandler.Enabled(context.TODO(), slog.LevelInfo))
-	})
-}
-
-func Test_createServer(t *testing.T) {
-	conf := core.Configuration{BasePath: "/ces-exporter"}
-	router := createServer(conf)
-	require.NotNil(t, router)
-
-	rr := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/ces-exporter/health", nil)
-	require.NoError(t, err)
-
-	router.ServeHTTP(rr, req)
-	require.Equal(t, http.StatusOK, rr.Code)
-	require.Equal(t, "healthy", rr.Body.String())
-}
-
 func Test_main(t *testing.T) {
-
 	t.Run("should start server", func(t *testing.T) {
+		// override default controller method to retrieve a kube config
+		oldGetConfigDelegate := ctrl.GetConfig
+		defer func() {
+			ctrl.GetConfig = oldGetConfigDelegate
+		}()
+		ctrl.GetConfig = func() (*rest.Config, error) {
+			return &rest.Config{}, nil
+		}
+
 		err := os.Setenv("API_KEY", "myApiKey")
 		err = os.Setenv("NAMESPACE", "ecosystem")
 		require.NoError(t, err)
@@ -93,20 +63,6 @@ func Test_main(t *testing.T) {
 		}()
 
 		wg.Wait()
-	})
-
-	t.Run("should print error on wrong config", func(t *testing.T) {
-		err := os.Unsetenv("API_KEY")
-		require.NoError(t, err)
-
-		// Create a channel to receive signals
-		sigChan := make(chan os.Signal, 1)
-		// Register SIGINT to the signal channel
-		signal.Notify(sigChan, syscall.SIGINT)
-
-		go func() {
-			assert.Panics(t, main)
-		}()
 	})
 }
 

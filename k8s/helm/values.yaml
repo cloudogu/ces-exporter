@@ -6,11 +6,13 @@ global:
 image:
   registry: docker.io
   repository: cloudogu/ces-exporter
-  tag: 0.0.1
+  tag: 0.0.2
 imagePullPolicy: IfNotPresent
 env:
   logLevel: info
   basePath: "/ces-exporter"
+  #exportCron: "*/5 * * * *"
+  #exportCronVerbose: true
 apiKey:
   secretName: "ces-exporter-api"
   secretDataKey: "apiKey"

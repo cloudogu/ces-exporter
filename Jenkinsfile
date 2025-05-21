@@ -22,7 +22,7 @@ currentBranch = "${env.BRANCH_NAME}"
 registryNamespace = "k8s"
 registryUrl = "registry.cloudogu.com"
 
-goVersion = "1.24.1"
+goVersion = "1.24.2"
 helmTargetDir = "target/k8s"
 helmChartDir = "${helmTargetDir}/helm"
 
@@ -30,6 +30,10 @@ imageRepository = "cloudogu/${repositoryName}"
 
 node('docker') {
     timestamps {
+        properties([
+                // Don't run concurrent builds for a branch, because they use the same workspace directory
+                disableConcurrentBuilds(),
+        ])
 
         catchError {
             timeout(activity: false, time: 60, unit: 'MINUTES') {
@@ -166,6 +170,12 @@ void stageAutomaticRelease() {
                             }
         }
 
+        stage('Push to apt') {
+            withAptlyCredentials{
+                make 'deploy'
+            }
+        }
+
         stage('Finish Release') {
             gitflow.finishRelease(changelogVersion, productionReleaseBranch)
         }
@@ -226,6 +236,14 @@ void stageStaticAnalysisSonarQube() {
         def qGate = waitForQualityGate()
         if (qGate.status != 'OK') {
             unstable("Pipeline unstable due to SonarQube quality gate failure")
+        }
+    }
+}
+
+void withAptlyCredentials(Closure closure){
+    withCredentials([usernamePassword(credentialsId: 'websites_apt-api.cloudogu.com_aptly-admin', usernameVariable: 'APT_API_USERNAME', passwordVariable: 'APT_API_PASSWORD')]) {
+        withCredentials([string(credentialsId: 'misc_signphrase_apt-api.cloudogu.com', variable: 'APT_API_SIGNPHRASE')]) {
+            closure.call()
         }
     }
 }

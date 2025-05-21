@@ -1,0 +1,210 @@
+{
+  "Name": "official/usermgt",
+  "Version": "1.20.0-4",
+  "DisplayName": "User Management",
+  "Description": "User and Group Management.",
+  "Category": "Administration Apps",
+  "Tags": [
+    "warp",
+    "users",
+    "groups"
+  ],
+  "Logo": "https://cloudogu.com/images/dogus/usermanagement.png",
+  "Url": "https://github.com/cloudogu/usermgt",
+  "Image": "registry.cloudogu.com/official/usermgt",
+  "Dependencies": [
+    {
+      "Type": "dogu",
+      "Name": "cas",
+      "Version": ">=7.0.5.1-6"
+    },
+    {
+      "Type": "dogu",
+      "Name": "ldap",
+      "Version": ">=2.6.2-7"
+    },
+    {
+      "Type": "dogu",
+      "Name": "nginx"
+    },
+    {
+      "Type": "dogu",
+      "Name": "postfix"
+    }
+  ],
+  "Volumes": [
+    {
+      "Name": "data",
+      "Path": "/var/lib/usermgt",
+      "Owner": "1000",
+      "Group": "1000",
+      "NeedsBackup": false
+    },
+    {
+      "Name": "importHistory",
+      "Path": "/var/lib/usermgt/importHistory",
+      "Owner": "1000",
+      "Group": "1000",
+      "NeedsBackup": true
+    }
+  ],
+  "Configuration": [
+    {
+      "Name": "container_config/cpu_core_limit",
+      "Description": "Limits the container's CPU core usage. Use a positive floating value describing a fraction of 1 CPU core. When you define a value of '0.5', you are requesting half as much CPU time compared to if you asked for '1.0' CPU.",
+      "Optional": true
+    },
+    {
+      "Name": "container_config/cpu_core_request",
+      "Description": "Requests the container's minimal CPU core requirement. Use a positive floating value describing a fraction of 1 CPU core. When you define a value of '0.5', you are requesting half as much CPU time compared to if you asked for '1.0' CPU.",
+      "Optional": true
+    },
+    {
+      "Name": "container_config/memory_request",
+      "Description": "Requests the container's minimal memory requirement. Use a positive integer value followed by one of these units [b,k,m,g] (byte, kibibyte, mebibyte, gibibyte).",
+      "Optional": true,
+      "Validation": {
+        "Type": "BINARY_MEASUREMENT"
+      }
+    },
+    {
+      "Name": "container_config/storage_limit",
+      "Description": "Limits the container's ephemeral storage usage. Use a positive integer value followed by one of these units [b,k,m,g] (byte, kibibyte, mebibyte, gibibyte).",
+      "Optional": true,
+      "Validation": {
+        "Type": "BINARY_MEASUREMENT"
+      }
+    },
+    {
+      "Name": "container_config/storage_request",
+      "Description": "Requests the container's minimal ephemeral storage requirement. Use a positive integer value followed by one of these units [b,k,m,g] (byte, kibibyte, mebibyte, gibibyte).",
+      "Optional": true,
+      "Validation": {
+        "Type": "BINARY_MEASUREMENT"
+      }
+    },
+    {
+      "Name": "pwd_reset_selected_by_default",
+      "Description": "Specifies whether the checkbox for the password change at the next login attribute should be preselected by default ",
+      "Default": "false",
+      "Optional": true,
+      "Validation": {
+        "Type": "ONE_OF",
+        "Values": [
+          "true",
+          "false"
+        ]
+      }
+    },
+    {
+      "Name": "mail/sender",
+      "Description": "Email address to use as sender of the User Management dogu",
+      "Default": "no-reply@cloudogu.com",
+      "Optional": true,
+      "Global": true
+    },
+    {
+      "Name": "mail/import/subject",
+      "Description": "The subject of the mail, which is send when a user is imported via the csv import feature",
+      "Default": "Ihr neuer Cloudogu Ecosystem Account",
+      "Optional": true
+    },
+    {
+      "Name": "mail/import/message",
+      "Description": "The content of the mail, which is send when a User is imported via the csv import feature. Within the content the placeholders ${username} and ${password} need to be included.",
+      "Default": "Willkommen im Cloudogu Ecosystem!\n\nDies ist Ihr Benutzeraccount:\n\nBenutzername: ${username}\nPasswort: ${password}\n\nBei der ersten Anmeldung müssen Sie das Passwort ändern.",
+      "Optional": true
+    },
+    {
+      "Name": "mail/import/max_retries",
+      "Description": "The number of maximum retries to send a mail, before an error occurs",
+      "Default": "10",
+      "Optional": true
+    },
+    {
+      "Name": "mail/import/max_retry_delay",
+      "Description": "The maximum delay for sending an email as part of a retry. By using a backoff strategy, the waiting time increases for each failed send until max_retry_delay is reached before the mail is sent again.",
+      "Default": "3600",
+      "Optional": true
+    },
+    {
+      "Name": "mail/import/retry_interval",
+      "Description": "The interval in which failed mails will be checked to be sent again.",
+      "Default": "30",
+      "Optional": true
+    },
+    {
+      "Name": "container_config/memory_limit",
+      "Description": "Limits the container's memory usage. Use a positive integer value followed by one of these units [b,k,m,g] (byte, kibibyte, mebibyte, gibibyte). We recommend at least 200m of memory for usermgt.",
+      "Optional": true,
+      "Validation": {
+        "Type": "BINARY_MEASUREMENT"
+      }
+    },
+    {
+      "Name": "container_config/swap_limit",
+      "Description": "Limits the container's swap memory usage. Use zero or a positive integer value followed by one of these units [b,k,m,g] (byte, kibibyte, mebibyte, gibibyte). 0 will disable swapping.",
+      "Optional": true,
+      "Validation": {
+        "Type": "BINARY_MEASUREMENT"
+      }
+    },
+    {
+      "Name": "container_config/java_max_ram_percentage",
+      "Description": "Limits the heap stack size of the Usermgt process to the configured percentage of the available physical memory when the container has more than approx. 250 MB of memory available. Is only considered when a memory_limit is set. Use a valid float value with decimals between 0 and 100 (f. ex. 55.0 for 55%). Default value for Usermgt: 25%",
+      "Optional": true,
+      "Default": "25.0",
+      "Validation": {
+        "Type": "FLOAT_PERCENTAGE_HUNDRED"
+      }
+    },
+    {
+      "Name": "container_config/java_min_ram_percentage",
+      "Description": "Limits the heap stack size of the Usermgt process to the configured percentage of the available physical memory when the container has less than approx. 250 MB of memory available. Is only considered when a memory_limit is set. Use a valid float value with decimals between 0 and 100 (f. ex. 55.0 for 55%). Default value for Usermgt: 50%",
+      "Optional": true,
+      "Default": "50.0",
+      "Validation": {
+        "Type": "FLOAT_PERCENTAGE_HUNDRED"
+      }
+    },
+    {
+      "Name": "logging/root",
+      "Description": "Set the root log level to one of ERROR, WARN, INFO, DEBUG.",
+      "Optional": true,
+      "Default": "WARN",
+      "Validation": {
+        "Type": "ONE_OF",
+        "Values": [
+          "WARN",
+          "DEBUG",
+          "INFO",
+          "ERROR"
+        ]
+      }
+    }
+  ],
+  "ExposedCommands": [
+    {
+      "Name": "post-upgrade",
+      "Command": "/post-upgrade.sh"
+    }
+  ],
+  "ServiceAccounts": [
+    {
+      "Type": "ldap",
+      "Params": [
+        "rw"
+      ]
+    },
+    {
+      "Type": "cas",
+      "Params": [
+        "cas"
+      ]
+    }
+  ],
+  "HealthCheck": {
+    "Type": "tcp",
+    "Port": 8080
+  }
+}

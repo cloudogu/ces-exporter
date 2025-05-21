@@ -1,7 +1,7 @@
 apiVersion: v1
 values:
   images:
-    cesControl: cloudogu/ces-exporter:0.0.1
+    cesControl: cloudogu/ces-exporter:0.0.2
 patches:
   values.yaml:
     image:

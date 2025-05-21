@@ -7,5 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.0.2] - 2025-05-21
+## Changed
+- Update makefiles to 9.8.0
+- Implement system info endpoint [#6]
+- implement maintenance mode endpoint [#18]
+- Implement export mode endpoint for multinode [#14] and classic mode [#20]
+- Implement configuration endpoint for classic ces [#16]
+
+## Added
+- New Make-Target (`make debian`) to build a debian package to install the exporter in a classic CES [#12]
+  - This also contains several refactorings to make the application run without a kubernetes environment
+
+### Fixed
+- Use full dogu-name in the system-info api-endpoint of the multinode-exporter 
+- Registration with registrator 
+- Error getting backup schedules when backup-dogu was not installed
+
 ## [v0.0.1] - 2025-03-14
 - initial release

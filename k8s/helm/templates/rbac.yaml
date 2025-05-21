@@ -12,7 +12,57 @@ metadata:
   name: {{ include "ces-exporter.name" . }}-role
   labels:
     {{- include "ces-exporter.labels" . | nindent 4 }}
-rules: []
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+      - configmaps
+    verbs:
+      - list
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - persistentvolumeclaims
+    verbs:
+      - get
+  - apiGroups:
+      - "k8s.cloudogu.com"
+    resources:
+      - components
+    verbs:
+      - list
+  - apiGroups:
+      - ""
+    resources:
+      - services
+    verbs:
+      - list
+      - get
+      - update
+  - apiGroups:
+      - k8s.cloudogu.com
+    resources:
+      - dogus
+    verbs:
+      - get
+      - list
+      - update
+  - apiGroups:
+      - "k8s.cloudogu.com"
+      - "k8s.cloudogu.com/v1"
+    resources:
+      - backupschedules
+    verbs:
+      - list
+      - get
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

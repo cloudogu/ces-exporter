@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# The postrm script should not fail, as this could lead to a non-deletable package. Disable all exit options.
+set +o errexit
+set +o nounset
+set +o pipefail
+
+docker rm -f ces-exporter
+docker images "ces-exporter" --format "{{.Repository}}:{{.Tag}}" | xargs -r docker rmi -f
+# Remove service of exporter
+etcdctl rm -r /services/ces-exporter-22
+etcdctl rm -r /services/ces-exporter-8080
+etcdctl rm -r /services/ces-exporter
+
+if dpkg-query -W ufw &> /dev/null; then
+  ufw delete allow 7022
+else
+  echo "The ufw package is not installed. Make sure to manually remove access to port 7022"
+fi

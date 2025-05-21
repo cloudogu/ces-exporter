@@ -24,6 +24,11 @@ func ErrorResponse(w http.ResponseWriter, status int, message string) {
 	JSON(w, status, &ApiError{Code: status, Message: message})
 }
 
+func InternalServerErrorResponse(w http.ResponseWriter, err error) {
+	slog.Error(err.Error())
+	ErrorResponse(w, http.StatusInternalServerError, err.Error())
+}
+
 func JSON[T any](w http.ResponseWriter, status int, v T) {
 	w.Header().Set("Content-Type", "application/json")
 
