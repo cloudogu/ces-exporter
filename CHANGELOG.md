@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.0.3] - 2025-05-23
+## Fixed
+- Do not add binary to debian-package
+- Rename systemctl start-script
+- Return correct dogu-volume-path in export-api
+
 ## [v0.0.2] - 2025-05-21
 ## Changed
 - Update makefiles to 9.8.0

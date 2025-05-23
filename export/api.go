@@ -8,7 +8,8 @@ import (
 )
 
 const (
-	dataVolumePath = "/data"
+	dataVolumePath   = "/data"
+	dataVolumeSubDir = "/volumes"
 )
 
 type Provider interface {

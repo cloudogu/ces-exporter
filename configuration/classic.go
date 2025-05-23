@@ -13,7 +13,6 @@ var skippedKeys = map[string][]string{
 		"active",
 	},
 	"global": {
-		"certificate",
 		"excluded_etcd_keys",
 		"debug",
 		"key_provider",
