@@ -40,7 +40,7 @@ func (c *ClassicExportModeProvider) GetExportDogu(_ context.Context) (*doguExpor
 
 	dE := &doguExport{
 		Dogu:         dogu,
-		VolumePath:   path.Join(dataVolumePath, dogu),
+		VolumePath:   createVolumePath(dogu),
 		ExporterPort: c.config.ClassicExportPort,
 	}
 	return dE, nil
@@ -56,7 +56,7 @@ func (c *ClassicExportModeProvider) SetExportDogu(_ context.Context, doguName st
 
 	dE := &doguExport{
 		Dogu:         dogu,
-		VolumePath:   path.Join(dataVolumePath, dogu),
+		VolumePath:   createVolumePath(dogu),
 		ExporterPort: c.config.ClassicExportPort,
 	}
 	return dE, nil
@@ -121,6 +121,10 @@ func (c *ClassicExportModeProvider) checkDogu(dogu string) (string, error) {
 		return "", fmt.Errorf("can not get dogu %s", dogu)
 	}
 	return dogu, nil
+}
+
+func createVolumePath(doguName string) string {
+	return path.Join(dataVolumePath, doguName, dataVolumeSubDir)
 }
 
 func (e *ExecClient) GetAllDogus() ([]string, error) {

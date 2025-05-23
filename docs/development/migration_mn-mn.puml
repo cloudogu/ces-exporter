@@ -87,13 +87,6 @@ end note
 
 |||
 
-'Configuration
-IJ -> E ++: Get Configuration
-IJ <-- E --: Configuration
-IJ -> IJ: Apply Configuration
-
-|||
-
 loop Dogus
     'Get Data from Dogu
     IJ -> E ++: Export "Dogu"
@@ -104,6 +97,13 @@ loop Dogus
     IJ <-- DP --: Data-Import for "Dogu" done
     ||5||
 end
+
+|||
+
+'Configuration
+IJ -> E ++: Get Configuration
+IJ <-- E --: Configuration
+IJ -> IJ: Apply Configuration
 
 |||
 
