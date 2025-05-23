@@ -25,7 +25,7 @@ func TestCGetExportDogu(t *testing.T) {
 
 		require.Equal(t, 7022, dogu.ExporterPort)
 		require.Equal(t, "test_A", dogu.Dogu)
-		require.Equal(t, "/data/test_A", dogu.VolumePath)
+		require.Equal(t, "/data/test_A/volumes", dogu.VolumePath)
 	})
 }
 
@@ -41,7 +41,7 @@ func TestCSetExportDogu(t *testing.T) {
 
 		require.Equal(t, 7022, dogu.ExporterPort)
 		require.Equal(t, "test_A", dogu.Dogu)
-		require.Equal(t, "/data/test_A", dogu.VolumePath)
+		require.Equal(t, "/data/test_A/volumes", dogu.VolumePath)
 	})
 	t.Run("fail on export non existent dogu", func(t *testing.T) {
 		config := core.Configuration{ClassicExportPort: 7022}
