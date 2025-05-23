@@ -48,6 +48,13 @@ $(DEBIAN_CONTENT_DIR)/control/postrm: $(DEBIAN_CONTENT_DIR)/control
 .PHONY: prepare-classic-docker
 prepare-classic-docker:
 	echo "Classic docker build for ces-exporter:${VERSION}"
+
+# delete binary, if it exists, to avoid adding it to the debian-package
+	@if [ -f $(BINARY) ]; then \
+		echo "Removing binary from $(BINARY)"; \
+		rm -f $(BINARY); \
+	fi
+
 	mkdir -p ${DEBIAN_CONTENT_DIR}/data/tmp/
 	rm -f ${DEBIAN_CONTENT_DIR}/data/tmp/exporter-image.tar
 	docker build -t ${IMAGE} --target classic .
@@ -66,38 +73,38 @@ helm-values-update-image-version: $(BINARY_YQ)
 .PHONY: helm-values-replace-image-repo
 helm-values-replace-image-repo: $(BINARY_YQ)
 	@if [[ ${STAGE} == "development" ]]; then \
-      		echo "Setting dev image repo in target values.yaml!" ;\
-    		$(BINARY_YQ) -i e ".image.registry=\"$(shell echo '${IMAGE_DEV}' | sed 's/\([^\/]*\)\/\(.*\)/\1/')\"" ${K8S_COMPONENT_TARGET_VALUES} ;\
-    		$(BINARY_YQ) -i e ".image.repository=\"$(shell echo '${IMAGE_DEV}' | sed 's/\([^\/]*\)\/\(.*\)/\2/')\"" ${K8S_COMPONENT_TARGET_VALUES} ;\
-    	fi
+		echo "Setting dev image repo in target values.yaml!" ;\
+		$(BINARY_YQ) -i e ".image.registry=\"$(shell echo '${IMAGE_DEV}' | sed 's/\([^\/]*\)\/\(.*\)/\1/')\"" ${K8S_COMPONENT_TARGET_VALUES} ;\
+		$(BINARY_YQ) -i e ".image.repository=\"$(shell echo '${IMAGE_DEV}' | sed 's/\([^\/]*\)\/\(.*\)/\2/')\"" ${K8S_COMPONENT_TARGET_VALUES} ;\
+	fi
 
 .PHONY: template-stage
 template-stage: $(BINARY_YQ)
 	@if [[ ${STAGE} == "development" ]]; then \
-  		echo "Setting STAGE env in deployment to ${STAGE}!" ;\
+		echo "Setting STAGE env in deployment to ${STAGE}!" ;\
 		$(BINARY_YQ) -i e ".env.stage=\"${STAGE}\"" ${K8S_COMPONENT_TARGET_VALUES} ;\
 	fi
 
 .PHONY: template-log-level
 template-log-level: ${BINARY_YQ}
 	@if [[ "${STAGE}" == "development" ]]; then \
-      echo "Setting LOG_LEVEL env in deployment to ${LOG_LEVEL}!" ; \
-      $(BINARY_YQ) -i e ".env.logLevel=\"${LOG_LEVEL}\"" "${K8S_COMPONENT_TARGET_VALUES}" ; \
-    fi
+	  echo "Setting LOG_LEVEL env in deployment to ${LOG_LEVEL}!" ; \
+	  $(BINARY_YQ) -i e ".env.logLevel=\"${LOG_LEVEL}\"" "${K8S_COMPONENT_TARGET_VALUES}" ; \
+	fi
 
 .PHONY: template-image-pull-policy
 template-image-pull-policy: $(BINARY_YQ)
 	@if [[ "${STAGE}" == "development" ]]; then \
-          echo "Setting pull policy to always!" ; \
-          $(BINARY_YQ) -i e ".imagePullPolicy=\"Always\"" "${K8S_COMPONENT_TARGET_VALUES}" ; \
-    fi
+		  echo "Setting pull policy to always!" ; \
+		  $(BINARY_YQ) -i e ".imagePullPolicy=\"Always\"" "${K8S_COMPONENT_TARGET_VALUES}" ; \
+	fi
 
 .PHONY: template-importer-public-key
 template-importer-public-key: $(BINARY_YQ)
 	@if [[ "${STAGE}" == "development" ]]; then \
-          echo "Setting importer-public-key from environment-variable 'IMPORTER_PUBLIC_KEY'" ; \
-          $(BINARY_YQ) -i e ".publicKey.data=\"${IMPORTER_PUBLIC_KEY}\"" "${K8S_COMPONENT_TARGET_VALUES}" ; \
-    fi
+		  echo "Setting importer-public-key from environment-variable 'IMPORTER_PUBLIC_KEY'" ; \
+		  $(BINARY_YQ) -i e ".publicKey.data=\"${IMPORTER_PUBLIC_KEY}\"" "${K8S_COMPONENT_TARGET_VALUES}" ; \
+	fi
 
 .PHONY: apikey-secret
 apikey-secret: $(BINARY_YQ) ## generates a K8s secret for the API key from an environment variable
