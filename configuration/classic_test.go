@@ -15,6 +15,10 @@ func TestGetBackupSchedulesClassic(t *testing.T) {
 			return core.DoguConfig{
 				NormalConfig: []core.KeyValue{
 					{
+						Key:   "/active",
+						Value: "true",
+					},
+					{
 						Key:   "/time",
 						Value: "13:30",
 					},
@@ -29,11 +33,37 @@ func TestGetBackupSchedulesClassic(t *testing.T) {
 		assert.Equal(t, "30 13 * * *", schedules[0].Schedule)
 		assert.Equal(t, scheduledBackupName, schedules[0].Name)
 	})
+	t.Run("will return empty array when backup is inactive", func(t *testing.T) {
+		provider := NewClassicProvider()
+		provider.backupScheduleProvider = newBackupScheduleProvider(func(dogu string, ignoreKeys []string) (core.DoguConfig, error) {
+			return core.DoguConfig{
+				NormalConfig: []core.KeyValue{
+					{
+						Key:   "/active",
+						Value: "false",
+					},
+					{
+						Key:   "/time",
+						Value: "13:30",
+					},
+				},
+			}, nil
+		})
+
+		schedules, err := provider.getBackupSchedules(nil)
+		require.NoError(t, err)
+
+		assert.Equal(t, 0, len(schedules))
+	})
 	t.Run("will return empty array on invalid time", func(t *testing.T) {
 		provider := NewClassicProvider()
 		provider.backupScheduleProvider = newBackupScheduleProvider(func(dogu string, ignoreKeys []string) (core.DoguConfig, error) {
 			return core.DoguConfig{
 				NormalConfig: []core.KeyValue{
+					{
+						Key:   "/active",
+						Value: "true",
+					},
 					{
 						Key:   "/time",
 						Value: "1330",

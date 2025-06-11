@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"github.com/cloudogu/ces-exporter/core"
 	"github.com/cloudogu/ces-exporter/etcd"
+	"log/slog"
+	"slices"
 	"strings"
 )
 
 const (
-	scheduledBackupName = "Scheduled Backup"
+	scheduledBackupName = "scheduled-backup"
 )
 
 type backupScheduleProvider struct {
@@ -41,6 +43,15 @@ func (e *backupScheduleProvider) getBackupSchedules() ([]core.BackupSchedule, er
 		}
 
 		return nil, fmt.Errorf("failed to get backup config: %w", err)
+	}
+
+	activeBackup := slices.ContainsFunc(keys.NormalConfig, func(kv core.KeyValue) bool {
+		return kv.Key == "/active" && kv.Value == "true"
+	})
+
+	if !activeBackup {
+		slog.Info("backup is not active, skipping backup schedule.")
+		return []core.BackupSchedule{}, nil
 	}
 
 	for _, kv := range keys.NormalConfig {
