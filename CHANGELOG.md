@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.0.4] - 2025-06-12
+## Changed
+- BackupSchedules are only returned when the backup is active [#32]
+
+## Fixed
+- Rename BackupSchedule name to be a valid lowercase RFC 1123 subdomain [#32]
+
 ## [v0.0.3] - 2025-05-23
 ## Fixed
 - Do not add binary to debian-package
