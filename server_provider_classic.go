@@ -18,9 +18,9 @@ import (
 
 const (
 	fqdnEnv = "FQDN"
-	// defaultVolumeIncreaseFactor represents the default percentage by which a Dogu's volume size should be increased
+	// defaultVolumeIncreaseFactor represents the default factor by which a Dogu's volume size should be increased
 	// when calculating the target volume size.
-	defaultVolumeIncreaseFactor = 0.3
+	defaultVolumeIncreaseFactor = 1.3
 )
 
 type watchConfigurationContext interface {
@@ -147,13 +147,13 @@ func watchSshKeyConfig(ctx context.Context, reg watchConfigurationContext, write
 func getVolumeIncreaseFactor(reg watchConfigurationContext) float32 {
 	volumeIncreaseFactorString, err := reg.Get(regKeyVolumeIncreaseFactor)
 	if err != nil || volumeIncreaseFactorString == "" {
-		slog.Warn("Could not read volume increase factor from registry. Using default value of 0.3.")
+		slog.Warn("Could not read volume increase factor from registry. Using default value of 1.3.")
 		return defaultVolumeIncreaseFactor
 	}
 
 	volumeIncreaseFactorF64, err := strconv.ParseFloat(volumeIncreaseFactorString, 32)
 	if err != nil {
-		slog.Warn("Could not parse volume increase factor from registry. Using default value of 0.3.")
+		slog.Warn("Could not parse volume increase factor from registry. Using default value of 1.3.")
 		return defaultVolumeIncreaseFactor
 	}
 
