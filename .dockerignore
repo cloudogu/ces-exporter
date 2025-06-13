@@ -1,17 +1,45 @@
-# Deny all
-*/**
+# Go vendor folder (docker build uses go mod)
+vendor/
 
-# Allow only resources
-!go.*
-!build/**/*
-!configuration/**/*
-!core/**/*
-!export/**/*
-!maintenance/**/*
-!systeminfo/**/*
-!decrypt/**/*
-!etcd/**/*
-!vendor/**/*
-!Makefile
-!.git/**/*
-!resources/**/*
+# Make files
+build/
+Makefile
+
+# Kubernetes
+k8s/
+
+# Builds
+target/
+
+# Git
+.git
+.gitignore
+
+# IDE/editor files
+.bin/
+.vscode/
+.idea/
+test/
+
+# Logs
+*.log
+
+# Test results / coverage
+coverage/
+*.coverprofile
+*.cov
+*.testresult
+
+# CI/CD leftovers
+.env
+.env.*
+*.bak
+
+# Docs
+docs/
+README.md
+CHANGELOG.md
+
+# Others
+.mockery.yaml
+sonar-project.properties
