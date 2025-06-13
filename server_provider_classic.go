@@ -157,5 +157,7 @@ func getVolumeIncreaseFactor(reg watchConfigurationContext) float32 {
 		return defaultVolumeIncreaseFactor
 	}
 
+	slog.Info("Using volume increase factor from registry.", "value", volumeIncreaseFactorString)
+
 	return float32(volumeIncreaseFactorF64)
 }
