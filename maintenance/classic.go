@@ -60,7 +60,8 @@ func (m ClassicMaintenanceModeProvider) SetMaintenanceMode(mReq maintenanceModeR
 		slog.Info(fmt.Sprintf("Maintenance-Mode activated: %s", out))
 	} else {
 		err := m.etcdGetter.Delete(maintenanceModeEtcdKey, &client2.DeleteOptions{})
-		if err != nil {
+		// ignore key not found errors, as they just mean that the maintenance mode is already deactivated
+		if err != nil && !strings.Contains(err.Error(), "Key not found") {
 			return nil, fmt.Errorf("failed to remove maintenance-etcd key: %w", err)
 		}
 		slog.Info("Maintenance-Mode deactivated")
