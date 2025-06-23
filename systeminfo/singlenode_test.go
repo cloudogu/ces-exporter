@@ -281,12 +281,12 @@ func TestCalculateTargetVolumeSize(t *testing.T) {
 		inIncreateFactor float32
 		expectedSize     int64
 	}{
-		{inActualSize: 0, inIncreateFactor: 0.3, expectedSize: 1 * GiB},
-		{inActualSize: 100, inIncreateFactor: 0, expectedSize: 1 * GiB},
-		{inActualSize: 100, inIncreateFactor: 0.3, expectedSize: 1 * GiB},
-		{inActualSize: 1*GiB + 500, inIncreateFactor: 0, expectedSize: 2 * GiB},
-		{inActualSize: 176 * GiB, inIncreateFactor: 0.8, expectedSize: 317 * GiB},
-		{inActualSize: 2 * GiB, inIncreateFactor: 2.2, expectedSize: 7 * GiB},
+		{inActualSize: 0, inIncreateFactor: 1.3, expectedSize: 1 * GiB},
+		{inActualSize: 100, inIncreateFactor: 1, expectedSize: 1 * GiB},
+		{inActualSize: 100, inIncreateFactor: 1.3, expectedSize: 1 * GiB},
+		{inActualSize: 1*GiB + 500, inIncreateFactor: 1, expectedSize: 2 * GiB},
+		{inActualSize: 176 * GiB, inIncreateFactor: 1.8, expectedSize: 317 * GiB},
+		{inActualSize: 2 * GiB, inIncreateFactor: 3.2, expectedSize: 7 * GiB},
 	}
 
 	for _, tc := range tests {

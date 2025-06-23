@@ -44,7 +44,7 @@ func TestUpdateApiKeysAndSshKey(t *testing.T) {
 		err := os.Setenv(fqdnEnv, "fqdn")
 		require.NoError(t, err)
 		confCtx := newMockWatchConfigurationContext(t)
-		confCtx.EXPECT().Get(regKeyVolumeIncreaseFactor).Return("0.3", nil)
+		confCtx.EXPECT().Get(regKeyVolumeIncreaseFactor).Return("1.3", nil)
 		confCtx.EXPECT().Get(regKeyApi).Return("oldval", nil).Once()
 		confCtx.EXPECT().Get(regKeySsh).Return("oldssh", nil).Once()
 		confCtx.EXPECT().
@@ -131,9 +131,9 @@ func Test_getVolumeIncreaseFactor(t *testing.T) {
 		mErr                 error
 		expected             float32
 	}{
-		{name: "30%", volumeIncreaseFactor: "0.3", expected: 0.3},
-		{name: "110%", volumeIncreaseFactor: "1.1", expected: 1.1},
-		{name: "50,55%", volumeIncreaseFactor: "0.555", expected: 0.555},
+		{name: "30%", volumeIncreaseFactor: "1.3", expected: 1.3},
+		{name: "110%", volumeIncreaseFactor: "2.1", expected: 2.1},
+		{name: "50,55%", volumeIncreaseFactor: "1.555", expected: 1.555},
 		{name: "invalid factor", volumeIncreaseFactor: "invalid", expected: defaultVolumeIncreaseFactor},
 		{name: "registry error", mErr: assert.AnError, expected: defaultVolumeIncreaseFactor},
 	}

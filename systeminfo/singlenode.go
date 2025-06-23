@@ -162,12 +162,12 @@ func (sp SingleNodeSystemInfoProvider) getDogus(_ context.Context) ([]dogu, erro
 	return doguSystemInfoList, nil
 }
 
-// calculateTargetVolumeSize increases the actual volume size by the given percentage factor,
+// calculateTargetVolumeSize increases the actual volume size by the given factor,
 // and rounds the result up to the next full GiB.
 func calculateTargetVolumeSize(increaseFactor float32, actualSize int64) int64 {
 	const GiB = 1024 * 1024 * 1024
 
-	estimated := float64(actualSize) * float64(1+increaseFactor)
+	estimated := float64(actualSize) * float64(increaseFactor)
 
 	if estimated == 0 {
 		return GiB
