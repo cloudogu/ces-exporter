@@ -22,7 +22,7 @@ Um den Key für den Exporter zu setzen, muss dieser einfach im etcd hinterlegt w
 etcd ist `/config/ces-exporter/authentication/api_key`.
 
 Der SSH-Key muss ein gültiger Public-Key sein und zu dem private-key passen, der im Importer hinterlegt ist. Er muss
-mit einem entsprechenden SSH-Befehl generiert worden sein. Um diesen nun korrekt im Exporter zu hinterlegen, muss
+mit einem entsprechenden SSH-Befehl (ssh-keygen generiert worden sein. Der Key muss ohne Passwort angelegt werden. Um diesen nun korrekt im Exporter zu hinterlegen, muss
 dieser im etcd abgespeichert werden. Der dafür zuständige Key im etcd ist
 `/config/ces-exporter/authentication/public_key`.
 

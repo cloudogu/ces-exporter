@@ -22,7 +22,7 @@ To set the key for the exporter, this must simply be stored in etcd. The key res
 etcd is `/config/ces-exporter/authentication/api_key`.
 
 The SSH key must be a valid public key and match the private key stored in the importer. It must have been generated
-with a corresponding SSH command. In order to store this correctly in the exporter,
+with a corresponding SSH command (ssh-keygen). The key cannot have a password. In order to store this correctly in the exporter,
 must be saved in etcd. The key responsible for this in etcd is
 `/config/ces-exporter/authentication/public_key`.
 
