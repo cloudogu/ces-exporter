@@ -142,11 +142,19 @@ func TestMNGetExportMode(t *testing.T) {
 						Name:       "test_A",
 						ExportMode: true,
 					},
+					Status: v2.DoguStatus{
+						ExportMode: true,
+						Health:     v2.AvailableHealthStatus,
+					},
 				},
 				{
 					Spec: v2.DoguSpec{
 						Name:       "test_B",
 						ExportMode: true,
+					},
+					Status: v2.DoguStatus{
+						ExportMode: true,
+						Health:     v2.AvailableHealthStatus,
 					},
 				},
 			},
@@ -172,5 +180,80 @@ func TestMNGetExportMode(t *testing.T) {
 		_, err := provider.GetExportMode(context.Background())
 
 		require.Contains(t, "error getting dogu list: testerror", err.Error())
+	})
+	t.Run("should return get export mode as false when exportMode-status is false", func(t *testing.T) {
+		configMaps := newMockConfigMaps(t)
+
+		doguClient := newMockDoguClient(t)
+		doguClient.EXPECT().List(mock.Anything, mock.Anything).Return(&v2.DoguList{
+			Items: []v2.Dogu{
+				{
+					Spec: v2.DoguSpec{
+						Name:       "test_A",
+						ExportMode: true,
+					},
+					Status: v2.DoguStatus{
+						ExportMode: true,
+						Health:     v2.AvailableHealthStatus,
+					},
+				},
+				{
+					Spec: v2.DoguSpec{
+						Name:       "test_B",
+						ExportMode: true,
+					},
+					Status: v2.DoguStatus{
+						ExportMode: false,
+						Health:     v2.AvailableHealthStatus,
+					},
+				},
+			},
+		}, nil)
+
+		serviceClient := newMockServiceClient(t)
+
+		provider := NewMultinodeExportModeProvider("ecosystem", configMaps, doguClient, serviceClient)
+
+		mode, _ := provider.GetExportMode(context.Background())
+
+		require.False(t, mode.IsActive)
+	})
+
+	t.Run("should return get export mode as false when dogu is unhealthy", func(t *testing.T) {
+		configMaps := newMockConfigMaps(t)
+
+		doguClient := newMockDoguClient(t)
+		doguClient.EXPECT().List(mock.Anything, mock.Anything).Return(&v2.DoguList{
+			Items: []v2.Dogu{
+				{
+					Spec: v2.DoguSpec{
+						Name:       "test_A",
+						ExportMode: true,
+					},
+					Status: v2.DoguStatus{
+						ExportMode: true,
+						Health:     v2.AvailableHealthStatus,
+					},
+				},
+				{
+					Spec: v2.DoguSpec{
+						Name:       "test_B",
+						ExportMode: true,
+					},
+					Status: v2.DoguStatus{
+						ExportMode: true,
+						Health:     v2.UnavailableHealthStatus,
+					},
+				},
+			},
+		}, nil)
+
+		serviceClient := newMockServiceClient(t)
+
+		provider := NewMultinodeExportModeProvider("ecosystem", configMaps, doguClient, serviceClient)
+
+		mode, _ := provider.GetExportMode(context.Background())
+
+		require.False(t, mode.IsActive)
 	})
 }

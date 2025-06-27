@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Fixed
 - [#43] Exclude ces-exporter from multinode system info 
+- [#45] checking dogu health when checking export-mode
 
 ## [v1.0.0] - 2025-06-23
 - 🎉🎉 First release 🎉🎉
