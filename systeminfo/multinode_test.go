@@ -25,10 +25,12 @@ func TestMultinodeSystemInfoProvider(t *testing.T) {
 			lister.EXPECT().List(mock.Anything, mock.Anything).Return(&v1.ComponentList{
 				Items: []v1.Component{
 					{
-						Spec: v1.ComponentSpec{Name: "c1", Version: "v1"},
+						Spec:   v1.ComponentSpec{Name: "c1", Version: "v1"},
+						Status: v1.ComponentStatus{InstalledVersion: "v1"},
 					},
 					{
-						Spec: v1.ComponentSpec{Name: "c2", Version: "v2"},
+						Spec:   v1.ComponentSpec{Name: "c2", Version: "v2"},
+						Status: v1.ComponentStatus{InstalledVersion: "v2"},
 					},
 				},
 			}, nil)
@@ -59,7 +61,8 @@ func TestMultinodeSystemInfoProvider(t *testing.T) {
 			lister.EXPECT().List(mock.Anything, mock.Anything).Return(&v1.ComponentList{
 				Items: []v1.Component{
 					{
-						Spec: v1.ComponentSpec{Name: "c1", Version: "v1"},
+						Spec:   v1.ComponentSpec{Name: "c1", Version: "v1"},
+						Status: v1.ComponentStatus{InstalledVersion: "v1"},
 					},
 					{
 						Spec: v1.ComponentSpec{Name: "ces-exporter", Version: "v2"},
