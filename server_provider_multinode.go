@@ -71,7 +71,6 @@ func (m *multinodeControllerProvider) createControllers(_ context.Context) (*sys
 	doguRepo := repository.NewDoguConfigRepository(configMaps)
 	doguVersionReg := libdogu.NewDoguVersionRegistry(configMaps)
 	services := m.client.CoreV1().Services(m.config.Namespace)
-	endpoints := m.client.CoreV1().Endpoints(m.config.Namespace)
 	dogus := m.doguClient.Dogus(m.config.Namespace)
 
 	systemInfoProvider := systeminfo.NewMultinodeSystemInfoProvider(
@@ -82,7 +81,7 @@ func (m *multinodeControllerProvider) createControllers(_ context.Context) (*sys
 	)
 	systemInfoController := systeminfo.NewController(systemInfoProvider)
 
-	exportModeProvider := export.NewMultinodeExportModeProvider(m.config.Namespace, configMaps, dogus, services, endpoints)
+	exportModeProvider := export.NewMultinodeExportModeProvider(m.config.Namespace, configMaps, dogus, services)
 	exportModeController := export.NewController(exportModeProvider)
 
 	// start cron job for setting export mode. See env variable "EXPORT_CRON" for timetable

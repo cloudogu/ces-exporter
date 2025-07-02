@@ -4,17 +4,25 @@ import (
 	"context"
 	"fmt"
 	doguv2 "github.com/cloudogu/k8s-dogu-operator/v3/api/v2"
+	"github.com/cloudogu/k8s-registry-lib/repository"
 	apiCorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/watch"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"log/slog"
+	"strings"
 	"time"
 )
 
 const (
-	cesDoguExporter = "ces-exporter-dogu-exporter"
+	cesDoguExporter            = "ces-exporter-dogu-exporter"
+	globalConfigKeyFqdn        = "/fqdn"
+	maxTriesWaitForDoguSidecar = 10
+	waitTimeForDoguSidecar     = 1 * time.Second
 )
+
+var getMaxTriesWaitForDoguSidecar = func() int {
+	return maxTriesWaitForDoguSidecar
+}
 
 type configMaps interface {
 	corev1.ConfigMapInterface
@@ -31,8 +39,8 @@ type serviceClient interface {
 	Update(ctx context.Context, service *apiCorev1.Service, opts metav1.UpdateOptions) (*apiCorev1.Service, error)
 }
 
-type endpointsClient interface {
-	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
+type sshBannerReader interface {
+	readSSHBanner(address string) (string, error)
 }
 
 type MultinodeExportModeProvider struct {
@@ -40,16 +48,16 @@ type MultinodeExportModeProvider struct {
 	configMaps      configMaps
 	doguclient      doguClient
 	serviceclient   serviceClient
-	endpointsclient endpointsClient
+	sshBannerReader sshBannerReader
 }
 
-func NewMultinodeExportModeProvider(namespace string, configMaps configMaps, ecosystemDoguClient doguClient, serviceClient serviceClient, endpointsClient endpointsClient) *MultinodeExportModeProvider {
+func NewMultinodeExportModeProvider(namespace string, configMaps configMaps, ecosystemDoguClient doguClient, serviceClient serviceClient) *MultinodeExportModeProvider {
 	return &MultinodeExportModeProvider{
 		namespace:       namespace,
 		configMaps:      configMaps,
 		doguclient:      ecosystemDoguClient,
 		serviceclient:   serviceClient,
-		endpointsclient: endpointsClient,
+		sshBannerReader: &defaultSshBannerReader{},
 	}
 }
 
@@ -75,7 +83,7 @@ func (m MultinodeExportModeProvider) SetExportDogu(ctx context.Context, doguName
 
 	_, err := m.doguclient.Get(ctx, doguName, metav1.GetOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("could not get dogu resource for current export dogu: %s", err)
+		return nil, fmt.Errorf("could not get dogu resource for current export dogu: %w", err)
 	}
 
 	_, err = m.serviceclient.Update(ctx, service, metav1.UpdateOptions{})
@@ -83,7 +91,13 @@ func (m MultinodeExportModeProvider) SetExportDogu(ctx context.Context, doguName
 		return nil, fmt.Errorf("failed to update exporter service: %w", err)
 	}
 
-	if err := m.waitForServiceEndpoints(ctx, service); err != nil {
+	fqdn, err := m.getFqdn(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fqdn while setting export-mode: %w", err)
+	}
+	externalExporterAddress := fmt.Sprintf("%s:%d", fqdn, port.Port)
+
+	if err := m.waitForDoguSidecar(externalExporterAddress, doguName, getMaxTriesWaitForDoguSidecar(), waitTimeForDoguSidecar); err != nil {
 		return nil, fmt.Errorf("failed to wait for endpoints to update: %w", err)
 	}
 
@@ -95,40 +109,47 @@ func (m MultinodeExportModeProvider) SetExportDogu(ctx context.Context, doguName
 	return dE, nil
 }
 
-func (m MultinodeExportModeProvider) waitForServiceEndpoints(ctx context.Context, service *apiCorev1.Service) error {
-	slog.Debug("start waiting for endpoints to update", "service", service.Name)
-	endpointsWatcher, err := m.endpointsclient.Watch(ctx, metav1.ListOptions{
-		FieldSelector: fmt.Sprintf("metadata.name=%s", service.Name),
-	})
-	if err != nil {
-		return fmt.Errorf("failed to start watch on endpoints: %w", err)
-	}
-	defer endpointsWatcher.Stop()
-
-	timeoutCh := time.After(time.Second * 10)
-	for {
-		select {
-		case event := <-endpointsWatcher.ResultChan():
-			if event.Type == watch.Error {
-				return fmt.Errorf("watch error occurred watching endpoints: %s", event.Object)
-			}
-			if ep, ok := event.Object.(*apiCorev1.Endpoints); ok {
-				// Check if any address is available
-				for _, subset := range ep.Subsets {
-					if len(subset.Addresses) > 0 {
-						slog.Debug("endpoints available", "service", service.Name, "subset", subset.Addresses[0].TargetRef.Name)
-						return nil
-					}
-				}
-			}
-		case <-timeoutCh:
-			return fmt.Errorf("timeout waiting for endpoints to update for service %s", service.Name)
+// waitForDoguSidecar tries to connect to the SSH server through the exposed port
+// and tries up to maxTries for the SSH banner to contain the doguName substring.
+func (m MultinodeExportModeProvider) waitForDoguSidecar(address string, doguName string, maxTries int, waitTime time.Duration) error {
+	slog.Debug("start waiting for exporter-sidecar for dogu", "dogu", doguName, "address", address)
+	for i := 0; i < maxTries; i++ {
+		banner, err := m.sshBannerReader.readSSHBanner(address)
+		if err != nil {
+			slog.Debug("failed to get ssh-banner, retrying...", "dogu", doguName, "error", err)
+			time.Sleep(waitTime)
+			continue
 		}
+
+		if strings.Contains(banner, doguName) {
+			slog.Debug("successfully found exporter-sidecar for dogu", "dogu", doguName, "address", address)
+			return nil
+		}
+
+		slog.Debug("ssh-banner did not match dogu-name, retrying...", "banner", banner, "dogu", doguName)
+		time.Sleep(waitTime)
 	}
+
+	return fmt.Errorf("maxTries [%d] reached while waiting for exporter-sidecar for dogu %q", maxTries, doguName)
+}
+
+func (m *MultinodeExportModeProvider) getFqdn(ctx context.Context) (string, error) {
+	globalConfigRepo := repository.NewGlobalConfigRepository(m.configMaps)
+
+	globalConfig, err := globalConfigRepo.Get(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get global config: %w", err)
+	}
+
+	value, exists := globalConfig.Get(globalConfigKeyFqdn)
+	if !exists {
+		return "", fmt.Errorf("critical error: no fqdn is configured in registry")
+	}
+
+	return value.String(), nil
 }
 
 func (m MultinodeExportModeProvider) GetExportMode(ctx context.Context) (*exportModeStatus, error) {
-
 	dogus, err := m.doguclient.List(ctx, metav1.ListOptions{})
 
 	if err != nil {
@@ -144,5 +165,4 @@ func (m MultinodeExportModeProvider) GetExportMode(ctx context.Context) (*export
 
 	// since we did not step out until now - the global export-mode-status is true
 	return &exportModeStatus{IsActive: true}, nil
-
 }
