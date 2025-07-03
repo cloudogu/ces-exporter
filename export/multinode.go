@@ -85,7 +85,6 @@ func (m MultinodeExportModeProvider) SetExportDogu(ctx context.Context, doguName
 }
 
 func (m MultinodeExportModeProvider) GetExportMode(ctx context.Context) (*exportModeStatus, error) {
-
 	dogus, err := m.doguclient.List(ctx, metav1.ListOptions{})
 
 	if err != nil {
@@ -93,7 +92,7 @@ func (m MultinodeExportModeProvider) GetExportMode(ctx context.Context) (*export
 	}
 
 	for _, d := range dogus.Items {
-		if !d.Spec.ExportMode {
+		if !d.Status.ExportMode || d.Status.Health != doguv2.AvailableHealthStatus {
 			// if just one dogu is not in export mode, the global export-mode-status is false
 			return &exportModeStatus{IsActive: false}, nil
 		}
@@ -101,5 +100,4 @@ func (m MultinodeExportModeProvider) GetExportMode(ctx context.Context) (*export
 
 	// since we did not step out until now - the global export-mode-status is true
 	return &exportModeStatus{IsActive: true}, nil
-
 }
