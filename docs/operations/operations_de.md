@@ -1,0 +1,1 @@
+> Das Benutzerhandbuch des CES-Exporter ist als Teil des Benutzerhandbuchs der automatischen Migration auf [docs.cloudogu.com](https://docs.cloudogu.com/de/usermanual/automatic_migration/how_to_guides/install_ces_vm_exporter/) zu finden.

@@ -11,6 +11,10 @@ import (
 	"log/slog"
 )
 
+const (
+	cesExporterName = "ces-exporter"
+)
+
 type configMaps interface {
 	corev1.ConfigMapInterface
 }
@@ -52,10 +56,14 @@ func (m *MultinodeSystemInfoProvider) getComponents(ctx context.Context) ([]comp
 	}
 
 	for _, c := range componentsList.Items {
-		slog.Debug(fmt.Sprintf("found component %s in version %s installed", c.Spec.Name, c.Spec.Version))
+		if c.Spec.Name == cesExporterName {
+			// skip ces-exporter, otherwise the target instance tries to validate that the ces-exporter is installed
+			continue
+		}
+		slog.Debug(fmt.Sprintf("found component %s in version %s installed", c.Spec.Name, c.Status.InstalledVersion))
 		components = append(components, component{
 			Name:    c.Spec.Name,
-			Version: c.Spec.Version,
+			Version: c.Status.InstalledVersion,
 		})
 	}
 

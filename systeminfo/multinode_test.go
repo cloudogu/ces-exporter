@@ -25,10 +25,12 @@ func TestMultinodeSystemInfoProvider(t *testing.T) {
 			lister.EXPECT().List(mock.Anything, mock.Anything).Return(&v1.ComponentList{
 				Items: []v1.Component{
 					{
-						Spec: v1.ComponentSpec{Name: "c1", Version: "v1"},
+						Spec:   v1.ComponentSpec{Name: "c1", Version: "v1"},
+						Status: v1.ComponentStatus{InstalledVersion: "v1"},
 					},
 					{
-						Spec: v1.ComponentSpec{Name: "c2", Version: "v2"},
+						Spec:   v1.ComponentSpec{Name: "c2", Version: "v2"},
+						Status: v1.ComponentStatus{InstalledVersion: "v2"},
 					},
 				},
 			}, nil)
@@ -52,6 +54,30 @@ func TestMultinodeSystemInfoProvider(t *testing.T) {
 			components, err := provider.getComponents(context.Background())
 			assert.Error(t, err)
 			assert.Nil(t, components)
+		})
+
+		t.Run("skips ces exporter component", func(t *testing.T) {
+			lister := newMockComponentLister(t)
+			lister.EXPECT().List(mock.Anything, mock.Anything).Return(&v1.ComponentList{
+				Items: []v1.Component{
+					{
+						Spec:   v1.ComponentSpec{Name: "c1", Version: "v1"},
+						Status: v1.ComponentStatus{InstalledVersion: "v1"},
+					},
+					{
+						Spec: v1.ComponentSpec{Name: "ces-exporter", Version: "v2"},
+					},
+				},
+			}, nil)
+			provider := NewMultinodeSystemInfoProvider(nil, nil, "", lister)
+
+			expectedComponents := []component{
+				{Name: "c1", Version: "v1"},
+			}
+			components, err := provider.getComponents(context.Background())
+			assert.NoError(t, err)
+
+			assert.Equal(t, expectedComponents, components)
 		})
 	})
 

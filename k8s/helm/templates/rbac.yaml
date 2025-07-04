@@ -48,6 +48,14 @@ rules:
       - get
       - update
   - apiGroups:
+      - ""
+    resources:
+      - endpoints
+    verbs:
+      - list
+      - get
+      - watch
+  - apiGroups:
       - k8s.cloudogu.com
     resources:
       - dogus
