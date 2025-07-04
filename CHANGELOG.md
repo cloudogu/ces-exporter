@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Fixed
 - [#43] Exclude ces-exporter from multinode system info 
+- [#45] checking dogu health when checking export-mode
 - [#47] Use correct data-path for export-dogu
 - [#47] Wait for sidecar-container of export-service to be available when changing the service
 

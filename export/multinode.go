@@ -157,7 +157,7 @@ func (m MultinodeExportModeProvider) GetExportMode(ctx context.Context) (*export
 	}
 
 	for _, d := range dogus.Items {
-		if !d.Spec.ExportMode {
+		if !d.Status.ExportMode || d.Status.Health != doguv2.AvailableHealthStatus {
 			// if just one dogu is not in export mode, the global export-mode-status is false
 			return &exportModeStatus{IsActive: false}, nil
 		}
