@@ -4,10 +4,22 @@ import (
 	"context"
 	"fmt"
 	"github.com/cloudogu/ces-exporter/core"
+	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"log/slog"
 )
 
 var _ Provider = (*MultinodeProvider)(nil)
+
+type secretRepository interface {
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*corev1.Secret, error)
+}
+
+const (
+	ecosystemCertificateSecretName = "ecosystem-certificate"
+	globalConfigCertificateKeyName = "certificate/server.key"
+	certificateKeyName             = "tls.key"
+)
 
 type MultinodeProvider struct {
 	namespace           string
@@ -16,6 +28,7 @@ type MultinodeProvider struct {
 	globalConfigRepo    globalConfigRepository
 	doguVersionRegistry doguVersionRegistry
 	client              backupScheduleRuntimeClient
+	secretRepository    secretRepository
 }
 
 func NewMultinodeConfigurationProvider(
@@ -25,6 +38,7 @@ func NewMultinodeConfigurationProvider(
 	globalConfigRepo globalConfigRepository,
 	doguVersionRegistry doguVersionRegistry,
 	client backupScheduleRuntimeClient,
+	secretRepo secretRepository,
 ) *MultinodeProvider {
 	return &MultinodeProvider{
 		namespace:           namespace,
@@ -33,6 +47,7 @@ func NewMultinodeConfigurationProvider(
 		globalConfigRepo:    globalConfigRepo,
 		client:              client,
 		doguVersionRegistry: doguVersionRegistry,
+		secretRepository:    secretRepo,
 	}
 }
 
@@ -49,6 +64,20 @@ func (c MultinodeProvider) getGlobalConfigs(ctx context.Context) ([]core.KeyValu
 			Value: v.String(),
 		})
 	}
+
+	// get certificate/server.key
+	cert, err := c.secretRepository.Get(ctx, ecosystemCertificateSecretName, v1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("Unable to get %s secret to include certificate key in config: %w", ecosystemCertificateSecretName, err)
+	}
+
+	for s := range cert.Data {
+		slog.Warn(fmt.Sprintf("secretkeys: %s", s))
+	}
+	globalConfigs = append(globalConfigs, core.KeyValue{
+		Key:   globalConfigCertificateKeyName,
+		Value: string(cert.Data[certificateKeyName]),
+	})
 
 	return globalConfigs, nil
 }

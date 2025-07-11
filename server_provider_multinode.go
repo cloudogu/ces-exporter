@@ -94,6 +94,7 @@ func (m *multinodeControllerProvider) createControllers(_ context.Context) (*sys
 		globalConfigRepo,
 		doguVersionReg,
 		m.bclient,
+		secrets,
 	)
 	configController := configuration.NewController(configurationProvider)
 
