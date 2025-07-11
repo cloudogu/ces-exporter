@@ -71,9 +71,6 @@ func (c MultinodeProvider) getGlobalConfigs(ctx context.Context) ([]core.KeyValu
 		return nil, fmt.Errorf("Unable to get %s secret to include certificate key in config: %w", ecosystemCertificateSecretName, err)
 	}
 
-	for s := range cert.Data {
-		slog.Warn(fmt.Sprintf("secretkeys: %s", s))
-	}
 	globalConfigs = append(globalConfigs, core.KeyValue{
 		Key:   globalConfigCertificateKeyName,
 		Value: string(cert.Data[certificateKeyName]),
