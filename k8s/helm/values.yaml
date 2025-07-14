@@ -6,7 +6,7 @@ global:
 image:
   registry: docker.io
   repository: cloudogu/ces-exporter
-  tag: 1.1.0
+  tag: 1.1.1
 imagePullPolicy: IfNotPresent
 env:
   logLevel: info
