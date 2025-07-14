@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.1.1] - 2025-07-14
+### Fixed
+- [#53] Include certificate key in global config in mn
+
 ## [v1.1.0] - 2025-07-04
 ### Fixed
 - [#43] Exclude ces-exporter from multinode system info 
