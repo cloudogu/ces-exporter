@@ -7,7 +7,7 @@ metavalues:
     keys:
       - path: env.logLevel
         mapping:
-          debug: trace
-          info: info
-          warn: warn
-          error: error
+          debug: DEBUG
+          info: INFO
+          warn: WARN
+          error: ERROR

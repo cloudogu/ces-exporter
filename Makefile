@@ -1,10 +1,9 @@
 ARTIFACT_ID=ces-exporter
-MAKEFILES_VERSION=9.9.1
+MAKEFILES_VERSION=10.2.0
 VERSION=1.1.1
 
 GOTAG=1.24.2
 MOCKERY_VERSION=v2.53.0
-LINT_VERSION?=v1.64.2
 .DEFAULT_GOAL:=help
 
 ## Image URL to use all building/pushing image targets
