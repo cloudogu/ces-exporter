@@ -7,7 +7,7 @@ docker image load -i /tmp/exporter-image.tar
 rm -f /tmp/exporter-image.tar
 
 
-if dpkg-query -W ufw &> /dev/null; then
+if command -v ufw &> /dev/null; then
   ufw allow 7022
 else
   echo "The ufw package is not installed. Make sure to manually allow access to port 7022"
