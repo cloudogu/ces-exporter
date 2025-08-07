@@ -12,7 +12,7 @@ etcdctl rm -r /services/ces-exporter-22
 etcdctl rm -r /services/ces-exporter-8080
 etcdctl rm -r /services/ces-exporter
 
-if dpkg-query -W ufw &> /dev/null; then
+if command -v ufw &> /dev/null; then
   ufw delete allow 7022
 else
   echo "The ufw package is not installed. Make sure to manually remove access to port 7022"
