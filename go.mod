@@ -12,7 +12,8 @@ require (
 	github.com/cloudogu/k8s-component-operator v1.7.0
 	github.com/cloudogu/k8s-dogu-operator/v3 v3.4.0
 	github.com/cloudogu/k8s-registry-lib v0.5.1
-	github.com/docker/docker v27.5.0+incompatible
+	github.com/docker/docker v28.5.2+incompatible
+	github.com/moby/moby v28.5.2+incompatible
 	github.com/stretchr/testify v1.10.0
 	go.etcd.io/etcd/client/v2 v2.305.18
 	k8s.io/api v0.32.3

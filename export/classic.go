@@ -3,20 +3,20 @@ package export
 import (
 	"context"
 	"fmt"
-	"github.com/cloudogu/ces-exporter/core"
-	"github.com/cloudogu/ces-exporter/etcd"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
 	"log/slog"
 	"path"
 	"strings"
+
+	"github.com/cloudogu/ces-exporter/core"
+	"github.com/cloudogu/ces-exporter/etcd"
+	"github.com/docker/docker/api/types/container"
+	"github.com/moby/moby/client"
 )
 
 type execClient interface {
 	GetAllDogus() ([]string, error)
-	ContainerList(ctx context.Context, options container.ListOptions) ([]types.Container, error)
-	ContainerInspect(ctx context.Context, containerID string) (types.ContainerJSON, error)
+	ContainerList(ctx context.Context, options container.ListOptions) ([]container.Summary, error)
+	ContainerInspect(ctx context.Context, containerID string) (container.InspectResponse, error)
 }
 
 type ExecClient struct{}
@@ -131,7 +131,7 @@ func (e *ExecClient) GetAllDogus() ([]string, error) {
 	return etcd.GetAllDogus()
 }
 
-func (e *ExecClient) ContainerList(ctx context.Context, options container.ListOptions) ([]types.Container, error) {
+func (e *ExecClient) ContainerList(ctx context.Context, options container.ListOptions) ([]container.Summary, error) {
 	// Get Docker client
 	docker, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
@@ -140,7 +140,7 @@ func (e *ExecClient) ContainerList(ctx context.Context, options container.ListOp
 	return docker.ContainerList(ctx, container.ListOptions{})
 }
 
-func (e *ExecClient) ContainerInspect(ctx context.Context, containerID string) (types.ContainerJSON, error) {
+func (e *ExecClient) ContainerInspect(ctx context.Context, containerID string) (container.InspectResponse, error) {
 	// Get Docker client
 	docker, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
