@@ -92,7 +92,7 @@ func (c *ClassicExportModeProvider) GetExportMode(ctx context.Context) (*exportM
 		}
 
 		slog.Info(fmt.Sprintf("%s: %s", dogu, cj.Container.State.Health.Status))
-		if "healthy" != cj.Container.State.Health.Status {
+		if cj.Container.State.Health.Status != "healthy" {
 			healthy = false
 			// break on first unhealthy dogu
 			slog.Warn(fmt.Sprintf("dogu %s is %s", dogu, cj.Container.State.Health.Status))
