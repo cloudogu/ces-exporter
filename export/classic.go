@@ -9,14 +9,13 @@ import (
 
 	"github.com/cloudogu/ces-exporter/core"
 	"github.com/cloudogu/ces-exporter/etcd"
-	"github.com/docker/docker/api/types/container"
 	"github.com/moby/moby/client"
 )
 
 type execClient interface {
 	GetAllDogus() ([]string, error)
-	ContainerList(ctx context.Context, options container.ListOptions) ([]container.Summary, error)
-	ContainerInspect(ctx context.Context, containerID string) (container.InspectResponse, error)
+	ContainerList(ctx context.Context, options client.ContainerListOptions) (client.ContainerListResult, error)
+	ContainerInspect(ctx context.Context, containerID string) (client.ContainerInspectResult, error)
 }
 
 type ExecClient struct{}
@@ -71,8 +70,8 @@ func (c *ClassicExportModeProvider) GetExportMode(ctx context.Context) (*exportM
 
 	// Filter dogus that are installed but not started - nether healthy nor unhealthy
 	var dockercontainers = make(map[string]bool)
-	containers, _ := c.execClient.ContainerList(ctx, container.ListOptions{})
-	for _, con := range containers {
+	containers, _ := c.execClient.ContainerList(ctx, client.ContainerListOptions{})
+	for _, con := range containers.Items {
 		containername := strings.Split(strings.Join(con.Names, ","), "/")[1]
 		dockercontainers[containername] = true
 	}
@@ -92,11 +91,11 @@ func (c *ClassicExportModeProvider) GetExportMode(ctx context.Context) (*exportM
 			break
 		}
 
-		slog.Info(fmt.Sprintf("%s: %s", dogu, cj.State.Health.Status))
-		if "healthy" != cj.State.Health.Status {
+		slog.Info(fmt.Sprintf("%s: %s", dogu, cj.Container.State.Health.Status))
+		if "healthy" != cj.Container.State.Health.Status {
 			healthy = false
 			// break on first unhealthy dogu
-			slog.Warn(fmt.Sprintf("dogu %s is %s", dogu, cj.State.Health.Status))
+			slog.Warn(fmt.Sprintf("dogu %s is %s", dogu, cj.Container.State.Health.Status))
 			break
 		}
 	}
@@ -131,20 +130,20 @@ func (e *ExecClient) GetAllDogus() ([]string, error) {
 	return etcd.GetAllDogus()
 }
 
-func (e *ExecClient) ContainerList(ctx context.Context, options container.ListOptions) ([]container.Summary, error) {
+func (e *ExecClient) ContainerList(ctx context.Context, options client.ContainerListOptions) (client.ContainerListResult, error) {
 	// Get Docker client
-	docker, err := client.NewClientWithOpts(client.FromEnv)
+	docker, err := client.New(client.FromEnv)
 	if err != nil {
 		slog.Error("error getting docker client", "err", err)
 	}
-	return docker.ContainerList(ctx, container.ListOptions{})
+	return docker.ContainerList(ctx, options)
 }
 
-func (e *ExecClient) ContainerInspect(ctx context.Context, containerID string) (container.InspectResponse, error) {
+func (e *ExecClient) ContainerInspect(ctx context.Context, containerID string) (client.ContainerInspectResult, error) {
 	// Get Docker client
-	docker, err := client.NewClientWithOpts(client.FromEnv)
+	docker, err := client.New(client.FromEnv)
 	if err != nil {
 		slog.Error("error getting docker client", "err", err)
 	}
-	return docker.ContainerInspect(ctx, containerID)
+	return docker.ContainerInspect(ctx, containerID, client.ContainerInspectOptions{})
 }
