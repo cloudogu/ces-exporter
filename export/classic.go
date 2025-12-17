@@ -12,6 +12,10 @@ import (
 	"github.com/moby/moby/client"
 )
 
+const (
+	dockerClientGetErrFmt = "failed to get docker client: %w"
+)
+
 type execClient interface {
 	GetAllDogus() ([]string, error)
 	ContainerList(ctx context.Context, options client.ContainerListOptions) (client.ContainerListResult, error)
@@ -70,7 +74,10 @@ func (c *ClassicExportModeProvider) GetExportMode(ctx context.Context) (*exportM
 
 	// Filter dogus that are installed but not started - nether healthy nor unhealthy
 	var dockercontainers = make(map[string]bool)
-	containers, _ := c.execClient.ContainerList(ctx, client.ContainerListOptions{})
+	containers, err := c.execClient.ContainerList(ctx, client.ContainerListOptions{})
+	if err != nil {
+		return nil, err
+	}
 	for _, con := range containers.Items {
 		containername := strings.Split(strings.Join(con.Names, ","), "/")[1]
 		dockercontainers[containername] = true
@@ -134,7 +141,7 @@ func (e *ExecClient) ContainerList(ctx context.Context, options client.Container
 	// Get Docker client
 	docker, err := client.New(client.FromEnv)
 	if err != nil {
-		slog.Error("error getting docker client", "err", err)
+		return client.ContainerListResult{}, fmt.Errorf(dockerClientGetErrFmt, err)
 	}
 	return docker.ContainerList(ctx, options)
 }
@@ -143,7 +150,7 @@ func (e *ExecClient) ContainerInspect(ctx context.Context, containerID string) (
 	// Get Docker client
 	docker, err := client.New(client.FromEnv)
 	if err != nil {
-		slog.Error("error getting docker client", "err", err)
+		return client.ContainerInspectResult{}, fmt.Errorf(dockerClientGetErrFmt, err)
 	}
 	return docker.ContainerInspect(ctx, containerID, client.ContainerInspectOptions{})
 }
