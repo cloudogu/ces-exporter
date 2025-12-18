@@ -3,11 +3,13 @@ package export
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/cloudogu/ces-exporter/core"
-	"github.com/docker/docker/api/types"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/client"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestCGetExportDogu(t *testing.T) {
@@ -62,19 +64,19 @@ func TestCGetExportMode(t *testing.T) {
 		execClient := newMockExecClient(t)
 
 		execClient.EXPECT().GetAllDogus().Return([]string{"test_A"}, nil)
-		execClient.EXPECT().ContainerList(mock.Anything, mock.Anything).Return([]types.Container{types.Container{
-			Names: []string{"/test_A"},
+		execClient.EXPECT().ContainerList(mock.Anything, mock.Anything).Return(client.ContainerListResult{Items: []container.Summary{
+			{Names: []string{"/test_A"}},
 		}}, nil)
-		var state = types.ContainerJSON{
-			ContainerJSONBase: &types.ContainerJSONBase{
-				State: &types.ContainerState{
-					Health: &types.Health{
+		var result = client.ContainerInspectResult{
+			Container: container.InspectResponse{
+				State: &container.State{
+					Health: &container.Health{
 						Status: "unknown",
 					},
 				},
 			},
 		}
-		execClient.EXPECT().ContainerInspect(mock.Anything, "test_A").Return(state, nil)
+		execClient.EXPECT().ContainerInspect(mock.Anything, "test_A").Return(result, nil)
 
 		provider := ClassicExportModeProvider{config: config, execClient: execClient}
 
@@ -87,19 +89,19 @@ func TestCGetExportMode(t *testing.T) {
 		execClient := newMockExecClient(t)
 
 		execClient.EXPECT().GetAllDogus().Return([]string{"test_A", "test_B"}, nil)
-		execClient.EXPECT().ContainerList(mock.Anything, mock.Anything).Return([]types.Container{types.Container{
-			Names: []string{"/test_A"},
+		execClient.EXPECT().ContainerList(mock.Anything, mock.Anything).Return(client.ContainerListResult{Items: []container.Summary{
+			{Names: []string{"/test_A"}},
 		}}, nil)
-		var state = types.ContainerJSON{
-			ContainerJSONBase: &types.ContainerJSONBase{
-				State: &types.ContainerState{
-					Health: &types.Health{
+		var result = client.ContainerInspectResult{
+			Container: container.InspectResponse{
+				State: &container.State{
+					Health: &container.Health{
 						Status: "healthy",
 					},
 				},
 			},
 		}
-		execClient.EXPECT().ContainerInspect(mock.Anything, "test_A").Return(state, nil)
+		execClient.EXPECT().ContainerInspect(mock.Anything, "test_A").Return(result, nil)
 
 		provider := ClassicExportModeProvider{config: config, execClient: execClient}
 
@@ -124,11 +126,11 @@ func TestCGetExportMode(t *testing.T) {
 		execClient := newMockExecClient(t)
 
 		execClient.EXPECT().GetAllDogus().Return([]string{"test_A", "test_B"}, nil)
-		execClient.EXPECT().ContainerList(mock.Anything, mock.Anything).Return([]types.Container{types.Container{
-			Names: []string{"/test_A"},
+		execClient.EXPECT().ContainerList(mock.Anything, mock.Anything).Return(client.ContainerListResult{Items: []container.Summary{
+			{Names: []string{"/test_A"}},
 		}}, nil)
 
-		execClient.EXPECT().ContainerInspect(mock.Anything, "test_A").Return(types.ContainerJSON{}, fmt.Errorf("testerror"))
+		execClient.EXPECT().ContainerInspect(mock.Anything, "test_A").Return(client.ContainerInspectResult{}, fmt.Errorf("testerror"))
 
 		provider := ClassicExportModeProvider{config: config, execClient: execClient}
 

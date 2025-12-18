@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.3.0] - 2025-12-18
+### Changed
+- [#57] Added support for Docker v29
+
 ## [v1.2.1] - 2025-08-07
 ### Fixed
 - [#55] ufw-check in post-install script
