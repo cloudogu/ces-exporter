@@ -8,7 +8,7 @@
 
 ################################################################################
 # Create a stage for building the application.
-ARG GO_VERSION=1.25.5
+ARG GO_VERSION=1.26.0
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION} AS build
 WORKDIR /workspace
 
@@ -39,7 +39,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 FROM alpine:3.21 AS classic
 LABEL maintainer="hello@cloudogu.com" \
       NAME="ces-exporter" \
-      VERSION="1.3.0"
+      VERSION="1.3.1"
 
 ENV MODE=classic
 
@@ -82,7 +82,7 @@ ENTRYPOINT ["/startup.sh"]
 FROM gcr.io/distroless/static:nonroot AS multinode
 LABEL maintainer="hello@cloudogu.com" \
       NAME="ces-exporter" \
-      VERSION="1.3.0"
+      VERSION="1.3.1"
 
 ENV MODE=multinode
 
