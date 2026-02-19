@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/adhocore/gronx/pkg/tasker"
 	"github.com/cloudogu/ces-exporter/core"
-	v2 "github.com/cloudogu/k8s-dogu-operator/v3/api/v2"
+	v2 "github.com/cloudogu/k8s-dogu-lib/v2/api/v2"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"log/slog"

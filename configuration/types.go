@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/ces-exporter/core"
-	bup "github.com/cloudogu/k8s-backup-operator/pkg/api/v1"
+	bup "github.com/cloudogu/k8s-backup-lib/api/v1"
 	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
