@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 > [!IMPORTANT]
 > Breaking change!
+> New compatible versions of k8s-service-discovery and k8s-ces-assets are required.
 
 ### Changed
 - [#99] Write maintenance mode to special `maintenance` ConfigMap
