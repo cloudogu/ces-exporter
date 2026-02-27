@@ -6,7 +6,6 @@ import (
 	context "context"
 
 	client "github.com/moby/moby/client"
-
 	mock "github.com/stretchr/testify/mock"
 )
 

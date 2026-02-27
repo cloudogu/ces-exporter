@@ -3,7 +3,7 @@ package core
 import (
 	"context"
 	"fmt"
-	bup "github.com/cloudogu/k8s-backup-operator/pkg/api/v1"
+	bup "github.com/cloudogu/k8s-backup-lib/api/v1"
 	rclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 

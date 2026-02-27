@@ -3,7 +3,7 @@
 package main
 
 import (
-	ecoSystem "github.com/cloudogu/k8s-dogu-operator/v3/api/ecoSystem"
+	client "github.com/cloudogu/k8s-dogu-lib/v2/client"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -21,19 +21,19 @@ func (_m *mockEcosystemDogusClient) EXPECT() *mockEcosystemDogusClient_Expecter 
 }
 
 // DoguRestarts provides a mock function with given fields: namespace
-func (_m *mockEcosystemDogusClient) DoguRestarts(namespace string) ecoSystem.DoguRestartInterface {
+func (_m *mockEcosystemDogusClient) DoguRestarts(namespace string) client.DoguRestartInterface {
 	ret := _m.Called(namespace)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DoguRestarts")
 	}
 
-	var r0 ecoSystem.DoguRestartInterface
-	if rf, ok := ret.Get(0).(func(string) ecoSystem.DoguRestartInterface); ok {
+	var r0 client.DoguRestartInterface
+	if rf, ok := ret.Get(0).(func(string) client.DoguRestartInterface); ok {
 		r0 = rf(namespace)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ecoSystem.DoguRestartInterface)
+			r0 = ret.Get(0).(client.DoguRestartInterface)
 		}
 	}
 
@@ -58,30 +58,30 @@ func (_c *mockEcosystemDogusClient_DoguRestarts_Call) Run(run func(namespace str
 	return _c
 }
 
-func (_c *mockEcosystemDogusClient_DoguRestarts_Call) Return(_a0 ecoSystem.DoguRestartInterface) *mockEcosystemDogusClient_DoguRestarts_Call {
+func (_c *mockEcosystemDogusClient_DoguRestarts_Call) Return(_a0 client.DoguRestartInterface) *mockEcosystemDogusClient_DoguRestarts_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *mockEcosystemDogusClient_DoguRestarts_Call) RunAndReturn(run func(string) ecoSystem.DoguRestartInterface) *mockEcosystemDogusClient_DoguRestarts_Call {
+func (_c *mockEcosystemDogusClient_DoguRestarts_Call) RunAndReturn(run func(string) client.DoguRestartInterface) *mockEcosystemDogusClient_DoguRestarts_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Dogus provides a mock function with given fields: namespace
-func (_m *mockEcosystemDogusClient) Dogus(namespace string) ecoSystem.DoguInterface {
+func (_m *mockEcosystemDogusClient) Dogus(namespace string) client.DoguInterface {
 	ret := _m.Called(namespace)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Dogus")
 	}
 
-	var r0 ecoSystem.DoguInterface
-	if rf, ok := ret.Get(0).(func(string) ecoSystem.DoguInterface); ok {
+	var r0 client.DoguInterface
+	if rf, ok := ret.Get(0).(func(string) client.DoguInterface); ok {
 		r0 = rf(namespace)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ecoSystem.DoguInterface)
+			r0 = ret.Get(0).(client.DoguInterface)
 		}
 	}
 
@@ -106,12 +106,12 @@ func (_c *mockEcosystemDogusClient_Dogus_Call) Run(run func(namespace string)) *
 	return _c
 }
 
-func (_c *mockEcosystemDogusClient_Dogus_Call) Return(_a0 ecoSystem.DoguInterface) *mockEcosystemDogusClient_Dogus_Call {
+func (_c *mockEcosystemDogusClient_Dogus_Call) Return(_a0 client.DoguInterface) *mockEcosystemDogusClient_Dogus_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *mockEcosystemDogusClient_Dogus_Call) RunAndReturn(run func(string) ecoSystem.DoguInterface) *mockEcosystemDogusClient_Dogus_Call {
+func (_c *mockEcosystemDogusClient_Dogus_Call) RunAndReturn(run func(string) client.DoguInterface) *mockEcosystemDogusClient_Dogus_Call {
 	_c.Call.Return(run)
 	return _c
 }
