@@ -3,17 +3,18 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
+
 	"github.com/cloudogu/ces-exporter/configuration"
 	"github.com/cloudogu/ces-exporter/core"
 	"github.com/cloudogu/ces-exporter/export"
 	"github.com/cloudogu/ces-exporter/maintenance"
 	"github.com/cloudogu/ces-exporter/systeminfo"
-	componentEcoClient "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
-	ecoSystemV2 "github.com/cloudogu/k8s-dogu-operator/v3/api/ecoSystem"
+	componentEcoClient "github.com/cloudogu/k8s-component-lib/client"
+	ecoSystemV2 "github.com/cloudogu/k8s-dogu-lib/v2/client"
 	libdogu "github.com/cloudogu/k8s-registry-lib/dogu"
 	"github.com/cloudogu/k8s-registry-lib/repository"
 	"k8s.io/client-go/kubernetes"
-	"log/slog"
 	ctrl "sigs.k8s.io/controller-runtime"
 	rclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -24,6 +25,7 @@ type multinodeControllerProvider struct {
 	client          kubernetesClient
 	config          *core.Configuration
 	bclient         *core.BackupScheduleRuntimeClient
+	rtclient        rclient.Client
 }
 
 func newMultinodeControllerProvider(config core.Configuration) (*multinodeControllerProvider, error) {
@@ -60,6 +62,7 @@ func newMultinodeControllerProvider(config core.Configuration) (*multinodeContro
 		client:          cl,
 		config:          &config,
 		bclient:         bclient,
+		rtclient:        rtclient,
 	}, nil
 }
 
@@ -98,7 +101,8 @@ func (m *multinodeControllerProvider) createControllers(_ context.Context) (*sys
 	)
 	configController := configuration.NewController(configurationProvider)
 
-	maintenanceModeProvider := maintenance.NewMultinodeProvider(globalConfigRepo)
+	maintenanceModeAdapter := repository.NewMaintenanceModeAdapter("ces-exporter", m.rtclient, m.config.Namespace)
+	maintenanceModeProvider := maintenance.NewMultinodeProvider(maintenanceModeAdapter)
 	maintenanceModeController := maintenance.NewController(maintenanceModeProvider)
 
 	return systemInfoController, configController, maintenanceModeController, exportModeController

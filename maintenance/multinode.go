@@ -3,73 +3,59 @@ package maintenance
 import (
 	"context"
 	"fmt"
-	"github.com/cloudogu/k8s-registry-lib/config"
 	"log/slog"
+
+	"github.com/cloudogu/k8s-registry-lib/repository"
 )
 
-const (
-	maintenanceModeKey = "maintenance"
-)
-
-type globalConfigRepo interface {
-	Get(ctx context.Context) (config.GlobalConfig, error)
-	Update(ctx context.Context, globalConfig config.GlobalConfig) (config.GlobalConfig, error)
-	Delete(ctx context.Context) error
+type maintenanceAdapter interface {
+	Activate(ctx context.Context, content repository.MaintenanceModeDescription, force bool) error
+	Deactivate(ctx context.Context, force bool) error
+	GetStatus(ctx context.Context) (repository.MaintenanceModeDescription, bool, error)
 }
 
 type MultinodeMaintenanceModeProvider struct {
-	globalConfigRepo globalConfigRepo
+	adapter maintenanceAdapter
 }
 
-func NewMultinodeProvider(repo globalConfigRepo) *MultinodeMaintenanceModeProvider {
-	return &MultinodeMaintenanceModeProvider{globalConfigRepo: repo}
+func NewMultinodeProvider(adapter maintenanceAdapter) *MultinodeMaintenanceModeProvider {
+	return &MultinodeMaintenanceModeProvider{adapter: adapter}
 }
 
 // SetMaintenanceMode activates or deactivates the maintenance mode by adding/removing the key maintenance to the global-config
 func (m MultinodeMaintenanceModeProvider) SetMaintenanceMode(mReq maintenanceModeRequest, ctx context.Context) (*MaintenanceModeStatus, error) {
-	globalConfig, err := m.globalConfigRepo.Get(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get global config: %w", err)
-	}
-
-	globalConfig.Delete(maintenanceModeKey)
 	if mReq.Activate {
-		jsonReq, err := BuildMaintenanceJSON(mReq)
+		err := m.adapter.Activate(ctx, repository.MaintenanceModeDescription{
+			Title: mReq.Message.Title,
+			Text:  mReq.Message.Text,
+		}, true)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("activate maintenance mode: %w", err)
 		}
-
-		_, err = globalConfig.Set(maintenanceModeKey, jsonReq)
+	} else {
+		err := m.adapter.Deactivate(ctx, true)
 		if err != nil {
-			return nil, fmt.Errorf("could not set maintenance mode: %w", err)
+			return nil, fmt.Errorf("deactivate maintenance mode: %w", err)
 		}
-	}
-
-	_, err = m.globalConfigRepo.Update(ctx, globalConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to update global config: %w", err)
 	}
 
 	status := &MaintenanceModeStatus{
 		IsActive: mReq.Activate,
 	}
 
-	slog.Info("Maintenance-Mode activated")
+	slog.Info("Maintenance-Mode set")
 	return status, nil
 }
 
 // GetMaintenanceMode Get maintenance mode by checking if key maintenance exists in global-config
 func (m MultinodeMaintenanceModeProvider) GetMaintenanceMode(ctx context.Context) (*MaintenanceModeStatus, error) {
-	globalConfig, err := m.globalConfigRepo.Get(ctx)
+	_, active, err := m.adapter.GetStatus(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get global config: %w", err)
+		return nil, fmt.Errorf("failed to get maintenance status: %w", err)
 	}
-
-	_, exists := globalConfig.Get(maintenanceModeKey)
 
 	status := &MaintenanceModeStatus{
-		IsActive: exists,
+		IsActive: active,
 	}
-
 	return status, nil
 }
