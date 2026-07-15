@@ -22,7 +22,7 @@ spec:
               kubernetes.io/metadata.name: {{ .Release.Namespace }}
           podSelector:
             matchLabels:
-              {{ toYaml .Values.networkPolicies.gateway.matchLabels | nindent 14 }}
+              {{ toYaml .Values.global.networkPolicies.gateway.matchLabels | nindent 14 }}
       ports:
         - port: 8080
           protocol: TCP
