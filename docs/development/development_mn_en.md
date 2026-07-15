@@ -26,6 +26,15 @@ The environment variable `IMPORTER_PUBLIC_KEY` can be used for development.
 The value of this variable is templated in the `values.yaml`.
 This environment variable can also be specified in the `.env` file.
 
+### Exposition-CRD
+To expose the exporter port, the component creates an Exposition-CR in the source system.
+This requires the corresponding CustomResourceDefinition to be installed.
+
+```bash
+# Installs the Exposition-CRD
+ helm install k8s-exposition-crd oci://registry.cloudogu.com/k8s/k8s-exposition-crd --version 1.0.0 --namespace ecosystem
+```
+
 ### Installation via helmet
 
 ```bash

@@ -27,6 +27,15 @@ Für die Entwicklung kann die Umgebungsvariable `IMPORTER_PUBLIC_KEY` verwendet 
 Der Wert dieser Variable wird in die `values.yaml` getemplatet.
 Diese Umgebungsvariable kann auch im `.env`-File angegeben werden.
 
+### Exposition-CRD
+Um den Exporter-Port freigeben zu können, erstellt die Komponente im Quellsystem einen Exposition-CR.
+Hierfür muss auch die entprechende CRD installiert sein.
+
+```bash
+# Installiert die Exposition-CRD
+ helm install k8s-exposition-crd oci://registry.cloudogu.com/k8s/k8s-exposition-crd --version 1.0.0 --namespace ecosystem
+```
+
 ### Installation per Helm
 
 ```bash

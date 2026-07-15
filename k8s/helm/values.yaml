@@ -1,6 +1,9 @@
 global:
   networkPolicies:
     enabled: true
+    gateway:
+      matchLabels:
+        k8s.cloudogu.com/component.name: k8s-ces-gateway
   imagePullSecrets:
     - name: "ces-container-registries"
 image:
