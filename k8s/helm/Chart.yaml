@@ -27,3 +27,6 @@ annotations:
   # Dependency for the Exposition CRD.
   # Allow all versions up to next major version to avoid breaking changes
   "k8s.cloudogu.com/ces-dependency/k8s-exposition-crd": "1.x.x-0"
+  # Dependency for the traefik gateway.
+  # Allow all versions up to next major version to avoid breaking changes
+  "k8s.cloudogu.com/ces-dependency/k8s-ces-gateway": "3.x.x-0"
