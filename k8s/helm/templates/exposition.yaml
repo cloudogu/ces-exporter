@@ -2,7 +2,6 @@ apiVersion: k8s.cloudogu.com/v1
 kind: Exposition
 metadata:
   name: {{ include "ces-exporter.name" . }}-exposition
-  namespace: ecosystem
 spec:
   http:
     - name: {{ include "ces-exporter.name" . }}-http
