@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - [#64] Add exposition to open port 7022 for Multinode-Multinode Migrations
+- [#64] Added RBACs to create configmaps, to be able to enable the maintenance mode when the configmap is not present 
+
+### Fixed
 
 ## [v2.0.0] - 2026-02-27
 > [!IMPORTANT]

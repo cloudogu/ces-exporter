@@ -3,7 +3,7 @@ The `ces-exporter` for Multinode CES is a CES component that provides the data o
 
 ## Migration procedure
 The basic migration process from one multinode CES instance to another multinode CES instance is described in the following diagram:
-![Migration CES MN -> CES MN](./migration_mn-mn.png)
+[Migration CES MN -> CES MN](https://docs.cloudogu.com/en/usermanual/automatic_migration/reference/migration_flow/#migration-ces-mn---ces-mn)
 
 ## API of the CES exporter
 The API of the `ces-exporter` is described in the following OpenAPI specification: [openapi.yaml](./openapi.yaml)
@@ -33,6 +33,18 @@ This requires the corresponding CustomResourceDefinition to be installed.
 ```bash
 # Installs the Exposition-CRD
  helm install k8s-exposition-crd oci://registry.cloudogu.com/k8s/k8s-exposition-crd --version 1.0.0 --namespace ecosystem
+```
+
+or via component-yaml:
+```yaml
+apiVersion: k8s.cloudogu.com/v1
+kind: Component
+metadata:
+  name: k8s-exposition-crd
+spec:
+  name: k8s-exposition-crd
+  namespace: k8s
+  version: 1.0.0
 ```
 
 ### Installation via helmet
