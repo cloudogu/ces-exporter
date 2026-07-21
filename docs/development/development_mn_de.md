@@ -27,7 +27,9 @@ Für die Entwicklung kann die Umgebungsvariable `IMPORTER_PUBLIC_KEY` verwendet 
 Der Wert dieser Variable wird in die `values.yaml` getemplatet.
 Diese Umgebungsvariable kann auch im `.env`-File angegeben werden.
 
-### Exposition-CRD
+### Abhängigkeiten
+
+#### Exposition-CRD
 Um den Exporter-Port freigeben zu können, erstellt die Komponente im Quellsystem einen Exposition-CR.
 Hierfür muss auch die entprechende CRD installiert sein.
 
@@ -46,6 +48,39 @@ spec:
   name: k8s-exposition-crd
   namespace: k8s
   version: 1.0.0
+```
+
+#### K8s-Service-Discovery
+Stelle sicher, dass die K8s-Service-Discovery in einer Version >= 6.1.0 installiert und für Exposition-CRs konfiguriert ist, damit der SSH-Port des Exporters die erforderlichen Ressourcen erhält.
+
+```yaml
+apiVersion: k8s.cloudogu.com/v1
+kind: Component
+metadata:
+  name: k8s-service-discovery
+  namespace: ecosystem
+spec:
+  name: k8s-service-discovery
+  namespace: k8s
+  version: 6.1.0
+  valuesYamlOverwrite: |-
+    exposition:
+      discoverExpositionCR: true
+```
+
+#### K8s-Ces-Gateway
+Das K8s-Ces-Gateway wird benötigt, um den SSH-Port des Exporters freizugeben. Dies ist ab Version `3.3.3` statisch konfiguriert.
+
+```yaml
+apiVersion: k8s.cloudogu.com/v1
+kind: Component
+metadata:
+  name: k8s-ces-gateway
+  namespace: ecosystem
+spec:
+  name: k8s-ces-gateway
+  namespace: k8s
+  version: 3.3.3
 ```
 
 ### Installation per Helm

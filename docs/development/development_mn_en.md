@@ -26,7 +26,9 @@ The environment variable `IMPORTER_PUBLIC_KEY` can be used for development.
 The value of this variable is templated in the `values.yaml`.
 This environment variable can also be specified in the `.env` file.
 
-### Exposition-CRD
+### Dependencies
+
+#### Exposition-CRD
 To expose the exporter port, the component creates an Exposition-CR in the source system.
 This requires the corresponding CustomResourceDefinition to be installed.
 
@@ -47,7 +49,40 @@ spec:
   version: 1.0.0
 ```
 
-### Installation via helmet
+#### K8s-Service-Discovery
+Ensure that the K8s-Service-Discovery is installed in a version >= 6.1.0 and configured for exposition-CRs, so that the ssh port of the exporter will get needed resources.
+
+```yaml
+apiVersion: k8s.cloudogu.com/v1
+kind: Component
+metadata:
+  name: k8s-service-discovery
+  namespace: ecosystem
+spec:
+  name: k8s-service-discovery
+  namespace: k8s
+  version: 6.1.0
+  valuesYamlOverwrite: |-
+    exposition:
+      discoverExpositionCR: true
+```
+
+#### K8s-Ces-Gateway
+The K8s-Ces-Gateway is required to expose the exporter ssh port. This is statically configured in the version `3.3.3` and above.
+
+```yaml
+apiVersion: k8s.cloudogu.com/v1
+kind: Component
+metadata:
+  name: k8s-ces-gateway
+  namespace: ecosystem
+spec:
+  name: k8s-ces-gateway
+  namespace: k8s
+  version: 3.3.3
+```
+
+### Installation via helm
 
 ```bash
 # Installs the Helm chart from ces-exporter in the cluster (without the CES component)
