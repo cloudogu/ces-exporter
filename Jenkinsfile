@@ -114,6 +114,13 @@ node('docker') {
                             }
                     }
 
+                    stage('Prepare K3D Dependencies') {
+                       withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'harborhelmchartpush', usernameVariable: 'HARBOR_USERNAME', passwordVariable: 'HARBOR_PASSWORD']]) {
+                          k3d.helm("registry login ${registryUrl} --username '${HARBOR_USERNAME}' --password '${HARBOR_PASSWORD}'")
+                          k3d.helm("install k8s-exposition-crd oci://${registryUrl}/${registryNamespace}/k8s-exposition-crd")
+                       }
+                    }
+
                     stage('Deploy ces-exporter') {
                         // add apikey-secret
                         k3d.kubectl("create secret generic ces-exporter-api --from-literal=apiKey=test123 ")

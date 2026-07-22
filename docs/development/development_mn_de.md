@@ -3,7 +3,7 @@ Der `ces-exporter` für Multinode CES ist eine CES-Komponente, die die Daten der
 
 ## Ablauf der Migration
 Der grundlegende Ablauf der Migration von einer Multinode CES-Instanz in eine andere Multinode CES-Instanz ist im folgenden Diagram beschrieben:
-![Migration CES MN -> CES MN](./migration_mn-mn.png)
+[Migration CES MN -> CES MN](https://docs.cloudogu.com/en/usermanual/automatic_migration/reference/migration_flow/#migration-ces-mn---ces-mn)
 
 ## API des CES-Exporters
 Die API des `ces-exporter` ist in der folgenden OpenAPI-Spezifikation beschrieben: [openapi.yaml](./openapi.yaml) 
@@ -26,6 +26,62 @@ Bei der Installation des `ces-exporter` wird die ConfigMap `ces-importer-public-
 Für die Entwicklung kann die Umgebungsvariable `IMPORTER_PUBLIC_KEY` verwendet werden. 
 Der Wert dieser Variable wird in die `values.yaml` getemplatet.
 Diese Umgebungsvariable kann auch im `.env`-File angegeben werden.
+
+### Abhängigkeiten
+
+#### Exposition-CRD
+Um den Exporter-Port freigeben zu können, erstellt die Komponente im Quellsystem einen Exposition-CR.
+Hierfür muss auch die entprechende CRD installiert sein.
+
+```bash
+# Installiert die Exposition-CRD
+ helm install k8s-exposition-crd oci://registry.cloudogu.com/k8s/k8s-exposition-crd --version 1.0.0 --namespace ecosystem
+```
+
+oder mittels einer Komponenten-yaml:
+```yaml
+apiVersion: k8s.cloudogu.com/v1
+kind: Component
+metadata:
+  name: k8s-exposition-crd
+spec:
+  name: k8s-exposition-crd
+  namespace: k8s
+  version: 1.0.0
+```
+
+#### K8s-Service-Discovery
+Stelle sicher, dass die K8s-Service-Discovery in einer Version >= 6.1.0 installiert und für Exposition-CRs konfiguriert ist, damit der SSH-Port des Exporters die erforderlichen Ressourcen erhält.
+
+```yaml
+apiVersion: k8s.cloudogu.com/v1
+kind: Component
+metadata:
+  name: k8s-service-discovery
+  namespace: ecosystem
+spec:
+  name: k8s-service-discovery
+  namespace: k8s
+  version: 6.1.0
+  valuesYamlOverwrite: |-
+    exposition:
+      discoverExpositionCR: true
+```
+
+#### K8s-Ces-Gateway
+Das K8s-Ces-Gateway wird benötigt, um den SSH-Port des Exporters freizugeben. Dies ist ab Version `3.3.3` statisch konfiguriert.
+
+```yaml
+apiVersion: k8s.cloudogu.com/v1
+kind: Component
+metadata:
+  name: k8s-ces-gateway
+  namespace: ecosystem
+spec:
+  name: k8s-ces-gateway
+  namespace: k8s
+  version: 3.3.3
+```
 
 ### Installation per Helm
 

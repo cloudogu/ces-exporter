@@ -17,9 +17,12 @@ spec:
     - Ingress
   ingress:
     - from:
-        - podSelector:
+        - namespaceSelector:
             matchLabels:
-              dogu.name: nginx-ingress
+              kubernetes.io/metadata.name: {{ .Release.Namespace }}
+          podSelector:
+            matchLabels:
+              {{ toYaml .Values.global.networkPolicies.gateway.matchLabels | nindent 14 }}
       ports:
         - port: 8080
           protocol: TCP
