@@ -22,3 +22,14 @@ version: 0.0.0-replaceme
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
 appVersion: "0.0.0-replaceme"
+
+annotations:
+  # Dependency for the Exposition CRD.
+  # Allow all versions up to next major version to avoid breaking changes
+  "k8s.cloudogu.com/ces-dependency/k8s-exposition-crd": "1.x.x"
+  # Dependency for the traefik gateway.
+  # Allow all versions up to next major version to avoid breaking changes
+  "k8s.cloudogu.com/ces-dependency/k8s-ces-gateway": ">=3.3.3 <4.0.0"
+  # Dependency for the service discovery.
+  # Allow all versions up to next major version to avoid breaking changes
+  "k8s.cloudogu.com/ces-dependency/k8s-service-discovery": ">=6.1.0 <7.0.0"

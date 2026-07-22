@@ -3,7 +3,7 @@ The `ces-exporter` for Multinode CES is a CES component that provides the data o
 
 ## Migration procedure
 The basic migration process from one multinode CES instance to another multinode CES instance is described in the following diagram:
-![Migration CES MN -> CES MN](./migration_mn-mn.png)
+[Migration CES MN -> CES MN](https://docs.cloudogu.com/en/usermanual/automatic_migration/reference/migration_flow/#migration-ces-mn---ces-mn)
 
 ## API of the CES exporter
 The API of the `ces-exporter` is described in the following OpenAPI specification: [openapi.yaml](./openapi.yaml)
@@ -26,7 +26,63 @@ The environment variable `IMPORTER_PUBLIC_KEY` can be used for development.
 The value of this variable is templated in the `values.yaml`.
 This environment variable can also be specified in the `.env` file.
 
-### Installation via helmet
+### Dependencies
+
+#### Exposition-CRD
+To expose the exporter port, the component creates an Exposition-CR in the source system.
+This requires the corresponding CustomResourceDefinition to be installed.
+
+```bash
+# Installs the Exposition-CRD
+ helm install k8s-exposition-crd oci://registry.cloudogu.com/k8s/k8s-exposition-crd --version 1.0.0 --namespace ecosystem
+```
+
+or via component-yaml:
+```yaml
+apiVersion: k8s.cloudogu.com/v1
+kind: Component
+metadata:
+  name: k8s-exposition-crd
+spec:
+  name: k8s-exposition-crd
+  namespace: k8s
+  version: 1.0.0
+```
+
+#### K8s-Service-Discovery
+Ensure that the K8s-Service-Discovery is installed in a version >= 6.1.0 and configured for exposition-CRs, so that the ssh port of the exporter will get needed resources.
+
+```yaml
+apiVersion: k8s.cloudogu.com/v1
+kind: Component
+metadata:
+  name: k8s-service-discovery
+  namespace: ecosystem
+spec:
+  name: k8s-service-discovery
+  namespace: k8s
+  version: 6.1.0
+  valuesYamlOverwrite: |-
+    exposition:
+      discoverExpositionCR: true
+```
+
+#### K8s-Ces-Gateway
+The K8s-Ces-Gateway is required to expose the exporter ssh port. This is statically configured in the version `3.3.3` and above.
+
+```yaml
+apiVersion: k8s.cloudogu.com/v1
+kind: Component
+metadata:
+  name: k8s-ces-gateway
+  namespace: ecosystem
+spec:
+  name: k8s-ces-gateway
+  namespace: k8s
+  version: 3.3.3
+```
+
+### Installation via helm
 
 ```bash
 # Installs the Helm chart from ces-exporter in the cluster (without the CES component)

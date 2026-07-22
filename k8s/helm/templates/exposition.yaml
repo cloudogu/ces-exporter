@@ -1,0 +1,16 @@
+apiVersion: k8s.cloudogu.com/v1
+kind: Exposition
+metadata:
+  name: {{ include "ces-exporter.name" . }}-exposition
+spec:
+  http:
+    - name: {{ include "ces-exporter.name" . }}-http
+      service: {{ include "ces-exporter.name" . }}
+      port: 8080
+      path: {{ .Values.env.basePath }}
+  tcp:
+    - name: {{ include "ces-exporter.name" . }}-tcp
+      service: {{ include "ces-exporter.name" . }}-dogu-exporter
+      port: 7022
+      requestedExternalPort: 7022
+      protocol: ssh
