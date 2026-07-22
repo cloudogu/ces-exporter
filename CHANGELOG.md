@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 > [!IMPORTANT]
 > Breaking change!
-> Added dependency to k8s-exposition-crd
+> Added dependency to k8s-exposition-crd, k8s-ces-gateway and k8s-service-discovery
 
 ### Added
 - [#64] Add exposition to open port 7022 for Multinode-Multinode Migrations
