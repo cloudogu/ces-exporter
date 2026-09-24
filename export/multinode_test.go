@@ -50,27 +50,22 @@ func TestMNSetExportDogu(t *testing.T) {
 			sshBannerReader: sshBannerReader,
 		}
 
-		sshBannerReader.EXPECT().readSSHBanner("fqdn:8080").Return("SSH server test_A\n", nil)
-
-		configMaps.EXPECT().List(testCtx, mock.Anything).Return(&corev1.ConfigMapList{
-			Items: []corev1.ConfigMap{
-				{Data: map[string]string{
-					"config.yaml": "fqdn: fqdn",
-				}},
-			},
-		}, nil)
+		sshBannerReader.EXPECT().readSSHBanner("ces-loadbalancer.ecosystem.svc.cluster.local:8080").Return("SSH server test_B\n", nil).Once()
+		sshBannerReader.EXPECT().readSSHBanner("ces-loadbalancer.ecosystem.svc.cluster.local:8080").Return("SSH server test_A\n", nil).Once()
 
 		serviceClient.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(&corev1.Service{
 			Spec: corev1.ServiceSpec{
 				Ports: []corev1.ServicePort{{
 					Port: 8080,
 				}},
-				Selector: map[string]string{"dogu.name": "test_A"},
+				Selector: map[string]string{"dogu.name": "test_B"},
 			},
 		}, nil)
 		doguClient.EXPECT().Get(mock.Anything, "test_A", mock.Anything).Return(nil, nil)
 
-		serviceClient.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
+		serviceClient.EXPECT().Update(mock.Anything, mock.MatchedBy(func(service *corev1.Service) bool {
+			return service.Spec.Selector["dogu.name"] == "test_A"
+		}), mock.Anything).Return(nil, nil)
 
 		dogu, err := provider.SetExportDogu(testCtx, "test_A")
 
@@ -121,38 +116,6 @@ func TestMNSetExportDogu(t *testing.T) {
 
 		require.Contains(t, err.Error(), "could not get dogu resource for current export dogu: testerror")
 	})
-	t.Run("should fail to set export dogu on error getting fqdn", func(t *testing.T) {
-		configMaps := newMockConfigMaps(t)
-		doguClient := newMockDoguClient(t)
-		serviceClient := newMockServiceClient(t)
-		sshBannerReader := newMockSshBannerReader(t)
-		provider := &MultinodeExportModeProvider{
-			namespace:       "ecosystem",
-			configMaps:      configMaps,
-			doguclient:      doguClient,
-			serviceclient:   serviceClient,
-			sshBannerReader: sshBannerReader,
-		}
-
-		configMaps.EXPECT().List(testCtx, mock.Anything).Return(nil, assert.AnError)
-
-		serviceClient.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(&corev1.Service{
-			Spec: corev1.ServiceSpec{
-				Ports: []corev1.ServicePort{{
-					Port: 8080,
-				}},
-				Selector: map[string]string{"dogu.name": "test_A"},
-			},
-		}, nil)
-		doguClient.EXPECT().Get(mock.Anything, "test_A", mock.Anything).Return(nil, nil)
-
-		serviceClient.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
-
-		_, err := provider.SetExportDogu(testCtx, "test_A")
-
-		require.Error(t, err)
-		require.ErrorContains(t, err, "failed to fqdn while setting export-mode:")
-	})
 	t.Run("should fail set export dogu for error waiting for sidecar", func(t *testing.T) {
 		configMaps := newMockConfigMaps(t)
 		doguClient := newMockDoguClient(t)
@@ -165,14 +128,6 @@ func TestMNSetExportDogu(t *testing.T) {
 			serviceclient:   serviceClient,
 			sshBannerReader: sshBannerReader,
 		}
-
-		configMaps.EXPECT().List(testCtx, mock.Anything).Return(&corev1.ConfigMapList{
-			Items: []corev1.ConfigMap{
-				{Data: map[string]string{
-					"config.yaml": "fqdn: fqdn",
-				}},
-			},
-		}, nil)
 
 		serviceClient.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(&corev1.Service{
 			Spec: corev1.ServiceSpec{
@@ -357,65 +312,17 @@ func TestMNGetExportMode(t *testing.T) {
 	})
 }
 
-func TestMultinodeExportModeProvider_getFqdn(t *testing.T) {
-	t.Run("can get fqdn from configmap", func(t *testing.T) {
-		cm := newMockConfigMaps(t)
-		cm.EXPECT().List(mock.Anything, mock.Anything).Return(&corev1.ConfigMapList{
-			Items: []corev1.ConfigMap{
-				{Data: map[string]string{
-					"config.yaml": "fqdn: fqdn",
-				}},
-			},
-		}, nil)
-		provider := &MultinodeExportModeProvider{
-			configMaps: cm,
-		}
-
-		fqdn, err := provider.getFqdn(context.Background())
-		assert.NoError(t, err)
-		assert.Equal(t, "fqdn", fqdn)
-	})
-
-	t.Run("fail on get global config repo", func(t *testing.T) {
-		cm := newMockConfigMaps(t)
-		cm.EXPECT().List(mock.Anything, mock.Anything).Return(nil, fmt.Errorf("testerror"))
-		provider := &MultinodeExportModeProvider{
-			configMaps: cm,
-		}
-
-		_, err := provider.getFqdn(context.Background())
-		assert.Error(t, err)
-		assert.Equal(
-			t,
-			"failed to get global config: could not get global config: unable to get data 'global-config' from cluster: unable to list config-map from cluster: testerror",
-			err.Error(),
-		)
-	})
-
-	t.Run("fail on get global config key for fqdn", func(t *testing.T) {
-		cm := newMockConfigMaps(t)
-		cm.EXPECT().List(mock.Anything, mock.Anything).Return(&corev1.ConfigMapList{
-			Items: []corev1.ConfigMap{
-				{Data: map[string]string{
-					"config.yaml": "{}",
-				}},
-			},
-		}, nil)
-		provider := &MultinodeExportModeProvider{
-			configMaps: cm,
-		}
-
-		_, err := provider.getFqdn(context.Background())
-		assert.Error(t, err)
-		assert.Equal(
-			t,
-			"critical error: no fqdn is configured in registry",
-			err.Error(),
-		)
-	})
-}
-
 func Test_waitForDoguSidecar(t *testing.T) {
+	t.Run("should fail after repeated TCP errors", func(t *testing.T) {
+		address := "test:7022"
+		mockBannerReader := newMockSshBannerReader(t)
+		mockBannerReader.EXPECT().readSSHBanner(address).Return("", fmt.Errorf("dial tcp: i/o timeout")).Twice()
+		m := &MultinodeExportModeProvider{sshBannerReader: mockBannerReader}
+
+		err := m.waitForDoguSidecar(address, "ldap", 2, 0)
+		require.ErrorContains(t, err, "maxTries [2] reached")
+	})
+
 	t.Run("should wait for sidecar", func(t *testing.T) {
 		address := "test:7022"
 		mockBannerReader := newMockSshBannerReader(t)
