@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	bup "github.com/cloudogu/k8s-backup-lib/api/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	rclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -26,12 +28,15 @@ type BackupScheduleRuntimeClient struct {
 	namespace string
 }
 
-// ListBackupSchedules returns a list of all backup schedule custom resources
+// ListBackupSchedules returns all backup schedules, or an empty list if their API is unavailable.
 func (b *BackupScheduleRuntimeClient) ListBackupSchedules(ctx context.Context) (*bup.BackupScheduleList, error) {
 	var backupSchedules bup.BackupScheduleList
 
 	err := b.rclient.List(ctx, &backupSchedules, rclient.InNamespace(b.namespace))
 	if err != nil {
+		if meta.IsNoMatchError(err) || apierrors.IsNotFound(err) {
+			return &bup.BackupScheduleList{Items: []bup.BackupSchedule{}}, nil
+		}
 		return nil, fmt.Errorf("failed to list backup schedules: %w", err)
 	}
 

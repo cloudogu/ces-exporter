@@ -303,6 +303,7 @@ components:
               - sensitive
         backupSchedules:
           type: array
+          description: Returns an empty array ([]) when no backup schedules exist or the BackupSchedule API is absent.
           items:
             type: object
             properties:
