@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
-- [#68] for multinode export, handle the backup operator API not being present so that there is no dependency of the exporter to the backup operator
+- [#68] For multinode export, handle the backup operator API being absent so the exporter does not depend on the backup operator
 
 
 ## [v3.0.0] - 2026-07-22
