@@ -7,10 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Fixed
-- Check Dogu exporter SSH readiness through the internal CES gateway address instead of the public address
+- [#68] Check Dogu exporter SSH readiness through the internal CES gateway address instead of the public address
 
 ### Added
-- Add NetworkPolicies allowing the exporter to reach the gateway and the gateway to reach Dogu exporter sidecars
+- [#68] Add NetworkPolicies allowing the exporter to reach the gateway and the gateway to reach Dogu exporter sidecars
 
 ## [v3.0.0] - 2026-07-22
 > [!IMPORTANT]
