@@ -4,18 +4,18 @@ import (
 	"context"
 	"fmt"
 	doguv2 "github.com/cloudogu/k8s-dogu-lib/v2/api/v2"
-	"github.com/cloudogu/k8s-registry-lib/repository"
 	apiCorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"log/slog"
+	"net"
 	"strings"
 	"time"
 )
 
 const (
 	cesDoguExporter            = "ces-exporter-dogu-exporter"
-	globalConfigKeyFqdn        = "/fqdn"
+	cesLoadBalancer            = "ces-loadbalancer"
 	maxTriesWaitForDoguSidecar = 10
 	waitTimeForDoguSidecar     = 1 * time.Second
 )
@@ -91,13 +91,10 @@ func (m MultinodeExportModeProvider) SetExportDogu(ctx context.Context, doguName
 		return nil, fmt.Errorf("failed to update exporter service: %w", err)
 	}
 
-	fqdn, err := m.getFqdn(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fqdn while setting export-mode: %w", err)
-	}
-	externalExporterAddress := fmt.Sprintf("%s:%d", fqdn, port.Port)
-
-	if err := m.waitForDoguSidecar(externalExporterAddress, doguName, getMaxTriesWaitForDoguSidecar(), waitTimeForDoguSidecar); err != nil {
+	// Check through the in-cluster gateway, which routes to the selected sidecar.
+	// The returned port still tells the importer where to connect externally.
+	internalExporterAddress := net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", cesLoadBalancer, m.namespace), fmt.Sprint(port.Port))
+	if err := m.waitForDoguSidecar(internalExporterAddress, doguName, getMaxTriesWaitForDoguSidecar(), waitTimeForDoguSidecar); err != nil {
 		return nil, fmt.Errorf("failed to wait for endpoints to update: %w", err)
 	}
 
@@ -131,22 +128,6 @@ func (m MultinodeExportModeProvider) waitForDoguSidecar(address string, doguName
 	}
 
 	return fmt.Errorf("maxTries [%d] reached while waiting for exporter-sidecar for dogu %q", maxTries, doguName)
-}
-
-func (m *MultinodeExportModeProvider) getFqdn(ctx context.Context) (string, error) {
-	globalConfigRepo := repository.NewGlobalConfigRepository(m.configMaps)
-
-	globalConfig, err := globalConfigRepo.Get(ctx)
-	if err != nil {
-		return "", fmt.Errorf("failed to get global config: %w", err)
-	}
-
-	value, exists := globalConfig.Get(globalConfigKeyFqdn)
-	if !exists {
-		return "", fmt.Errorf("critical error: no fqdn is configured in registry")
-	}
-
-	return value.String(), nil
 }
 
 func (m MultinodeExportModeProvider) GetExportMode(ctx context.Context) (*exportModeStatus, error) {
