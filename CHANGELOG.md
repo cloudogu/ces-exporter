@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v3.1.0] - 2026-10-15
+### Fixed
+- [#68] Check Dogu exporter SSH readiness through the internal CES gateway address instead of the public address
+### Added
+- [#68] Add NetworkPolicies allowing the exporter to reach the gateway and the gateway to reach Dogu exporter sidecars
+### Changed
+- [#68] For multinode export, handle the backup operator API being absent so the exporter does not depend on the backup operator
+
+
 ## [v3.0.0] - 2026-07-22
 > [!IMPORTANT]
 > Breaking change!
