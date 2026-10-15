@@ -2,6 +2,7 @@ package configuration
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/ces-exporter/core"
@@ -210,4 +211,32 @@ func TestGetBackupSchedules(t *testing.T) {
 		assert.Equal(t, "failed to list backup schedules: testerror", err.Error())
 		require.Equal(t, 0, len(configs))
 	})
+}
+
+func TestGetBackupSchedulesEmptyArray(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		items []v1.BackupSchedule
+	}{
+		{name: "backup schedule lookup returns nil"},
+		{name: "backup schedule lookup returns empty slice", items: []v1.BackupSchedule{}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			client := newMockBackupScheduleRuntimeClient(t)
+			client.EXPECT().ListBackupSchedules(mock.Anything).Return(&v1.BackupScheduleList{Items: tc.items}, nil).Once()
+			provider := NewMultinodeConfigurationProvider("", nil, nil, nil, nil, client, nil)
+
+			schedules, err := provider.getBackupSchedules(context.Background())
+
+			require.NoError(t, err)
+			require.NotNil(t, schedules)
+			assert.Empty(t, schedules)
+
+			data, err := json.Marshal(core.ExportResponse{BackupSchedules: schedules})
+			require.NoError(t, err)
+			var response map[string]json.RawMessage
+			require.NoError(t, json.Unmarshal(data, &response))
+			assert.JSONEq(t, "[]", string(response["backupSchedules"]))
+		})
+	}
 }

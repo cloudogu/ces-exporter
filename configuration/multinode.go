@@ -129,7 +129,7 @@ func (c MultinodeProvider) getDoguConfigs(ctx context.Context) ([]core.DoguConfi
 }
 
 func (c MultinodeProvider) getBackupSchedules(ctx context.Context) ([]core.BackupSchedule, error) {
-	var schedulesResult []core.BackupSchedule
+	schedulesResult := []core.BackupSchedule{}
 
 	schedules, err := c.client.ListBackupSchedules(ctx)
 	if err != nil {
