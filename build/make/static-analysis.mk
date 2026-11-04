@@ -47,7 +47,7 @@ $(STATIC_ANALYSIS_DIR)/static-analysis.log: $(STATIC_ANALYSIS_DIR)
 
 $(STATIC_ANALYSIS_DIR)/static-analysis-cs.log: $(STATIC_ANALYSIS_DIR)
 	@echo "run static analysis with export to checkstyle format"
-	@$(LINT) $(LINTFLAGS) --output.checkstyle.path stdout run ./... $(ADDITIONAL_LINTER) > $@
+	@$(LINT) $(LINTFLAGS) --output.checkstyle.path $@ run ./... $(ADDITIONAL_LINTER)
 
 $(STATIC_ANALYSIS_DIR): $(LINT)
 	@mkdir -p $(STATIC_ANALYSIS_DIR)
@@ -60,7 +60,7 @@ static-analysis-ci-report-local: $(STATIC_ANALYSIS_DIR)/static-analysis-cs.log $
 
 $(LINT): $(TMP_DIR)
 	@echo "Download golangci-lint $(LINT_VERSION)..."
-	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TMP_DIR)/bin $(LINT_VERSION)
+	@curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b $(TMP_DIR)/bin $(LINT_VERSION)
 
 $(REVIEW_DOG): $(TMP_DIR)
 	@curl -sfL https://raw.githubusercontent.com/reviewdog/reviewdog/master/install.sh| sh -s -- -b $(TMP_DIR)/bin
