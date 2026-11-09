@@ -4,7 +4,7 @@ VERSION=3.1.0
 
 GOTAG=1.27.3
 MOCKERY_VERSION=v2.53.0
-LINT_VERSION?=v2.9.0
+LINT_VERSION?=v2.15.0
 .DEFAULT_GOAL:=help
 
 ## Image URL to use all building/pushing image targets
