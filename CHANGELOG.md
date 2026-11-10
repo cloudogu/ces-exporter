@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v3.1.1] - 2026-11-10
+
 ### Security
 - [#70] Update Alpine to 3.24.4 and Go to 1.27.3 to address several CVEs
 - [#70] Restrict exporter SSH access to public-key authentication, including root logins
