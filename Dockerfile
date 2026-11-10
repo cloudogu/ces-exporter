@@ -39,7 +39,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 FROM alpine:3.24.4 AS classic
 LABEL maintainer="hello@cloudogu.com" \
       NAME="ces-exporter" \
-      VERSION="3.1.0"
+      VERSION="3.1.1"
 
 ENV MODE=classic
 
@@ -81,7 +81,7 @@ ENTRYPOINT ["/startup.sh"]
 FROM gcr.io/distroless/static:nonroot AS multinode
 LABEL maintainer="hello@cloudogu.com" \
       NAME="ces-exporter" \
-      VERSION="3.1.0"
+      VERSION="3.1.1"
 
 ENV MODE=multinode
 
