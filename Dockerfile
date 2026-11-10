@@ -8,7 +8,7 @@
 
 ################################################################################
 # Create a stage for building the application.
-ARG GO_VERSION=1.26.0
+ARG GO_VERSION=1.27.3
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION} AS build
 WORKDIR /workspace
 
@@ -36,10 +36,10 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=bind,target=. \
     CGO_ENABLED=0 GOARCH=$TARGETARCH go build -o /target/ces-exporter ./
 
-FROM alpine:3.21 AS classic
+FROM alpine:3.24.4 AS classic
 LABEL maintainer="hello@cloudogu.com" \
       NAME="ces-exporter" \
-      VERSION="3.1.0"
+      VERSION="3.1.1"
 
 ENV MODE=classic
 
@@ -62,7 +62,6 @@ RUN --mount=type=cache,target=/var/cache/apk \
 # Configure SSH
 RUN \
    ssh-keygen -A && \
-   sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
    mkdir -p /root/.ssh && \
    chmod -R 700 /root && \
    chmod -R 600 /root/.ssh
@@ -82,7 +81,7 @@ ENTRYPOINT ["/startup.sh"]
 FROM gcr.io/distroless/static:nonroot AS multinode
 LABEL maintainer="hello@cloudogu.com" \
       NAME="ces-exporter" \
-      VERSION="3.1.0"
+      VERSION="3.1.1"
 
 ENV MODE=multinode
 
