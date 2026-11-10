@@ -36,7 +36,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=bind,target=. \
     CGO_ENABLED=0 GOARCH=$TARGETARCH go build -o /target/ces-exporter ./
 
-FROM alpine:3.21 AS classic
+FROM alpine:3.24.4 AS classic
 LABEL maintainer="hello@cloudogu.com" \
       NAME="ces-exporter" \
       VERSION="3.1.0"
@@ -62,7 +62,6 @@ RUN --mount=type=cache,target=/var/cache/apk \
 # Configure SSH
 RUN \
    ssh-keygen -A && \
-   sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
    mkdir -p /root/.ssh && \
    chmod -R 700 /root && \
    chmod -R 600 /root/.ssh
