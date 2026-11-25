@@ -23,3 +23,8 @@ publicKey:
   configMapName: "ces-importer-public-key"
   configMapDataKey: "publicKey"
   data: ""
+
+# Requires cert-manager. Activates the V3 sidecar proof of concept only.
+poc:
+  enabled: false
+  sidecarImage: registry.cloudogu.com/k8s/rsync-sidecar:1.1.2

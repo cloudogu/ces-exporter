@@ -25,6 +25,13 @@ const (
 
 // Configuration holds all possible configurations of the exporter app
 type Configuration struct {
+	// PoC settings enable and configure V3 injection independently of the legacy export API.
+	PoCEnabled            bool
+	PoCSidecarImage       string
+	PoCPublicKeyConfigMap string
+	PoCPublicKeyDataKey   string
+	PoCCertDir            string
+	PoCWebhookName        string
 	// LogLevel controls the granularity and amount of issued log output. Valid values are (always in
 	// uppercase) `ERROR`, `WARN`, `INFO`, `DEBUG`. Defaults to `ERROR` if left empty.
 	LogLevel string
@@ -73,6 +80,12 @@ func ReadConfigFromEnv() (Configuration, error) {
 		return conf, fmt.Errorf(errorFormat, NamespaceEnv)
 	}
 
+	conf.PoCEnabled = os.Getenv("POC_ENABLED") == "true"
+	conf.PoCSidecarImage = envOrDefault("POC_SIDECAR_IMAGE", "registry.cloudogu.com/k8s/rsync-sidecar:1.1.2")
+	conf.PoCPublicKeyConfigMap = envOrDefault("POC_PUBLIC_KEY_CONFIGMAP", "ces-importer-public-key")
+	conf.PoCPublicKeyDataKey = envOrDefault("POC_PUBLIC_KEY_DATA_KEY", "publicKey")
+	conf.PoCCertDir = envOrDefault("POC_CERT_DIR", "/etc/ces-exporter-webhook")
+	conf.PoCWebhookName = envOrDefault("POC_WEBHOOK_NAME", "ces-exporter-poc")
 	conf.CronExp = os.Getenv(CronJobEnv)
 
 	conf.VerboseCron = os.Getenv(CronJobVerboseEnv) == "true"
@@ -85,4 +98,12 @@ func ReadConfigFromEnv() (Configuration, error) {
 	}
 
 	return conf, nil
+}
+
+// envOrDefault returns a nonempty environment value or the supplied default.
+func envOrDefault(name, fallback string) string {
+	if value := os.Getenv(name); value != "" {
+		return value
+	}
+	return fallback
 }
