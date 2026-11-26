@@ -1,0 +1,151 @@
+{{/* Optional PoC infrastructure: serving certificates, admission registration, RBAC and webhook ingress. */}}
+{{- if .Values.poc.enabled }}
+# Bootstrap a serving certificate without introducing an external certificate authority.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "ces-exporter.name" . }}-poc-selfsigned
+spec:
+  selfSigned: {}
+---
+# cert-manager creates the TLS secret and supplies the CA injected into the webhook registration.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "ces-exporter.name" . }}-poc
+spec:
+  secretName: {{ include "ces-exporter.name" . }}-poc-tls
+  dnsNames:
+    - {{ include "ces-exporter.name" . }}-poc.{{ .Release.Namespace }}.svc
+    - {{ include "ces-exporter.name" . }}-poc.{{ .Release.Namespace }}.svc.cluster.local
+  issuerRef:
+    name: {{ include "ces-exporter.name" . }}-poc-selfsigned
+    kind: Issuer
+---
+# The API server reaches the exporter TLS listener through this service.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ces-exporter.name" . }}-poc
+spec:
+  selector:
+    {{- include "ces-exporter.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: webhook
+      port: 443
+      targetPort: webhook
+---
+# Limit mutation to pod creation in the release namespace; injection errors must not block applications.
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: {{ include "ces-exporter.name" . }}-poc-{{ .Release.Namespace }}
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "ces-exporter.name" . }}-poc
+webhooks:
+  - name: exporter-poc.cloudogu.com
+    admissionReviewVersions: [v1]
+    sideEffects: None
+    failurePolicy: Ignore
+    timeoutSeconds: 10
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: {{ .Release.Namespace }}
+    clientConfig:
+      service:
+        name: {{ include "ces-exporter.name" . }}-poc
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-pods
+        port: 443
+    rules:
+      - operations: [CREATE]
+        apiGroups: [""]
+        apiVersions: [v1]
+        resources: [pods]
+        scope: Namespaced
+---
+# Namespace permissions cover discovery, mode updates, pod replacement and failure events.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "ces-exporter.name" . }}-poc
+rules:
+  - apiGroups: [""]
+    resources: [pods, persistentvolumeclaims, configmaps, secrets, endpoints]
+    verbs: [get, list]
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [delete]
+  - apiGroups: [""]
+    resources: [configmaps]
+    verbs: [create, update]
+  - apiGroups: [""]
+    resources: [events]
+    verbs: [create]
+  - apiGroups: [discovery.k8s.io]
+    resources: [endpointslices]
+    verbs: [list]
+  - apiGroups: [apps]
+    resources: [deployments, statefulsets, replicasets]
+    verbs: [get, list]
+  - apiGroups: [k8s.cloudogu.com]
+    resources: [dogus]
+    verbs: [get, list]
+---
+# Grant namespace permissions to the existing exporter service account.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "ces-exporter.name" . }}-poc
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "ces-exporter.name" . }}-poc
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "ces-exporter.name" . }}
+    namespace: {{ .Release.Namespace }}
+---
+# Read only this webhook registration so the controller can verify its CA before replacing pods.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "ces-exporter.name" . }}-poc-{{ .Release.Namespace }}
+rules:
+  - apiGroups: [admissionregistration.k8s.io]
+    resources: [mutatingwebhookconfigurations]
+    resourceNames: [{{ include "ces-exporter.name" . }}-poc-{{ .Release.Namespace }}]
+    verbs: [get]
+---
+# Grant the narrowly scoped registration check to the namespaced exporter service account.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "ces-exporter.name" . }}-poc-{{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "ces-exporter.name" . }}-poc-{{ .Release.Namespace }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "ces-exporter.name" . }}
+    namespace: {{ .Release.Namespace }}
+{{- if .Values.global.networkPolicies.enabled }}
+---
+# Allow API-server admission traffic to the TLS port when exporter ingress is otherwise restricted.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "ces-exporter.name" . }}-poc-webhook
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "ces-exporter.selectorLabels" . | nindent 6 }}
+  policyTypes: [Ingress]
+  ingress:
+    # API-server source addresses vary by cluster. Limit the allowed port.
+    - ports:
+        - protocol: TCP
+          port: 9443
+{{- end }}
+{{- end }}

@@ -1,0 +1,15 @@
+# PoC test object: Nexus as a V3 dogu, including the PostgreSQL StatefulSet supplied by its chart.
+# The shared ecosystem namespace is managed by the existing Dogu Operator.
+apiVersion: k8s.cloudogu.com/v3beta1
+kind: Dogu
+metadata:
+  name: nexus
+  namespace: ecosystem
+  labels:
+    app: ces
+    k8s.cloudogu.com/dogu.name: nexus
+spec:
+  name: nexus
+  doguNamespace: official
+  doguApiVersion: v3
+  version: 3.96.4-2

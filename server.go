@@ -10,11 +10,13 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/cloudogu/ces-exporter/configuration"
 	"github.com/cloudogu/ces-exporter/core"
 	"github.com/cloudogu/ces-exporter/export"
+	"github.com/cloudogu/ces-exporter/exportpoc"
 	"github.com/cloudogu/ces-exporter/maintenance"
 	"github.com/cloudogu/ces-exporter/systeminfo"
 	bup "github.com/cloudogu/k8s-backup-lib/api/v1"
@@ -22,6 +24,7 @@ import (
 	ecoSystemV2 "github.com/cloudogu/k8s-dogu-lib/v2/client"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 const (
@@ -78,10 +81,31 @@ func newServer(config core.Configuration) (*server, error) {
 	}, nil
 }
 
+// run starts the HTTP API and optional PoC runtime and shuts them down on cancellation or termination.
 func (s *server) run(ctx context.Context) error {
-	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
+	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
+	if s.config.PoCEnabled && !s.config.IsClassic {
+		clusterConfig, err := ctrl.GetConfig()
+		if err != nil {
+			return fmt.Errorf("PoC cluster configuration: %w", err)
+		}
+		runtime, err := exportpoc.New(exportpoc.Config{
+			Namespace: s.config.Namespace, SidecarImage: s.config.PoCSidecarImage,
+			PublicKeyConfigMap: s.config.PoCPublicKeyConfigMap, PublicKeyDataKey: s.config.PoCPublicKeyDataKey,
+			CertDir: s.config.PoCCertDir, WebhookName: s.config.PoCWebhookName,
+		}, clusterConfig)
+		if err != nil {
+			return err
+		}
+		go func() {
+			if err := runtime.Run(ctx); err != nil {
+				slog.Error("PoC runtime stopped", "error", err)
+				cancel()
+			}
+		}()
+	}
 	srv := s.createEndpoints(ctx)
 
 	httpServer := &http.Server{

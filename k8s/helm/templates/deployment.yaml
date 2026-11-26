@@ -28,7 +28,24 @@ spec:
             - mountPath: /etc/ces-exporter
               name: ces-exporter-server-certificate
               readOnly: false
+          {{- if .Values.poc.enabled }}
+            - mountPath: /etc/ces-exporter-webhook
+              name: poc-webhook-tls
+              readOnly: true
+          {{- end }}
           env:
+            {{- if .Values.poc.enabled }}
+            - name: POC_ENABLED
+              value: "true"
+            - name: POC_SIDECAR_IMAGE
+              value: {{ .Values.poc.sidecarImage | quote }}
+            - name: POC_PUBLIC_KEY_CONFIGMAP
+              value: {{ .Values.publicKey.configMapName | quote }}
+            - name: POC_PUBLIC_KEY_DATA_KEY
+              value: {{ .Values.publicKey.configMapDataKey | quote }}
+            - name: POC_WEBHOOK_NAME
+              value: {{ include "ces-exporter.name" . }}-poc-{{ .Release.Namespace }}
+            {{- end }}
             - name: LOG_LEVEL
               value: '{{ .Values.env.logLevel  | default "info" }}'
             - name: BASE_PATH
@@ -55,11 +72,24 @@ spec:
             httpGet:
               path: "{{ .Values.env.basePath }}/health"
               port: 8080
+          {{- if .Values.poc.enabled }}
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: webhook
+              scheme: HTTPS
+          {{- else }}
           readinessProbe:
             httpGet:
               path: "{{ .Values.env.basePath }}/health"
               port: 8080
+          {{- end }}
           ports:
+            {{- if .Values.poc.enabled }}
+            - name: webhook
+              containerPort: 9443
+              protocol: TCP
+            {{- end }}
             - name: http-port
               containerPort: 8080
               protocol: TCP
@@ -70,3 +100,9 @@ spec:
           secret:
             optional: true
             secretName: ces-exporter-server-certificate
+
+        {{- if .Values.poc.enabled }}
+        - name: poc-webhook-tls
+          secret:
+            secretName: {{ include "ces-exporter.name" . }}-poc-tls
+        {{- end }}
